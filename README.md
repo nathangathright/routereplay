@@ -4,9 +4,11 @@ A self-contained agent skill and offline renderer for 9:16 flight reels. Describ
 
 ## Demo
 
-ORD → SFO → AKL · 18 seconds · 1080 × 1920 · silent. Route and altitude are illustrative.
+ORD → SFO → AKL · 18 seconds · 1080 × 1920 · silent. Route, altitude and aircraft attitude are illustrative.
 
-https://github.com/user-attachments/assets/5719c454-9c09-4809-842f-f468a95020b9
+https://github.com/user-attachments/assets/79262c00-d3f3-47af-9faf-2051da8a9bdd
+
+Rendered from [f34b87e](https://github.com/nathangathright/routereplay/commit/f34b87ed400ee926886d9ab879da407c9dfdd97d) at delivery quality with adaptive cloud/atmosphere reconstruction and modeled aircraft motion.
 
 The renderer combines a north-up globe, terrain relief, dated Sun/stars/Moon, causal modeled city lighting, wind-advected clouds, atmospheric scattering and aircraft rendered in Blender Cycles. Scene layers share linear light and camera depth before a single exposure and tone mapper. The final video is display-referred H.264. Historical textures, reconstructed weather and artistic scale choices are identified in its provenance.
 
