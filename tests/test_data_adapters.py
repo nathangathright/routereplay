@@ -7,7 +7,7 @@ from unittest.mock import patch
 import numpy as np
 from PIL import Image,TiffImagePlugin
 from scipy.io import netcdf_file
-SCRIPTS=Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts'
+SCRIPTS=Path(__file__).resolve().parents[1]/'skills/route-replay/scripts'
 sys.path.insert(0,str(SCRIPTS))
 from environmental_data import (environment_metadata,read_environment,sample_environment,prepared_environment_sampler,
     validate_environment_coverage,write_environment)

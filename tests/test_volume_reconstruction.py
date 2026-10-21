@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-ENGINE = Path(__file__).resolve().parents[1]/'skills'/'cinematic-flight-videos'/'scripts'/'engine'
+ENGINE = Path(__file__).resolve().parents[1]/'skills'/'route-replay'/'scripts'/'engine'
 sys.path.insert(0, str(ENGINE))
 from camera_geometry import pixel_rays, pixel_rays_at
 from volume_reconstruction import (_blend_weight, _grid_coordinates,

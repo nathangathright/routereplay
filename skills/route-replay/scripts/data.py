@@ -461,7 +461,7 @@ def download(url, destination, max_bytes=100_000_000):
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix(destination.suffix + ".part")
     try:
-        request = Request(url, headers={"User-Agent": "cinematic-flight-videos/1 asset-bootstrap"})
+        request = Request(url, headers={"User-Agent": "route-replay/1 asset-bootstrap"})
         with urlopen(request, timeout=60) as response, temporary.open("wb") as handle:
             if response.status != 200:
                 raise ValueError(f"Expected HTTP 200 downloading {url}")

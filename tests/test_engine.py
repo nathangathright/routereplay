@@ -10,7 +10,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-SCRIPTS = Path(__file__).resolve().parents[1]/'skills'/'cinematic-flight-videos'/'scripts'
+SCRIPTS = Path(__file__).resolve().parents[1]/'skills'/'route-replay'/'scripts'
 sys.path[:0] = [str(SCRIPTS), str(SCRIPTS/'engine')]
 from trip import load_trip, trip_from_dict
 from motion import Motion

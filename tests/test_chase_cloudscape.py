@@ -8,7 +8,7 @@ import unittest
 
 import numpy as np
 
-SCRIPTS = Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts'
+SCRIPTS = Path(__file__).resolve().parents[1]/'skills/route-replay/scripts'
 sys.path.insert(0, str(SCRIPTS))
 import chase_cloudscape as cloud
 from chase_weather import enu_to_ecef, enu_basis

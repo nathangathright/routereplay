@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-ENGINE=Path(__file__).resolve().parents[1]/'skills'/'cinematic-flight-videos'/'scripts'/'engine'
+ENGINE=Path(__file__).resolve().parents[1]/'skills'/'route-replay'/'scripts'/'engine'
 sys.path.insert(0,str(ENGINE))
 from solar_visibility import SUN_ANGULAR_RADIUS, solar_visibility, shadow_boundaries, split_intervals
 

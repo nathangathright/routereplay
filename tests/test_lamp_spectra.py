@@ -7,7 +7,7 @@ import unittest
 
 import numpy as np
 
-SKILL = Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos'
+SKILL = Path(__file__).resolve().parents[1]/'skills/route-replay'
 DATA = SKILL/'references/lamp-spectra'
 spec = importlib.util.spec_from_file_location('lampspectra', SKILL/'scripts/engine/lampspectra.py')
 lamps = importlib.util.module_from_spec(spec)

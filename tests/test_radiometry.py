@@ -15,7 +15,7 @@ import unittest
 
 import numpy as np
 
-ENGINE = Path(__file__).resolve().parents[1]/'skills'/'cinematic-flight-videos'/'scripts'/'engine'
+ENGINE = Path(__file__).resolve().parents[1]/'skills'/'route-replay'/'scripts'/'engine'
 sys.path[:0]=[str(ENGINE),str(ENGINE.parent)]
 from radiometry import (TransportLayer, srgb_to_linear, linear_to_srgb,
                         resize_float, source_over, tone_map, causal_exposure_profile)

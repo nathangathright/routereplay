@@ -1,4 +1,4 @@
 interface:
   display_name: "Route Replay"
   short_description: "Create reusable globe flight reels from itineraries"
-  default_prompt: "Use $cinematic-flight-videos to make a globe flight reel from my itinerary."
+  default_prompt: "Use $route-replay to make a globe flight reel from my itinerary."

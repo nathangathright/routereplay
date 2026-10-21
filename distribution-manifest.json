@@ -3,13 +3,13 @@
   "files": [
     {
       "path": ".gitattributes",
-      "bytes": 303,
-      "sha256": "16d06c1ae1687ce6c569d29f4719f1daa3bfd3ef2d3f608b7444973a4d70b53b"
+      "bytes": 270,
+      "sha256": "31aab3f3b7546df728430c0871cbe5820a74073b613ef415d2b4ff0a549d1e90"
     },
     {
       "path": ".github/workflows/validate.yml",
-      "bytes": 757,
-      "sha256": "a5423e24ee842b7af08be488dc4e14cfc49b548dceb21863356aae8010093472"
+      "bytes": 724,
+      "sha256": "c0b05b5c4e721e31d6fcff5aab6bc30c527db86b704c0a38ffe0e0c4442ffc24"
     },
     {
       "path": "LICENSE",
@@ -18,8 +18,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 12209,
-      "sha256": "b2a957849b62100829e72b455f95c757e1ec7b19c67282b0d4f4057a7d9586df"
+      "bytes": 11973,
+      "sha256": "e6fbf0bb244872cdab7e33923b675ae33395121e4f64d448520d3509b63cb5ea"
     },
     {
       "path": "package.json",
@@ -27,674 +27,674 @@
       "sha256": "094451ca774d58ec5abb204abc57a013b68c89a2a5be811311561cc964d02ce0"
     },
     {
-      "path": "skills/cinematic-flight-videos/SKILL.md",
-      "bytes": 11776,
-      "sha256": "2847eacc16a6138b021687a4ba57942724a486c7c3424dda21ca564b6e012398"
+      "path": "skills/route-replay/SKILL.md",
+      "bytes": 11765,
+      "sha256": "b295fd1a7d48fec11fee4b2fb58f7f617b3da7426f6b22a45cfd3851591518bb"
     },
     {
-      "path": "skills/cinematic-flight-videos/agents/openai.yaml",
-      "bytes": 213,
-      "sha256": "7c7c999d6e12149aebe8a141b5d35eff2a0e3d533816b497079c460a37c516e8"
+      "path": "skills/route-replay/agents/openai.yaml",
+      "bytes": 202,
+      "sha256": "a592d66196073ac361b2f242ac523f7c196444502988507ce78271e83f1e52ae"
     },
     {
-      "path": "skills/cinematic-flight-videos/assets/fonts/dosis/Dosis-Variable.ttf",
+      "path": "skills/route-replay/assets/fonts/dosis/Dosis-Variable.ttf",
       "bytes": 117280,
       "sha256": "b2238eef0b3464904fed097ef274c704bc63d21407369b7d7a5be7b0821a0e82"
     },
     {
-      "path": "skills/cinematic-flight-videos/assets/fonts/dosis/OFL.txt",
+      "path": "skills/route-replay/assets/fonts/dosis/OFL.txt",
       "bytes": 4386,
       "sha256": "6dfa3951f0c829518b284608fcc1acb196cba1536b1ae1713a49deccde1ccc53"
     },
     {
-      "path": "skills/cinematic-flight-videos/assets/fonts/dosis/README.md",
+      "path": "skills/route-replay/assets/fonts/dosis/README.md",
       "bytes": 665,
       "sha256": "381ca27ae31368e15048314eca270d8fc13ab4cf3b50e3d844089776f22dc41c"
     },
     {
-      "path": "skills/cinematic-flight-videos/examples/city-lighting-chicago-auckland.json",
+      "path": "skills/route-replay/examples/city-lighting-chicago-auckland.json",
       "bytes": 3474,
       "sha256": "a64adacf81f56a486b26da0a477e511d039ad5447f829f022a6ac38676a783dc"
     },
     {
-      "path": "skills/cinematic-flight-videos/examples/sample-four-stop.json",
+      "path": "skills/route-replay/examples/sample-four-stop.json",
       "bytes": 1829,
       "sha256": "951309524c354c633569ef9f3983c06e2333039d43a138ef5717e5c8fc66321c"
     },
     {
-      "path": "skills/cinematic-flight-videos/examples/sample-lighting-profile.json",
+      "path": "skills/route-replay/examples/sample-lighting-profile.json",
       "bytes": 871,
       "sha256": "5c02963d446b3f9d8ea2f4df625882e7a6aa4cbe01d3ff639efd78627877f4b3"
     },
     {
-      "path": "skills/cinematic-flight-videos/examples/sample-return.json",
+      "path": "skills/route-replay/examples/sample-return.json",
       "bytes": 790,
       "sha256": "c045a927dbfbf5250ed626eeaa7a4be965d9bea4524e70ecb0bc85daedb62a25"
     },
     {
-      "path": "skills/cinematic-flight-videos/examples/sample-single-leg.json",
+      "path": "skills/route-replay/examples/sample-single-leg.json",
       "bytes": 536,
       "sha256": "d84a7de06ff6714d3a14843ba64973f24713d10dedfae8b217572926341c8c9e"
     },
     {
-      "path": "skills/cinematic-flight-videos/examples/sample-storytelling.json",
+      "path": "skills/route-replay/examples/sample-storytelling.json",
       "bytes": 2465,
       "sha256": "04cb3349a883f20194db4e4aa41734d13c09d5fdc139b0f9e0be804e33575004"
     },
     {
-      "path": "skills/cinematic-flight-videos/examples/sample-three-leg.json",
+      "path": "skills/route-replay/examples/sample-three-leg.json",
       "bytes": 1150,
       "sha256": "e040a27a5d2d9f571553bf1cfc27c30b36032ce9b41dffbe4b331d288967bb0f"
     },
     {
-      "path": "skills/cinematic-flight-videos/examples/sample-trajectory.json",
+      "path": "skills/route-replay/examples/sample-trajectory.json",
       "bytes": 2313,
       "sha256": "7fba1a92c6c6bc926034923c43b4a5d64686951bbe0c59d9ab14bbc88a165af0"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/architecture.md",
+      "path": "skills/route-replay/references/architecture.md",
       "bytes": 19254,
       "sha256": "bcf331b3eca29ada33fa38c2ed5336628d03dddc83067b0621c7895022b621b4"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/birdseye-performance.md",
+      "path": "skills/route-replay/references/birdseye-performance.md",
       "bytes": 9375,
       "sha256": "6b4b45ebab0e19c051c026b9b400d26109bcf2d9936f96bea2ba05cf707877a6"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/calibration.md",
+      "path": "skills/route-replay/references/calibration.md",
       "bytes": 4811,
       "sha256": "ec96afa7e34a9fe2a923c7cbb7eaac791923f9285fb9244e1cb466430e159b00"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/chase-camera.md",
+      "path": "skills/route-replay/references/chase-camera.md",
       "bytes": 11665,
       "sha256": "c71b759ecee8befb6a90892b8cd3b446200d1e575d0f91927bbc05cdeb4172f5"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/cloud-lighting.md",
+      "path": "skills/route-replay/references/cloud-lighting.md",
       "bytes": 4325,
       "sha256": "a5c57f8f0abab776cdab508eba5e47f65e8e064d3a5aba6e74f79619213f3db8"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/cloud-morphology.md",
+      "path": "skills/route-replay/references/cloud-morphology.md",
       "bytes": 2905,
       "sha256": "0e392b1cf2ac40614e30aa7c653877154f1215e7efa7a7a1e57441b3428f6cf3"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/data-adapters.md",
+      "path": "skills/route-replay/references/data-adapters.md",
       "bytes": 16111,
       "sha256": "9b0172f5ac32abe6dedd771edf6ea1f60eea9748abd0c9e4e4090c4d185c8021"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/data-sources.md",
+      "path": "skills/route-replay/references/data-sources.md",
       "bytes": 15905,
       "sha256": "1da3ee8aede4bf8d354b87a8ac6e85a7daf42df43cc673024fa55cc5226cbb96"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/lamp-spectra.md",
+      "path": "skills/route-replay/references/lamp-spectra.md",
       "bytes": 6603,
       "sha256": "19291a07cde02b7c20a74a00866e1f45416def83baa891572bc269e0f8768881"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/lamp-spectra/CIE_illum_HPs.csv",
+      "path": "skills/route-replay/references/lamp-spectra/CIE_illum_HPs.csv",
       "bytes": 2814,
       "sha256": "035e09d62b27f4b1e362ff1ba99a50235f0d7886c2781c50d49851b6e4bb4552"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/lamp-spectra/CIE_illum_HPs.csv_metadata_v2.json",
+      "path": "skills/route-replay/references/lamp-spectra/CIE_illum_HPs.csv_metadata_v2.json",
       "bytes": 5127,
       "sha256": "d72f68dcbae8c0bc9361a399e172e8f9beb61dc59119620047538df4840c39b3"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/lamp-spectra/CIE_illum_LEDs_1nm.csv",
+      "path": "skills/route-replay/references/lamp-spectra/CIE_illum_LEDs_1nm.csv",
       "bytes": 63851,
       "sha256": "2a065526e1502f138d5b96aa8c9b337320e08667aac028ab5ad428bf1179a4b7"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/lamp-spectra/CIE_illum_LEDs_1nm.csv_metadata.json",
+      "path": "skills/route-replay/references/lamp-spectra/CIE_illum_LEDs_1nm.csv_metadata.json",
       "bytes": 5298,
       "sha256": "8e95fe131cfff2534aa161846b1b7d113f74781338e85787104661b887f8ff48"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/lamp-spectra/CIE_xyz_1931_2deg.csv",
+      "path": "skills/route-replay/references/lamp-spectra/CIE_xyz_1931_2deg.csv",
       "bytes": 24021,
       "sha256": "fa663e3535a7e0763a745993a1f0a192eb0275ac46ad2d1befd7626841e713c1"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/lamp-spectra/CIE_xyz_1931_2deg.csv_metadata.json",
+      "path": "skills/route-replay/references/lamp-spectra/CIE_xyz_1931_2deg.csv_metadata.json",
       "bytes": 3787,
       "sha256": "03abcaecf4e63d77045ef57c4514b52c8bb1a46dd18e1f93a50044a0f4f481c8"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/lamp-spectra/derive.py",
+      "path": "skills/route-replay/references/lamp-spectra/derive.py",
       "bytes": 6132,
       "sha256": "ca51764fda98a97186051a4bd6c0475d41cffa0031b308cf8a937c1422c61e56"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/lamp-spectra/palette.json",
+      "path": "skills/route-replay/references/lamp-spectra/palette.json",
       "bytes": 4626,
       "sha256": "f682640b0f80d1334c7d86139ffadda3f1828fbcd92bfcf69177b62a2e0bb83e"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/local-acceleration.md",
+      "path": "skills/route-replay/references/local-acceleration.md",
       "bytes": 5720,
       "sha256": "60ffbb3acb77ed565b081d166983d33b420cb64ab6f55ee0a3cb7529d1a92542"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/local-assets.md",
+      "path": "skills/route-replay/references/local-assets.md",
       "bytes": 8635,
       "sha256": "b895fb72dadac1c04e5eb27c4ae029fa75e4c6f9181d497fa16702bffbd4b711"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/moonlight.md",
+      "path": "skills/route-replay/references/moonlight.md",
       "bytes": 7913,
       "sha256": "2b54a93bf80193d8c557675f85b66848e36643ec6fe61513dd212be4302a0099"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/night-light-model.md",
+      "path": "skills/route-replay/references/night-light-model.md",
       "bytes": 9658,
       "sha256": "1eb0c6f629aad09c12f6e7587eeb9b935d198855d92aa0b485564c5397e9a034"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/realism-roadmap.md",
+      "path": "skills/route-replay/references/realism-roadmap.md",
       "bytes": 14416,
       "sha256": "8c19bf4bc6177bcdd3f1ce26283cfd5e49f410f8c68ed7c9ceaa80ce50a1ed25"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/render-budgets.md",
+      "path": "skills/route-replay/references/render-budgets.md",
       "bytes": 4814,
       "sha256": "e658e5725f5fb4eee0f0d58a3f0d56aaecdd6512125f2036922907a3085d54c4"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/storytelling.md",
+      "path": "skills/route-replay/references/storytelling.md",
       "bytes": 6017,
       "sha256": "bf1931b3cf8968d4e444d43174abd8d945d28d24489f54ab0c0b0195f18a3f0c"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/track-imports.md",
+      "path": "skills/route-replay/references/track-imports.md",
       "bytes": 7110,
       "sha256": "3416f4075562f6ea2e993c46f193a6ede1db0431c20d94798c7146c51fec7e65"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/trip-format.md",
+      "path": "skills/route-replay/references/trip-format.md",
       "bytes": 16958,
       "sha256": "97af1b9e765118b46eaf78c7180c274c85607f0249a7c8567d5eb0d7c8513d8e"
     },
     {
-      "path": "skills/cinematic-flight-videos/references/volume-reconstruction.md",
+      "path": "skills/route-replay/references/volume-reconstruction.md",
       "bytes": 6050,
       "sha256": "bcec19393232702bb94dcf8534bc37895de53aa0a8c74e8c9a1d9bfbea01dc68"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/acceleration.py",
+      "path": "skills/route-replay/scripts/acceleration.py",
       "bytes": 4862,
       "sha256": "94061635b1216717eeaf214bd4f131409184b1bf2648e52334997d5670c8cfd4"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/aircraft_assets.py",
+      "path": "skills/route-replay/scripts/aircraft_assets.py",
       "bytes": 16177,
       "sha256": "5a0a4196e967a1f81fbb94e57df3b93544824f7379472bdcc63b82da4856c660"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/calibration.py",
+      "path": "skills/route-replay/scripts/calibration.py",
       "bytes": 8130,
       "sha256": "7f6735ed69ec4097a0ad72fab86f4d5fe99203ac5970b07da4937324109806f1"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/chase_cloudscape.py",
+      "path": "skills/route-replay/scripts/chase_cloudscape.py",
       "bytes": 14470,
       "sha256": "ed67a3840feb56578641de1896eee92d7f3cdaea240782de55ee29043462901b"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/chase_preview.py",
+      "path": "skills/route-replay/scripts/chase_preview.py",
       "bytes": 16261,
       "sha256": "40bdb68eeb9459907e5e7a0e303b7a89d0d9a7cac5f93ff97a1a1d01d4ce891b"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/chase_weather.py",
+      "path": "skills/route-replay/scripts/chase_weather.py",
       "bytes": 13159,
       "sha256": "7f3b0c2a617b4dc613f1002d9bc5b60824a217863aa4ed543f39212e28cd0af1"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/data.py",
-      "bytes": 39650,
-      "sha256": "fe461e8d44bbc5da529be2267008fa7a6e174ee644892b460adbe82a6322c33e"
+      "path": "skills/route-replay/scripts/data.py",
+      "bytes": 39639,
+      "sha256": "60224164dc31924604210050ef6bb061948cc986a42f8ff4f75ae555a01dd74b"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/data_adapters.py",
+      "path": "skills/route-replay/scripts/data_adapters.py",
       "bytes": 18783,
       "sha256": "795b40369b5df31265dbc28efeaca2a84e2f8694369f0c696e3d1b9f11e717a6"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/dataset_netcdf.py",
+      "path": "skills/route-replay/scripts/dataset_netcdf.py",
       "bytes": 6928,
       "sha256": "ef81a00170f8f5d2bc338972484b0719fdba2a536e08e13bbaed76e7813a9b44"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/aircraft.py",
+      "path": "skills/route-replay/scripts/engine/aircraft.py",
       "bytes": 11786,
       "sha256": "bf5accc1ede1e258635f65c0e8dccb26b1db8da9f76bd34665054729dfa30ee4"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/aircraft_blender.py",
+      "path": "skills/route-replay/scripts/engine/aircraft_blender.py",
       "bytes": 70769,
       "sha256": "34b5adda91f313fee277c795e1dc7ef3c223e199856171e22796b4702090b3dc"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/astronomy.py",
+      "path": "skills/route-replay/scripts/engine/astronomy.py",
       "bytes": 1032,
       "sha256": "1bf3017a027915e6a7e5029bde7dee9d9c8c296463a0e75d3ace7b80612c1abf"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/atmosphere.py",
+      "path": "skills/route-replay/scripts/engine/atmosphere.py",
       "bytes": 16719,
       "sha256": "5b6aca83a994fb90bf5f60722adc6c0c58afa67565e7befbe8eee3e04b40791e"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/atmosphere_lookup.py",
+      "path": "skills/route-replay/scripts/engine/atmosphere_lookup.py",
       "bytes": 4167,
       "sha256": "c7a227ac04e804c85284dbb920f090a30513d7e45a0b48ea0808bd46c7fa4653"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/camera_geometry.py",
+      "path": "skills/route-replay/scripts/engine/camera_geometry.py",
       "bytes": 4265,
       "sha256": "c252275272bf5b4cd1900c7f86d6f44e058856b7e021aae383c0a5b4fdefb071"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/causal_lights.py",
+      "path": "skills/route-replay/scripts/engine/causal_lights.py",
       "bytes": 11109,
       "sha256": "9499898de545304a2203508b9ea3c75556690a818426857bd0d0d64ee18dbb1f"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/celestial.py",
+      "path": "skills/route-replay/scripts/engine/celestial.py",
       "bytes": 7388,
       "sha256": "0f1f27caca868a842c078d58561b9b9164fcd64c6083c4d453a6d29e87f2102f"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/chase_atmosphere.py",
+      "path": "skills/route-replay/scripts/engine/chase_atmosphere.py",
       "bytes": 6725,
       "sha256": "b80bc00e92da021901b2a706a22df437222c4cc9d3eb81a07e5f71f35e278f54"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/chase_blender.py",
+      "path": "skills/route-replay/scripts/engine/chase_blender.py",
       "bytes": 15615,
       "sha256": "0e596a7f5ececea61b7f89e2be0467630817fd0d6073e5b9f259882e7ef41be2"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/chase_camera.py",
+      "path": "skills/route-replay/scripts/engine/chase_camera.py",
       "bytes": 9414,
       "sha256": "9d9f4df9571775b21c52cb61774129c82be705b2f707c689774214cefd4b4b75"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/chase_cloud_grid.py",
+      "path": "skills/route-replay/scripts/engine/chase_cloud_grid.py",
       "bytes": 11247,
       "sha256": "caacefd9df0d3db82b23002f6537bb03fad4c7bb6c84f12c742a3730e8e4e9f5"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/cityglow.py",
+      "path": "skills/route-replay/scripts/engine/cityglow.py",
       "bytes": 6377,
       "sha256": "bd80dab05808f946956864eba89a3d69264a63b874b91d42a64f3b6be99feea0"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/citylight_model.py",
+      "path": "skills/route-replay/scripts/engine/citylight_model.py",
       "bytes": 3578,
       "sha256": "604257db029bbe9202b788f4cc85b041cadfd98e4a53272ecb493af4b4a30692"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/citypopulations.py",
+      "path": "skills/route-replay/scripts/engine/citypopulations.py",
       "bytes": 8436,
       "sha256": "8021cab7b5320928a727855550cd031c18d52c2e1320035ec541e7bb403b2767"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/cloud_occupancy.py",
+      "path": "skills/route-replay/scripts/engine/cloud_occupancy.py",
       "bytes": 2267,
       "sha256": "98a6419daed57bd7bc46e4c96d1ac9afbb6b003d5856014b06fa5fab1bc904b6"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/cloudlayers.py",
+      "path": "skills/route-replay/scripts/engine/cloudlayers.py",
       "bytes": 7205,
       "sha256": "9fb7c3b38d89b4431e6a224f5e4769a3276b596dd27d48f84da969f9804093f4"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/cloudlighting.py",
+      "path": "skills/route-replay/scripts/engine/cloudlighting.py",
       "bytes": 17583,
       "sha256": "0cfe2d1519cc0d6f9e55f9db398a25966ebf429d64823b216d706436d2a500ec"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/cloudshapes.py",
+      "path": "skills/route-replay/scripts/engine/cloudshapes.py",
       "bytes": 3402,
       "sha256": "164cf6f0175ed2d63466a56fbaa929fb6f8126cc90a32e7e043cef1d6ccdbbe0"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/cloudview.py",
+      "path": "skills/route-replay/scripts/engine/cloudview.py",
       "bytes": 6939,
       "sha256": "ea94a65578678ddb2578dcb39ff25bc1464d22842d2c30b1ab329af8bd68a864"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/cloudvolume.py",
+      "path": "skills/route-replay/scripts/engine/cloudvolume.py",
       "bytes": 35603,
       "sha256": "d1c36efb2119c4b5e9f4c9c9a65df37b10579dd8130832de9e1e7e8e6ed815ae"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/cycles_device.py",
+      "path": "skills/route-replay/scripts/engine/cycles_device.py",
       "bytes": 3659,
       "sha256": "7e697c0546430bbe9e2d06318978d0ea5b8014a86548816a4ecf634843a7c65b"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/environmentlighting.py",
+      "path": "skills/route-replay/scripts/engine/environmentlighting.py",
       "bytes": 6098,
       "sha256": "db42e0f15cf099a855fccbf0caeba55b7c774f790e3d24a912f2a37b90e12031"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/fonts.py",
+      "path": "skills/route-replay/scripts/engine/fonts.py",
       "bytes": 1541,
       "sha256": "67bff0190a85f63f02cda1a31dafc9d08fd488de6faaf404ef01e4b74005347d"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/frame_context.py",
+      "path": "skills/route-replay/scripts/engine/frame_context.py",
       "bytes": 2814,
       "sha256": "dfee4a7908289da5395ec0c1520a4a6369fd481402d685be7953e22acb0f3cad"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/jointtransport.py",
+      "path": "skills/route-replay/scripts/engine/jointtransport.py",
       "bytes": 17069,
       "sha256": "282f6309d553ec5dc76fe1400ce92f337d914736f89dc703a4e6be9a1af86ff9"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/labels.py",
+      "path": "skills/route-replay/scripts/engine/labels.py",
       "bytes": 8060,
       "sha256": "1702a41fc01cb241968d5c4ee6257b6ff85914ae5b8c6b2a144a0b2ae0f14b8e"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/lampspectra.py",
+      "path": "skills/route-replay/scripts/engine/lampspectra.py",
       "bytes": 1732,
       "sha256": "58f6a9242502a00db1f46bf0bb8eba2bc1978dad65f66ec03382806ba3cb7720"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/lunar_scattering.py",
+      "path": "skills/route-replay/scripts/engine/lunar_scattering.py",
       "bytes": 5763,
       "sha256": "bc629a79b9d61348a93d9ae393d0ba1dd0894ea89ea15245a0750f1808604dad"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/media_overlay.py",
+      "path": "skills/route-replay/scripts/engine/media_overlay.py",
       "bytes": 3731,
       "sha256": "92e13cd9b9b363e7686363ea22d9dbbbc7ec065b43dd8a84f308fa1d4fb0b254"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/metal_atmosphere.py",
+      "path": "skills/route-replay/scripts/engine/metal_atmosphere.py",
       "bytes": 13001,
       "sha256": "7462dae1e4b3d63d9604d5328db61e5c11d0711bd5efe36074668b4a90f27dbf"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/metal_clouds.py",
+      "path": "skills/route-replay/scripts/engine/metal_clouds.py",
       "bytes": 21811,
       "sha256": "ad74a33f82673efd8af0f8a40e3222c0c4f5c96887a879b90083ade40968407a"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/metal_compute.py",
+      "path": "skills/route-replay/scripts/engine/metal_compute.py",
       "bytes": 7674,
       "sha256": "80def5744207271d7525a0b1acdc3a8a342d48a06d63d78d5599f526c87af336"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/metal_weather.py",
+      "path": "skills/route-replay/scripts/engine/metal_weather.py",
       "bytes": 13066,
       "sha256": "4aa8a6389e14bda9c51fb4ffaa1c5d4284999609cd7e2fcda955e934d588034e"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/moonlighting.py",
+      "path": "skills/route-replay/scripts/engine/moonlighting.py",
       "bytes": 16310,
       "sha256": "7068c3b59415ce37451489100c2f31cfd33081072049680641473d8d925cc84e"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/motion.py",
+      "path": "skills/route-replay/scripts/engine/motion.py",
       "bytes": 14845,
       "sha256": "651f91f097d5527c07808fa1303824bc16306ce65d8dd819aae382166ad88610"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/nightlighting.py",
+      "path": "skills/route-replay/scripts/engine/nightlighting.py",
       "bytes": 11534,
       "sha256": "ccf114b0fb931e4cb6eed8851c3b69a23f8d913dfdae63d5e1624c8b89c53ae3"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/quality.py",
+      "path": "skills/route-replay/scripts/engine/quality.py",
       "bytes": 971,
       "sha256": "f712d5c9939119ee85c6116993809e7ce068e6ff2e23f9be442e01185dcbc2f4"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/radiometry.py",
+      "path": "skills/route-replay/scripts/engine/radiometry.py",
       "bytes": 5396,
       "sha256": "6712222fe76de8995421f76baa28fa571917c8caa6901f0bb164088a05518ad6"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/render.py",
+      "path": "skills/route-replay/scripts/engine/render.py",
       "bytes": 17079,
       "sha256": "8dc9ba614ce722af06cc315f0e4707fcd09b1d742a20e513c62b8250b1369094"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/runtime.py",
+      "path": "skills/route-replay/scripts/engine/runtime.py",
       "bytes": 754,
       "sha256": "77b0ef53db2bb7800faaa87a996cdf64eb462ff678352b80d72a0c3607ab253d"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/scene_cache.py",
+      "path": "skills/route-replay/scripts/engine/scene_cache.py",
       "bytes": 16211,
       "sha256": "fdbb093a42c64a7675841d7aa8128d8fda3b2394c2849599df7ae2d81014867d"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/scene_overlays.py",
+      "path": "skills/route-replay/scripts/engine/scene_overlays.py",
       "bytes": 9867,
       "sha256": "ca1a393f5c6d4b0a09143aaf99ad847fefd1d02b61c97ef5179d63fadee5624d"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/solar_visibility.py",
+      "path": "skills/route-replay/scripts/engine/solar_visibility.py",
       "bytes": 3921,
       "sha256": "1cb58c6f5ace5b6c3fa9b65199372d48947cd3e0458e15d0a40aabfe2ab5cffa"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/starfield.py",
+      "path": "skills/route-replay/scripts/engine/starfield.py",
       "bytes": 8074,
       "sha256": "14e39f4df72bb569fb016c583991372679251ebcfa303abe5b70212145c572d2"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/surfacelighting.py",
+      "path": "skills/route-replay/scripts/engine/surfacelighting.py",
       "bytes": 1695,
       "sha256": "b211168aed027136645c832dd5a1484fdeb6847dcabf661801e0b5139308595a"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/telemetry_overlay.py",
+      "path": "skills/route-replay/scripts/engine/telemetry_overlay.py",
       "bytes": 3943,
       "sha256": "3203298619cfd5833bc89797fff38d42e57e6821d3d359be591c1e8358eb8e4b"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/terrain_detail.py",
+      "path": "skills/route-replay/scripts/engine/terrain_detail.py",
       "bytes": 4666,
       "sha256": "3a2dab38ec7f611be7e69559c30486403403aafc73c5d00b6b54952748a29898"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/volume_reconstruction.py",
+      "path": "skills/route-replay/scripts/engine/volume_reconstruction.py",
       "bytes": 17603,
       "sha256": "11f5e360a22cd4d71d0116dd764b733640b80d9df4c9e3eaba0f1ecf4357986f"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/engine/weatherfields.py",
+      "path": "skills/route-replay/scripts/engine/weatherfields.py",
       "bytes": 10308,
       "sha256": "41c4ad53b24a7eef53061f1a16ae188476deec1f5eafac5dbca00a7b3d5eaf16"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/environmental_data.py",
+      "path": "skills/route-replay/scripts/environmental_data.py",
       "bytes": 10269,
       "sha256": "6c1527a224e16f3f5bb9d2064e63a88be1d36bccad06cf23ede22bfe4eb907ba"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/era5_import.py",
+      "path": "skills/route-replay/scripts/era5_import.py",
       "bytes": 10456,
       "sha256": "110643dae80a70c86114ab6c591f6245a4936b6777ab958699a3d93fb2bc1a1e"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/flight_video.py",
+      "path": "skills/route-replay/scripts/flight_video.py",
       "bytes": 45117,
       "sha256": "f10ebffee30b81c95089d4042720079e20e612197ac9e45b730569da26b145ba"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/gfs_archive.py",
-      "bytes": 16382,
-      "sha256": "5320b874b6633717a50afcef9f7eda5b922c883d584880e8d259ed7f8197b7ac"
+      "path": "skills/route-replay/scripts/gfs_archive.py",
+      "bytes": 16371,
+      "sha256": "33c16f1f92b2428730ff8a213a18ecf34f36f82fe3fad643a2caa617f21b3385"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/lighting_profile.py",
+      "path": "skills/route-replay/scripts/lighting_profile.py",
       "bytes": 15989,
       "sha256": "d094f0fc1677f4c4acde989fe13e85b6d82b790f53e528fe383ce9b4139233cb"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/media_moments.py",
+      "path": "skills/route-replay/scripts/media_moments.py",
       "bytes": 19686,
       "sha256": "34bd02bdd52ab3d35844f550a6c43a225f6c789aeeb39866edb81239397160cb"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/pacing.py",
+      "path": "skills/route-replay/scripts/pacing.py",
       "bytes": 14052,
       "sha256": "dbffe82c08c4792617e3ed10e9feab180ca16a028f1c297161c54137f9db1182"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/prepare_weather_bundle.py",
+      "path": "skills/route-replay/scripts/prepare_weather_bundle.py",
       "bytes": 19053,
       "sha256": "0846133a49e29e20bf209038c234af70db4619ef792ed90ee77e8addc3b650a7"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/render_budget.py",
+      "path": "skills/route-replay/scripts/render_budget.py",
       "bytes": 28423,
       "sha256": "cb0734f56d0aa6115c9cc9c6c4f1333261977f9d19b15a529ce3345754d9248f"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/requirements-metal.txt",
+      "path": "skills/route-replay/scripts/requirements-metal.txt",
       "bytes": 218,
       "sha256": "32dc6649dc4250d1e8fc49ab1ad4edd4a946ceffc5830d5026138c4b53f19f47"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/requirements.txt",
+      "path": "skills/route-replay/scripts/requirements.txt",
       "bytes": 78,
       "sha256": "8d5ea5c5e74b98cf895e2d48112efd9e9a480e3439d18c1914e0e9c6c301852c"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/telemetry.py",
+      "path": "skills/route-replay/scripts/telemetry.py",
       "bytes": 8118,
       "sha256": "3e9fab3cf81d2d68600b884b3c44ab741d72aa7b933f9a4e458de0b876059750"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/terrain_tiles.py",
+      "path": "skills/route-replay/scripts/terrain_tiles.py",
       "bytes": 2792,
       "sha256": "7d67ddf222c7f01783fcaf195890fce7966a2a7908aa73f45fa75556b6cf4855"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/trajectory.py",
+      "path": "skills/route-replay/scripts/trajectory.py",
       "bytes": 20904,
       "sha256": "b20e61574d59866365fa9c5c99bf6e3e741c7d157ee761e06f92ebb8d6a4c3a1"
     },
     {
-      "path": "skills/cinematic-flight-videos/scripts/trip.py",
+      "path": "skills/route-replay/scripts/trip.py",
       "bytes": 29679,
       "sha256": "051114545584ecc3bf843d76d848249febaea19e374f99ed7781ec454e35535a"
     },
     {
       "path": "tests/test_acceleration.py",
-      "bytes": 7419,
-      "sha256": "4463a8deb49dddcbfcb955fe603121df27fc515e330f98c19dbf1578102aad1f"
+      "bytes": 7408,
+      "sha256": "dcca3e1c73a443af9f0ff0b6afabdc46397b67a133c8cd7d6f656eff71969aed"
     },
     {
       "path": "tests/test_adversarial.py",
-      "bytes": 9880,
-      "sha256": "f1eb6f5d9126ca8f7f5711e39d69992da2e406ab172eeb7fa2cb43b03fd23dc3"
+      "bytes": 9869,
+      "sha256": "1ef4a82d4d134c86d94083281192c99ff2027aea9f89c195f2b2dbaa92da7914"
     },
     {
       "path": "tests/test_air_reconstruction.py",
-      "bytes": 15992,
-      "sha256": "71cbe3e07eeb12e4c843d6bd4aabbefb766fa5dc788304464da694a4087537c1"
+      "bytes": 15981,
+      "sha256": "3e30ee8002d934cae2d3e2769e8c8b9ca8b6a884096d92b218a6ddf89881b7d0"
     },
     {
       "path": "tests/test_aircraft_assets.py",
-      "bytes": 16576,
-      "sha256": "48e0e7887c1c991af99b33b91fa6253423fddea29695734170e331bcef598998"
+      "bytes": 16565,
+      "sha256": "757aa9c4ca3fb81310b94e641009236518b595c9101a998c83f68af28c56d093"
     },
     {
       "path": "tests/test_aircraft_attitude.py",
-      "bytes": 13475,
-      "sha256": "298d7e599f3bf7ba9515a548932f751a9d17000a542c213a939254952b16d214"
+      "bytes": 13464,
+      "sha256": "d393f377c36f43e049df157824f1ba7f31818cfc150f9bb4dadac59d2fc755ae"
     },
     {
       "path": "tests/test_atmosphere_lookup.py",
-      "bytes": 6374,
-      "sha256": "85a9745f5a95655e6f9393034f468f36e5352d2bf6cdfb6011c6c26a9cb44519"
+      "bytes": 6363,
+      "sha256": "680001211bfa74f58822064c519bde64597c164729506ea0f6551f63f9d8f493"
     },
     {
       "path": "tests/test_calibration.py",
-      "bytes": 9124,
-      "sha256": "f90e846673b0557be26be461edb7d5d484b6781caf54eaeeb81c330d0727012a"
+      "bytes": 9113,
+      "sha256": "24a28f16157c2fd7230481e748ef423ede08f4f3405c36d93f5d836af4d656ce"
     },
     {
       "path": "tests/test_causal_lights.py",
-      "bytes": 16095,
-      "sha256": "aba0365cad157ac1f2fe5d6fd8c8de4938ec65493e85e906ae90f5ce60363d1a"
+      "bytes": 16084,
+      "sha256": "7fafd40d697fc5f53823ffddeb0fe9bde9fe8a2c570fc0e32a3b7902a7790ef4"
     },
     {
       "path": "tests/test_chase_atmosphere.py",
-      "bytes": 2716,
-      "sha256": "4d5ff8c5ba2e5e28ebce8b41511621692c162807cc0e29aa21220a9b8fff54bb"
+      "bytes": 2705,
+      "sha256": "12bcd7e3b846a03a4c98699a5798be2ac2056445eb6f2de959d02482f5d71042"
     },
     {
       "path": "tests/test_chase_camera.py",
-      "bytes": 7633,
-      "sha256": "93eba1fc1ddfe69b866baf9decb0c49d222f9e7d68aa811d3a935bca28561db2"
+      "bytes": 7622,
+      "sha256": "44a8dbde6bfbe9d2ec3ca796e68efac5807f09eddc0af44cbcfa392b7d3725c3"
     },
     {
       "path": "tests/test_chase_cloud_grid.py",
-      "bytes": 2612,
-      "sha256": "e5dabcf04813e0667a934565447094335eab86561b7d62e12b330616db0c03c5"
+      "bytes": 2601,
+      "sha256": "bf81fee6398bcd8b6b29f1e9e321d68620a9a4a7d4fedff41ac337b6e44c26f4"
     },
     {
       "path": "tests/test_chase_cloudscape.py",
-      "bytes": 11576,
-      "sha256": "e862bbc1b884040d94bcc74b050bb98769a3ae90e937b32ddb3ff2f769742824"
+      "bytes": 11565,
+      "sha256": "a2670a687a399484ca4efdd193b7336f731e96e88640127adb7b24888372576d"
     },
     {
       "path": "tests/test_chase_preview.py",
-      "bytes": 16661,
-      "sha256": "c7071d617c6f446a100899352631eacaf0e00276b86d68d00cf1808459378294"
+      "bytes": 16650,
+      "sha256": "7cee308ca2cf6fafb11accc89db69bb33c614070fed391fee03f154276099786"
     },
     {
       "path": "tests/test_chase_weather.py",
-      "bytes": 7257,
-      "sha256": "213d6b1a43110d64930a5b44964d48cc03e3463bd2262d07a5f344cb79a38022"
+      "bytes": 7246,
+      "sha256": "bad2e8f1c69ff482cba9be48c02aeab02a4c5506429ad1cc199cdb9c610f9422"
     },
     {
       "path": "tests/test_city_color.py",
-      "bytes": 12916,
-      "sha256": "f2e9de238fd35e12c5c4b89e4c623b836105aab910d19e5f20626b569ae4c794"
+      "bytes": 12905,
+      "sha256": "66f71d4a15639feee89b39575d82767f8737f1c6a18d104aa541cddafbf01bd2"
     },
     {
       "path": "tests/test_cityglow.py",
-      "bytes": 7994,
-      "sha256": "596ddac77bb45133e508db5691d9b5fe39bd38b9394f4f2b00ec18029ad72db9"
+      "bytes": 7983,
+      "sha256": "369b500f17eea7404acc39e3c81bf71f3ba644b62300310bff108d34486fc107"
     },
     {
       "path": "tests/test_cloud_reconstruction.py",
-      "bytes": 16347,
-      "sha256": "4e7095388a36a835f9a32b18ac09fb490a2ae1444d22878ec9286fa40d476538"
+      "bytes": 16336,
+      "sha256": "3b98b7ba9365491c3b3c1d64a6c0c951c056cd9e9de29e55c48fe35b26a2251d"
     },
     {
       "path": "tests/test_cloud_source.py",
-      "bytes": 8770,
-      "sha256": "a7b026d51c640bc9e46fe1f32a77170831b87936eb47ff89ae1f8caba97947e6"
+      "bytes": 8759,
+      "sha256": "31ad6e0eacaa64f4592284889bdfd15744dd4c4530f0bacd313bd557678d692c"
     },
     {
       "path": "tests/test_cloud_view.py",
-      "bytes": 11785,
-      "sha256": "36b8979f54f3092a60407d277aba129ab7db36e9fbd69f78a1673ce5ad1d4fe9"
+      "bytes": 11774,
+      "sha256": "1759ed3e93ff163b9cf51ae0b9619f93ebee916069e84a35d31fa5d87e0fe30f"
     },
     {
       "path": "tests/test_cloudlighting.py",
-      "bytes": 8117,
-      "sha256": "03fe58aeccb27e967cd2f20995c4b604c7180191ef034bbc5658496177b9d41e"
+      "bytes": 8106,
+      "sha256": "1db20a49c7be5c4f1ff87f0a0bb055ac12b564cc9228ce675cffcf69845126a9"
     },
     {
       "path": "tests/test_cloudshapes.py",
@@ -703,23 +703,23 @@
     },
     {
       "path": "tests/test_data.py",
-      "bytes": 26546,
-      "sha256": "4e6cd6845102ffb53430422b7a0f50d83dbdc79118047f6112942bd40d1e2d05"
+      "bytes": 26535,
+      "sha256": "28cb7be42ce7f4372f4df6e06674bf63c2d9aef4555901b26db98152683305a1"
     },
     {
       "path": "tests/test_data_adapters.py",
-      "bytes": 18325,
-      "sha256": "2b3d38d6bcf47f918b49edf34f8a0ba10179574fe954a8180c6482e3abad58c7"
+      "bytes": 18314,
+      "sha256": "283675ca223b49cdd5efd4116fc851c11d56e93ac03b2418d4520fe65e6ff931"
     },
     {
       "path": "tests/test_engine.py",
-      "bytes": 7773,
-      "sha256": "22e0d9c93d104cf92aa227b5d29171fdb6cf74bff0c61e5d04b0e86365cbfe38"
+      "bytes": 7762,
+      "sha256": "dc3441482c485ec18797c09fed0dba15796c8507638b8c3f7c7cb1986a842a9d"
     },
     {
       "path": "tests/test_environmentlighting.py",
-      "bytes": 9359,
-      "sha256": "669fd21c4f4ca30adc69f651a03e883c7148f4cb779c6381fa6e34715e823262"
+      "bytes": 9348,
+      "sha256": "a2db2927aa62555b2a1ddfcef83bb8037372f8a38f7cf690bc17c7f902f4c5fb"
     },
     {
       "path": "tests/test_export_skill.py",
@@ -728,163 +728,163 @@
     },
     {
       "path": "tests/test_gfs_archive.py",
-      "bytes": 17260,
-      "sha256": "015b8053e4270350668079cf3a975e5e0e5c45679b5adcb7d45bae9d321a7bcd"
+      "bytes": 17249,
+      "sha256": "be293e78de2eba1d4a95894a9c79020ac36e31fea18704ee25c4d455bde7b155"
     },
     {
       "path": "tests/test_itinerary_edges.py",
-      "bytes": 11448,
-      "sha256": "89b5f3cc207dac0b04ff10a8c70112741f1bf73d4be59d9ab6b0b933e55e4e86"
+      "bytes": 11437,
+      "sha256": "66126fd6b76416a13b1908d478e42807572b17d5a7cf0080d53cf04fbc50820d"
     },
     {
       "path": "tests/test_joint_transport.py",
-      "bytes": 20617,
-      "sha256": "ffb282b768e2723b75cc5e8a33817f7b5db1dd85f156bdbdc81b2cef54ec40df"
+      "bytes": 20606,
+      "sha256": "dcf8de387000ca69bd813b14ed861a79ce73c5807ff8b3f5bbf3e14aa79c74ca"
     },
     {
       "path": "tests/test_labels.py",
-      "bytes": 8998,
-      "sha256": "d5ffcc08b1c2e5d1dd9b2519e84e09e9cb9afc983cf66989bbf068d1bd5947f2"
+      "bytes": 8987,
+      "sha256": "ec5559c2513c5ce8e7701abbe0e341e6f03a7309bcb9e3e3adaa5d2050d04151"
     },
     {
       "path": "tests/test_lamp_spectra.py",
-      "bytes": 7333,
-      "sha256": "0127d7ead6fa17ce5703ebb0ca785e4c5bae07e5f67db3846b519dd449d5de30"
+      "bytes": 7322,
+      "sha256": "e175510362dbdb10afc043550deb373aa5b474968f4d7666ad83c7dad27d2c8b"
     },
     {
       "path": "tests/test_lighting_profile.py",
-      "bytes": 18017,
-      "sha256": "9ec28122340149ce0933717428ba6fff1c7439ec827219fb8b3f62811d547920"
+      "bytes": 18006,
+      "sha256": "a76454d22bc709813f6301b27077b1e5cafdacf54fadfb8b8004ce2a16c0fe67"
     },
     {
       "path": "tests/test_lunar_incident.py",
-      "bytes": 9368,
-      "sha256": "a8cfb23c2151d62d22ffc2fd7e13444a866e7518e63a4c0edec7ea7c598b5e98"
+      "bytes": 9357,
+      "sha256": "6000dcbd58ea59fcda121b0e494bfb0ca9701d3d871e8414330d8542aecfed85"
     },
     {
       "path": "tests/test_lunar_scattering.py",
-      "bytes": 8978,
-      "sha256": "299f95e2885948b2ac483bf43a0560594312b45bb0b8dd90cc9fa0c27b1a22f6"
+      "bytes": 8967,
+      "sha256": "d344407a2e2fcf4e85b51764ae36115ee5984b15b95c16246da591c3c6c2ff16"
     },
     {
       "path": "tests/test_media_moments.py",
-      "bytes": 20745,
-      "sha256": "704ce53df5747d408f52186376fecb92b49ab40b9d93c8d076e697033369a537"
+      "bytes": 20734,
+      "sha256": "0583830553305b32adfdab59f2f56bee8665bb24f592dc50ae9e495765b6bbe2"
     },
     {
       "path": "tests/test_metal_atmosphere.py",
-      "bytes": 12223,
-      "sha256": "6aa9f2480bdbef4d8201d02705e80f3795cc52134b949900343f706abf35b6e3"
+      "bytes": 12212,
+      "sha256": "1627b708425c3ccc0b0ae4f327521c11ae31aced861a209b2c86a8cf2b16d5be"
     },
     {
       "path": "tests/test_metal_clouds.py",
-      "bytes": 12645,
-      "sha256": "f572130f7697a5afed1f8317a21eccbcb29ece85d41a731125fe23fe766a7ac7"
+      "bytes": 12634,
+      "sha256": "ade0b682dddcc2daac9c33423068f2d37982cb90d590d1257851429ac46c2ff0"
     },
     {
       "path": "tests/test_metal_compute.py",
-      "bytes": 4261,
-      "sha256": "eb5e4c5307a54dfa986662cd4880a966cf521692dbc7f94b31fa408ba2411e98"
+      "bytes": 4250,
+      "sha256": "a206ea32412a8a5bdc4ef37c07559b8a8bc08b3d8cf503ad06e7120e7ce6f13f"
     },
     {
       "path": "tests/test_metal_weather.py",
-      "bytes": 10493,
-      "sha256": "091778d6780e08db2aca3151128f05bf0d93cc662c36e9e99565cd11f123d6c4"
+      "bytes": 10482,
+      "sha256": "5e4d36c7e3c74839ce6401d1058396c46437e407259b5bbc035c64cc81bfde35"
     },
     {
       "path": "tests/test_moonlighting.py",
-      "bytes": 9082,
-      "sha256": "d0386a4a2179dcea595038014640fa61760a4c2e2bee65e9c96aba9e461d84b8"
+      "bytes": 9071,
+      "sha256": "a1b1722653676fecba7e3c88ff26a832bce4e836a66eb0e560b6bcf4f3cb50ee"
     },
     {
       "path": "tests/test_pacing.py",
-      "bytes": 14094,
-      "sha256": "e6f113c35d454c0004d7fe44bcc9f72288f29de44b6890c1e09179a13b4b9738"
+      "bytes": 14083,
+      "sha256": "66abda96ed5812ee28a9d3a70c4d5b6efa45ab54ef30c06ad48deb8bc9ad4494"
     },
     {
       "path": "tests/test_pipeline.py",
-      "bytes": 35512,
-      "sha256": "577aa58994f1743705e67b96478791c3cf3c0975b046236680fbaf4671a6da35"
+      "bytes": 35501,
+      "sha256": "918a405af342a33e74f876fcc8a7540357193967d3e6d8fcae51c0f4ac69e65a"
     },
     {
       "path": "tests/test_radiometry.py",
-      "bytes": 23277,
-      "sha256": "f38de0111511a6db0a8f27efd7d396a8c3521fb9d2ebf6745dab5a10c5650c8c"
+      "bytes": 23266,
+      "sha256": "2db5f4f1ca579b1edcffb229a72e6e5238b9c48430cf1c8a83c59e8e9046d0cb"
     },
     {
       "path": "tests/test_render_budget.py",
-      "bytes": 20042,
-      "sha256": "93c7654d2e48bf06a7781b9882c8f092363a82249a3b66d813d712aa0a4d5036"
+      "bytes": 20031,
+      "sha256": "11ddcaa821855bb71cb63dbf948a32e3f8c959979c61ac769267835c366f134b"
     },
     {
       "path": "tests/test_scene_cache.py",
-      "bytes": 23166,
-      "sha256": "8822a1dbaa3ac204818001e0defaa2fc4602852df13baf5c14c1f67d590fd1c7"
+      "bytes": 23155,
+      "sha256": "6ab717831749cd809f287694c3da2fcf2814218d79414b2afce5448d7a47b8ab"
     },
     {
       "path": "tests/test_solar_visibility.py",
-      "bytes": 5447,
-      "sha256": "637150bba5fe527f6aa3e45177d9a167898520a06efe4c50408034e7d1241813"
+      "bytes": 5436,
+      "sha256": "a1c3ceff7baace7d77355c6b113d480b50c7d99d8632bf3437b82c996ed87f8a"
     },
     {
       "path": "tests/test_storytelling.py",
-      "bytes": 5619,
-      "sha256": "18a8fff9b78b96201de01ea96722adcd7966e809bf56e5456af7eb04609fdf93"
+      "bytes": 5608,
+      "sha256": "82a18609d62ee89fe0e0ac71566c4dd443cee9c8fdd06da1d546bb54451cd635"
     },
     {
       "path": "tests/test_surface_moonlight.py",
-      "bytes": 10027,
-      "sha256": "c54508e9c2f9fe5ef7ab0b9a5c79f372ff02bb0bfcf89fc65d19a965cf82b9fc"
+      "bytes": 10016,
+      "sha256": "1a4a00801689afbfdd17069b3d601f563c1c6b1c2119c7f4327cd9cdda7ae870"
     },
     {
       "path": "tests/test_telemetry.py",
-      "bytes": 10973,
-      "sha256": "e55124edcdaf565e10e3e6da69395cd756cc878661375a6894f30bcb78d35794"
+      "bytes": 10962,
+      "sha256": "efb4a1163d8ca93a768a0a93457d12ed6cce3ffcfb05eae2fd009bd43ff3962d"
     },
     {
       "path": "tests/test_telemetry_overlay.py",
-      "bytes": 4846,
-      "sha256": "2aaa9e04853e6b08559573fce4b64a4fcc9111f4b72e564ada69caa82e29a26e"
+      "bytes": 4835,
+      "sha256": "dbfc5933c1d9ee3cf25fffd3d8ef4df5cd497cf6e2800df37d95b4d6332a3694"
     },
     {
       "path": "tests/test_terrain_tiles.py",
-      "bytes": 6369,
-      "sha256": "992bc43bf283d4ff33b4c12d9c10b0e5db6e87a9686b81648a3b2941d9155232"
+      "bytes": 6358,
+      "sha256": "18c56d5fdace117f0b817a83ec4bb6332ad0215a71f7926a4c5d12c9e3e439a9"
     },
     {
       "path": "tests/test_track_imports.py",
-      "bytes": 12731,
-      "sha256": "1b67de2256c837cd51e187acefb208fbd4dc759fa5bfa54e63364d62bccb70ab"
+      "bytes": 12720,
+      "sha256": "b4d0934d322a88ea1b78b2d0f437decae4d8e26cbd50ea6a78c2fbd6d597498b"
     },
     {
       "path": "tests/test_track_workflow.py",
-      "bytes": 5114,
-      "sha256": "89c2a2f43b07c078f3bc3f1cad6c6f6e532ff23df3ceafd55a311cb3d2cb2266"
+      "bytes": 5103,
+      "sha256": "f50b07f12c58c40551a6eedc178294bf1ceaa827e39bcd600cae3f786a834a3f"
     },
     {
       "path": "tests/test_trajectories.py",
-      "bytes": 6539,
-      "sha256": "d38dcd1d946d0ce417da2fc5df5996086183e0c7f4b7c8a5cf565b211e579bd3"
+      "bytes": 6528,
+      "sha256": "322ee67226dc9c08dbc1042f1e62279e92f424658847a7dcd87be661953bdfc7"
     },
     {
       "path": "tests/test_transport.py",
-      "bytes": 35867,
-      "sha256": "65a0c2f6d313b90292067dee0e8a78b8e6750a323f8371a887d444643402df1a"
+      "bytes": 35856,
+      "sha256": "7d36d96c1ac1e9a5c4d9af0d9c7ac999c78dfd27bb250c1b488f034eba357ef5"
     },
     {
       "path": "tests/test_trip.py",
-      "bytes": 11538,
-      "sha256": "08c7b5699d9befb33e48ab62591b8aed88b26bc9e044bdbfc85cf047b6313b53"
+      "bytes": 11527,
+      "sha256": "c8e790159206fc99a9a5652798841052d6966ded23017f993153305257b495b6"
     },
     {
       "path": "tests/test_volume_reconstruction.py",
-      "bytes": 14491,
-      "sha256": "0fc18eba7bbdd4de096cd42888eddfea6846d9064ba643405b838c05aae680fa"
+      "bytes": 14480,
+      "sha256": "77d190c921649a8416793cd38c00992985b33279555fbf1e7c0033bc2403be11"
     },
     {
       "path": "tools/export_skill_repo.py",
-      "bytes": 11830,
-      "sha256": "faace9d03d55e025ba660ad7845907c7e969613126843577701ef6c07cb3aaf0"
+      "bytes": 11819,
+      "sha256": "6dcc6c2ae59a949aecaaebede04de879baeda45e71c7806cd8c76b34276963e0"
     },
     {
       "path": "tools/list_skills.py",

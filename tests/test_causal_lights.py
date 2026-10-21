@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-ENGINE = Path(__file__).resolve().parents[1] / 'skills/cinematic-flight-videos/scripts/engine'
+ENGINE = Path(__file__).resolve().parents[1] / 'skills/route-replay/scripts/engine'
 sys.path[:0] = [str(ENGINE), str(ENGINE.parent)]
 from causal_lights import LampTimeline, RelayPopulation, build_lamp_timeline
 from citypopulations import (LINEAR_PALETTE, LUMA, geographic_fields, local_solar_hour,

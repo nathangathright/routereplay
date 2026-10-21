@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 import numpy as np
 from scipy.io import netcdf_file
-SCRIPTS=Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts'
+SCRIPTS=Path(__file__).resolve().parents[1]/'skills/route-replay/scripts'
 sys.path[:0]=[str(SCRIPTS),str(SCRIPTS/'engine')]
 from calibration import validate_profile,read_profile,profile_summary,apply_surveys
 from terrain_detail import TerrainSampler,terrain_sampler

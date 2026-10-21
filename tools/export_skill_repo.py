@@ -14,7 +14,7 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL = Path("skills/cinematic-flight-videos")
+SKILL = Path("skills/route-replay")
 EXCLUDED_DIRS = {
     ".git", ".venv", "__pycache__", "node_modules", "data", "outputs", "cache",
     "caches", ".pytest_cache",

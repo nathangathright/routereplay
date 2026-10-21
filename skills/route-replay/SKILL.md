@@ -1,5 +1,5 @@
 ---
-name: cinematic-flight-videos
+name: route-replay
 description: Create and refine cinematic 9:16 globe flight videos from itineraries, with date-aware astronomy, terrain, city lights, animated weather and aircraft. Use for flight-route reels, new trip editions, or improvements to this renderer's realism.
 ---
 

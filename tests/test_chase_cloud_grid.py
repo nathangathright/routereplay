@@ -4,7 +4,7 @@ import sys
 import unittest
 import numpy as np
 
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts/engine'))
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'skills/route-replay/scripts/engine'))
 from chase_cloud_grid import grid_geometry, GRID_STORAGE_SCALE, NATIVE_CLIPPING_DEFAULT
 
 

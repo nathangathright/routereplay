@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-ENGINE=Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts/engine'
+ENGINE=Path(__file__).resolve().parents[1]/'skills/route-replay/scripts/engine'
 sys.path.insert(0,str(ENGINE))
 _names=('runtime','starfield','celestial','moonlighting','atmosphere','cloudlighting')
 _saved={name:sys.modules.get(name) for name in _names}

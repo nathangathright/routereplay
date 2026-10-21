@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 
-ENGINE=Path(__file__).resolve().parents[1]/'skills'/'cinematic-flight-videos'/'scripts'/'engine'
+ENGINE=Path(__file__).resolve().parents[1]/'skills'/'route-replay'/'scripts'/'engine'
 sys.path.insert(0,str(ENGINE))
 # Layer runtime configuration is not needed by numerical transport. Keep the
 # test fixtures isolated from the runtime module used by actual CLI workers.

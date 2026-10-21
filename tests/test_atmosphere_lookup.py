@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 import numpy as np
 
-SCRIPTS=Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts'
+SCRIPTS=Path(__file__).resolve().parents[1]/'skills/route-replay/scripts'
 sys.path[:0]=[str(SCRIPTS),str(SCRIPTS/'engine')]
 from atmosphere_lookup import optical_depth_lookup, column_table
 

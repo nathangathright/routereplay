@@ -15,7 +15,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-SCRIPTS=Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts'
+SCRIPTS=Path(__file__).resolve().parents[1]/'skills/route-replay/scripts'
 sys.path.insert(0,str(SCRIPTS))
 from aircraft_assets import validate_aircraft_model, validate_model_metadata
 

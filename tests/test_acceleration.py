@@ -8,7 +8,7 @@ from types import SimpleNamespace as NS
 import unittest
 from unittest.mock import patch, Mock
 
-SCRIPTS=Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts'
+SCRIPTS=Path(__file__).resolve().parents[1]/'skills/route-replay/scripts'
 sys.path[:0]=[str(SCRIPTS),str(SCRIPTS/'engine')]
 from acceleration import cycles_device, encoding_arguments, probe_encoder
 from cycles_device import select_device, MARKER

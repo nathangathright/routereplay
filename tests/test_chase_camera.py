@@ -8,7 +8,7 @@ import sys
 import unittest
 import numpy as np
 
-ENGINE=Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts/engine'
+ENGINE=Path(__file__).resolve().parents[1]/'skills/route-replay/scripts/engine'
 sys.path.insert(0,str(ENGINE))
 from chase_camera import (ChaseCamera,ChaseConfig,EARTH_M,GRAVITY_MPS2,
                           enu_basis,enu_to_ecef,ecef_to_enu,look_at)

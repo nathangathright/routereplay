@@ -13,7 +13,7 @@ import unittest
 from unittest.mock import patch
 from zipfile import ZIP_DEFLATED, ZipFile
 
-SCRIPTS = Path(__file__).resolve().parents[1] / "skills" / "cinematic-flight-videos" / "scripts"
+SCRIPTS = Path(__file__).resolve().parents[1] / "skills" / "route-replay" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 import data
 import prepare_weather_bundle as preparation

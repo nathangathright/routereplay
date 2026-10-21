@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 from PIL import Image, ImageChops
 
-SCRIPTS=Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts'
+SCRIPTS=Path(__file__).resolve().parents[1]/'skills/route-replay/scripts'
 sys.path[:0]=[str(SCRIPTS),str(SCRIPTS/'engine')]
 from trip import load_trip,trip_from_dict,TripError
 from telemetry_overlay import composite,readouts,_advance

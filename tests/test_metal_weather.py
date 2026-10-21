@@ -9,7 +9,7 @@ from unittest.mock import patch
 import numpy as np
 from scipy.ndimage import map_coordinates
 
-ENGINE=Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts/engine'
+ENGINE=Path(__file__).resolve().parents[1]/'skills/route-replay/scripts/engine'
 sys.path.insert(0,str(ENGINE))
 import metal_weather as metal
 

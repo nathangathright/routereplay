@@ -10,7 +10,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-SCRIPTS=Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts'
+SCRIPTS=Path(__file__).resolve().parents[1]/'skills/route-replay/scripts'
 sys.path.insert(0,str(SCRIPTS))
 import chase_weather as chase
 

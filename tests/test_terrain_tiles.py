@@ -7,7 +7,7 @@ from unittest.mock import patch
 from zipfile import ZipFile
 import numpy as np
 from scipy.io import netcdf_file
-SCRIPTS=Path(__file__).resolve().parents[1]/'skills/cinematic-flight-videos/scripts'
+SCRIPTS=Path(__file__).resolve().parents[1]/'skills/route-replay/scripts'
 sys.path[:0]=[str(SCRIPTS),str(SCRIPTS/'engine')]
 from terrain_tiles import read_tile, tile_uncompressed_bytes, check_tile_budget
 from terrain_detail import TerrainSampler

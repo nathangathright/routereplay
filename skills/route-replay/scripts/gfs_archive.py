@@ -142,7 +142,7 @@ class DownloadCache:
         count = 0
         temporary = None
         try:
-            headers = {"User-Agent": "cinematic-flight-videos/1 NOAA-local-archive"}
+            headers = {"User-Agent": "route-replay/1 NOAA-local-archive"}
             if byte_range:
                 headers["Range"] = f"bytes={start}-{end}"
             request = Request(url, headers=headers)

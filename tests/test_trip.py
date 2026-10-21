@@ -9,7 +9,7 @@ import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL = ROOT / "skills" / "cinematic-flight-videos"
+SKILL = ROOT / "skills" / "route-replay"
 MODULE_PATH = SKILL / "scripts" / "trip.py"
 sys.path.insert(0,str(SKILL / "scripts"))
 spec = importlib.util.spec_from_file_location("cinematic_trip", MODULE_PATH)
