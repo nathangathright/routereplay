@@ -1,0 +1,194 @@
+{
+  "schema": 1,
+  "data_license": "CC-BY-SA-4.0",
+  "attribution": "Derived from International Commission on Illumination (CIE) datasets; see ../lamp-spectra.md.",
+  "source_base_url": "https://files.cie.co.at/Publications-datasets/",
+  "source_sha256": {
+    "CIE_illum_LEDs_1nm.csv": "2a065526e1502f138d5b96aa8c9b337320e08667aac028ab5ad428bf1179a4b7",
+    "CIE_illum_HPs.csv": "035e09d62b27f4b1e362ff1ba99a50235f0d7886c2781c50d49851b6e4bb4552",
+    "CIE_xyz_1931_2deg.csv": "fa663e3535a7e0763a745993a1f0a192eb0275ac46ad2d1befd7626841e713c1",
+    "CIE_illum_LEDs_1nm.csv_metadata.json": "8e95fe131cfff2534aa161846b1b7d113f74781338e85787104661b887f8ff48",
+    "CIE_illum_HPs.csv_metadata_v2.json": "d72f68dcbae8c0bc9361a399e172e8f9beb61dc59119620047538df4840c39b3",
+    "CIE_xyz_1931_2deg.csv_metadata.json": "03abcaecf4e63d77045ef57c4514b52c8bb1a46dd18e1f93a50044a0f4f481c8"
+  },
+  "luma": [
+    0.2126,
+    0.7152,
+    0.0722
+  ],
+  "xyz_to_linear_srgb": [
+    [
+      3.2406255,
+      -1.537208,
+      -0.4986286
+    ],
+    [
+      -0.9689307,
+      1.8757561,
+      0.0415175
+    ],
+    [
+      0.0557101,
+      -0.2040211,
+      1.0569959
+    ]
+  ],
+  "lamps": [
+    {
+      "id": "sodium",
+      "source_file": "CIE_illum_HPs.csv",
+      "source_column": "HP1",
+      "xyz_y1": [
+        1.283279366047,
+        1.0,
+        0.125368555945
+      ],
+      "xy": [
+        0.532779969347,
+        0.415170681804
+      ],
+      "cct_approx_kelvin": 1962.3,
+      "planckian_uv_distance": 0.00083237,
+      "rgb_before_nonnegative_projection": [
+        2.5589074897,
+        0.637552314582,
+        -1.5428567e-05
+      ],
+      "linear_rgb_y1": [
+        2.558904552847,
+        0.637551582864,
+        0.0
+      ]
+    },
+    {
+      "id": "led_2700",
+      "source_file": "CIE_illum_LEDs_1nm.csv",
+      "source_column": "LED-B1",
+      "xyz_y1": [
+        1.118098055559,
+        1.0,
+        0.334063205225
+      ],
+      "xy": [
+        0.45596432561,
+        0.407803522547
+      ],
+      "cct_approx_kelvin": 2733.3,
+      "planckian_uv_distance": 0.00070377,
+      "rgb_before_nonnegative_projection": [
+        1.919555602014,
+        0.806266037481,
+        0.211371692748
+      ],
+      "linear_rgb_y1": [
+        1.919555549781,
+        0.806266015542,
+        0.211371686997
+      ]
+    },
+    {
+      "id": "led_3000",
+      "source_file": "CIE_illum_LEDs_1nm.csv",
+      "source_column": "LED-B2",
+      "xyz_y1": [
+        1.08598933001,
+        1.0,
+        0.406700123294
+      ],
+      "xy": [
+        0.435669725553,
+        0.401173117925
+      ],
+      "cct_approx_kelvin": 2997.5,
+      "planckian_uv_distance": 0.00098827,
+      "rgb_before_nonnegative_projection": [
+        1.779284402462,
+        0.840392870649,
+        0.286359837025
+      ],
+      "linear_rgb_y1": [
+        1.779284357473,
+        0.8403928494,
+        0.286359829784
+      ]
+    },
+    {
+      "id": "led_4000",
+      "source_file": "CIE_illum_LEDs_1nm.csv",
+      "source_column": "LED-B3",
+      "xyz_y1": [
+        1.00890772648,
+        1.0,
+        0.677177301159
+      ],
+      "xy": [
+        0.375605282818,
+        0.372289033932
+      ],
+      "cct_approx_kelvin": 4102.7,
+      "planckian_uv_distance": 0.00065979,
+      "rgb_before_nonnegative_projection": [
+        1.394624135949,
+        0.926309138947,
+        0.567958881231
+      ],
+      "linear_rgb_y1": [
+        1.394624109866,
+        0.926309121623,
+        0.567958870609
+      ]
+    },
+    {
+      "id": "led_5000",
+      "source_file": "CIE_illum_LEDs_1nm.csv",
+      "source_column": "LED-B4",
+      "xyz_y1": [
+        0.977186521759,
+        1.0,
+        0.878607503332
+      ],
+      "xy": [
+        0.342176821288,
+        0.350165309968
+      ],
+      "cct_approx_kelvin": 5109.1,
+      "planckian_uv_distance": 0.00046683,
+      "rgb_before_nonnegative_projection": [
+        1.191388731334,
+        0.965407666461,
+        0.779102587577
+      ],
+      "linear_rgb_y1": [
+        1.191388714467,
+        0.965407652793,
+        0.779102576547
+      ]
+    },
+    {
+      "id": "metal_halide",
+      "source_file": "CIE_illum_HPs.csv",
+      "source_column": "HP4",
+      "xyz_y1": [
+        1.003623295246,
+        1.0,
+        0.629981739515
+      ],
+      "xy": [
+        0.381083451011,
+        0.379707658058
+      ],
+      "cct_approx_kelvin": 4004.3,
+      "planckian_uv_distance": 0.001194,
+      "rgb_before_nonnegative_projection": [
+        1.401032330169,
+        0.929469944871,
+        0.517778969882
+      ],
+      "linear_rgb_y1": [
+        1.401032302721,
+        0.929469926662,
+        0.517778959738
+      ]
+    }
+  ]
+}

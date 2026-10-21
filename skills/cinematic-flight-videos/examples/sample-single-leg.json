@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "title": "Synthetic Pacific crossing — sample only",
+  "airports": {
+    "LAX": {"name": "Los Angeles", "lat": 33.9425, "lon": -118.4081, "timezone": "America/Los_Angeles"},
+    "AKL": {"name": "Auckland", "lat": -37.0082, "lon": 174.785, "timezone": "Pacific/Auckland"}
+  },
+  "flights": [
+    {"from": "LAX", "to": "AKL", "departure": "2029-11-02T21:30:00-07:00", "arrival": "2029-11-04T07:30:00+13:00", "aircraft": "787-9"}
+  ],
+  "video": {"duration_s": 12, "fps": 30},
+  "weather": {"mode": "clear"}
+}

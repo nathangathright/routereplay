@@ -1,0 +1,14 @@
+{
+  "name": "routereplay",
+  "version": "0.18.0",
+  "private": true,
+  "description": "Route Replay: a portable agent skill and offline renderer for cinematic flight videos",
+  "repository": {"type": "git", "url": "https://github.com/nathangathright/routereplay.git"},
+  "scripts": {
+    "list": "python3 tools/list_skills.py",
+    "test": "python3 tools/test_portable.py",
+    "check:distribution": "python3 tools/export_skill_repo.py --check",
+    "check:public": "python3 tools/export_skill_repo.py --check-tracked",
+    "export:skill": "python3 tools/export_skill_repo.py"
+  }
+}

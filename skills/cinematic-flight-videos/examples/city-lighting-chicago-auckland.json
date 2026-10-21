@@ -1,0 +1,52 @@
+{
+  "schema_version": 2,
+  "title": "Modeled Chicago and Auckland outdoor lamp mixtures for October–November 2026",
+  "source": {
+    "url": "https://chicagoinfrastructure.org/press/2017/04/",
+    "credit": "Route Replay modeled example, informed by Chicago Infrastructure Trust and Auckland Transport",
+    "license_url": "https://opensource.org/license/mit",
+    "notes": "The authored model is MIT licensed; linked source publications retain their publishers' rights. Region sources describe streetlight programs, not measured citywide luminous mixtures. This profile is opt-in and applies only during the stated 2026 interval."
+  },
+  "regions": [
+    {
+      "id": "chicago-outdoor-2026-modeled",
+      "lat": 41.8781,
+      "lon": -87.6298,
+      "radius_km": 20,
+      "valid_from": "2026-10-01T00:00:00Z",
+      "valid_until": "2026-12-01T00:00:00Z",
+      "basis": "modeled",
+      "population_mixtures": {
+        "outdoor": {"sodium": 0.10, "led_2700": 0.15, "led_3000": 0.75}
+      },
+      "district_variation": 0.20,
+      "source": {
+        "url": "https://chicagoinfrastructure.org/press/2017/04/",
+        "credit": "Chicago Infrastructure Trust, April 21, 2017 streetlight modernization announcement",
+        "license_url": "https://chicagoinfrastructure.org/press/2017/04/",
+        "notes": "Reference only; no article text or asset is redistributed. The announcement specifies LEDs at 3000 K or below to replace high-pressure sodium. It does not establish a measured 2026 lamp inventory or give permission to relicense the publication."
+      },
+      "notes": "The 10/15/75 percent luminous weights are illustrative, not fixture counts or measured 2026 proportions. Carrying the 2017 program's warm-LED direction into these trip dates is a modeling assumption. The 20 km city-centered circle and district variation are synthetic, not municipal or road boundaries; ORD is outside it. Streetlight evidence informs only an outdoor-population proxy. Building, sign, persistent colors, population shares and schedules retain defaults."
+    },
+    {
+      "id": "auckland-outdoor-2026-modeled",
+      "lat": -36.8485,
+      "lon": 174.7633,
+      "radius_km": 15,
+      "valid_from": "2026-10-01T00:00:00Z",
+      "valid_until": "2026-12-01T00:00:00Z",
+      "basis": "modeled",
+      "population_mixtures": {
+        "outdoor": {"sodium": 0.01, "led_4000": 0.99}
+      },
+      "district_variation": 0.20,
+      "source": {
+        "url": "https://at.govt.nz/about-us/sustainability",
+        "credit": "Auckland Transport, Sustainability: LED streetlight conversion",
+        "license_url": "https://at.govt.nz/about-us/about-this-site/terms-conditions/copyright-statement",
+        "notes": "AT reports 99% of its streetlight network converted to LED by mid-2025 and describes 4000 K LEDs. This concerns AT's network, not all city lights; the fixture percentage is not a measured luminous fraction. Publisher terms apply to the source publication."
+      },
+      "notes": "The 1/99 percent luminous weights are an illustrative translation of the network conversion report, not calibrated radiance or a measured 2026 inventory. Assuming continued LED dominance during these trip dates is modeled. The 15 km city-centered circle and district variation are synthetic, not network boundaries; AKL is outside it. Only the outdoor-population proxy changes. Buildings, signs, persistent colors, population shares and schedules retain defaults."
+    }
+  ]
+}

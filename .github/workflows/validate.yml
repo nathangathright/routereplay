@@ -1,0 +1,25 @@
+name: Validate skill
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  portable-skill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: skills/cinematic-flight-videos/scripts/requirements.txt
+      - run: python3 -m pip install -r skills/cinematic-flight-videos/scripts/requirements.txt
+      - run: python3 tools/list_skills.py
+      - run: python3 tools/export_skill_repo.py --check
+      - run: python3 tools/export_skill_repo.py --check-tracked
+      - run: python3 -m compileall -q skills/cinematic-flight-videos/scripts tools
+      - run: python3 tools/test_portable.py

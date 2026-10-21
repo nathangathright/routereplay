@@ -1,0 +1,4 @@
+# Preserve upstream assets byte-for-byte for their published checksums.
+skills/cinematic-flight-videos/references/lamp-spectra/CIE_* -text -whitespace
+skills/cinematic-flight-videos/assets/fonts/dosis/OFL.txt -text -whitespace
+skills/cinematic-flight-videos/assets/fonts/dosis/Dosis-Variable.ttf binary

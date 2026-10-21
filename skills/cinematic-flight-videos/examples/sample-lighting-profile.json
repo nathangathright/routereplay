@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "title": "Synthetic regional lighting example",
+  "source": {
+    "url": "https://example.org/synthetic-lighting",
+    "credit": "Synthetic demonstration, not a lamp survey",
+    "license_url": "https://opensource.org/license/mit",
+    "notes": "Illustrative values only. Replace with attributed measurements or explicitly modeled choices."
+  },
+  "regions": [{
+    "id": "illustrative-new-zealand",
+    "lat": -41.0,
+    "lon": 174.0,
+    "radius_km": 600.0,
+    "valid_from": "2030-01-01T00:00:00Z",
+    "valid_until": "2031-01-01T00:00:00Z",
+    "basis": "modeled",
+    "xy": [0.40, 0.40],
+    "shares": [0.55, 0.28, 0.08, 0.09],
+    "building_curfew": 24.0,
+    "sign_curfew": 25.0,
+    "notes": "Warm color and population fractions are hypothetical; curfews use local mean solar hours, with 25 meaning 01:00 the following morning."
+  }]
+}

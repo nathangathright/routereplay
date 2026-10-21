@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "title": "Synthetic four-stop itinerary with long layovers",
+  "airports": {
+    "MEL": {
+      "name": "Melbourne",
+      "lat": -37.669,
+      "lon": 144.841,
+      "timezone": "Australia/Melbourne"
+    },
+    "ORD": {
+      "name": "Chicago",
+      "lat": 41.9742,
+      "lon": -87.9073,
+      "timezone": "America/Chicago"
+    },
+    "SFO": {
+      "name": "San Francisco",
+      "lat": 37.6213,
+      "lon": -122.379,
+      "timezone": "America/Los_Angeles"
+    },
+    "AKL": {
+      "name": "Auckland",
+      "lat": -37.0082,
+      "lon": 174.785,
+      "timezone": "Pacific/Auckland"
+    },
+    "LAX": {
+      "name": "Los Angeles",
+      "lat": 33.9425,
+      "lon": -118.408,
+      "timezone": "America/Los_Angeles"
+    }
+  },
+  "flights": [
+    {
+      "from": "ORD",
+      "to": "SFO",
+      "departure": "2030-11-01T13:00:00-05:00",
+      "arrival": "2030-11-01T21:00:00-07:00",
+      "aircraft": "a321neo"
+    },
+    {
+      "from": "SFO",
+      "to": "AKL",
+      "departure": "2030-11-05T03:00:00-08:00",
+      "arrival": "2030-11-06T10:00:00+13:00",
+      "aircraft": "777-200er"
+    },
+    {
+      "from": "AKL",
+      "to": "MEL",
+      "departure": "2030-11-09T17:00:00+13:00",
+      "arrival": "2030-11-10T01:00:00+11:00",
+      "aircraft": "787-9"
+    },
+    {
+      "from": "MEL",
+      "to": "LAX",
+      "departure": "2030-11-13T08:00:00+11:00",
+      "arrival": "2030-11-12T23:00:00-08:00",
+      "aircraft": "757-300"
+    },
+    {
+      "from": "LAX",
+      "to": "ORD",
+      "departure": "2030-11-16T06:00:00-08:00",
+      "arrival": "2030-11-16T18:00:00-06:00",
+      "aircraft": "a321neo"
+    }
+  ],
+  "video": {
+    "duration_s": 30,
+    "fps": 30,
+    "departure_hold_s": 1,
+    "arrival_hold_s": 2,
+    "layover_hold_s": 2
+  },
+  "weather": {
+    "mode": "clear"
+  }
+}

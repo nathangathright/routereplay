@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "title": "Synthetic trajectory format demonstration",
+  "airports": {
+    "AKL": {
+      "name": "Auckland",
+      "lat": -37.0082,
+      "lon": 174.785,
+      "timezone": "Pacific/Auckland"
+    },
+    "MEL": {
+      "name": "Melbourne",
+      "lat": -37.6733,
+      "lon": 144.8433,
+      "timezone": "Australia/Melbourne"
+    },
+    "ORD": {
+      "name": "Chicago",
+      "lat": 41.9742,
+      "lon": -87.9073,
+      "timezone": "America/Chicago"
+    },
+    "SFO": {
+      "name": "San Francisco",
+      "lat": 37.6213,
+      "lon": -122.379,
+      "timezone": "America/Los_Angeles"
+    }
+  },
+  "flights": [
+    {
+      "from": "ORD",
+      "to": "SFO",
+      "departure": "2031-01-05T10:00:00-06:00",
+      "arrival": "2031-01-05T12:45:00-08:00",
+      "aircraft": "a321neo",
+      "trajectory": {
+        "source": "Synthetic fixture; not a recorded flight",
+        "altitude_reference": "MSL",
+        "max_gap_s": 300,
+        "points": [
+          {
+            "time": "2031-01-05T16:00:00+00:00",
+            "lat": 41.9742,
+            "lon": -87.9073,
+            "altitude_m": 210
+          },
+          {
+            "time": "2031-01-05T17:11:15+00:00",
+            "lat": 45,
+            "lon": -98,
+            "altitude_m": 7000
+          },
+          {
+            "time": "2031-01-05T18:22:30+00:00",
+            "lat": 46,
+            "lon": -108,
+            "altitude_m": 11000
+          },
+          {
+            "time": "2031-01-05T19:33:45+00:00",
+            "lat": 42,
+            "lon": -118,
+            "altitude_m": 8000
+          },
+          {
+            "time": "2031-01-05T20:45:00+00:00",
+            "lat": 37.6213,
+            "lon": -122.379,
+            "altitude_m": 4
+          }
+        ]
+      }
+    }
+  ],
+  "video": {
+    "duration_s": 24.0,
+    "fps": 30,
+    "departure_hold_s": 1.6,
+    "arrival_hold_s": 2.7,
+    "layover_hold_s": 1.3
+  },
+  "weather": {
+    "mode": "clear"
+  },
+  "style": {
+    "ground_radius": 1300.0,
+    "summit_radius": 440.0,
+    "relief_exaggeration": 12.0,
+    "atmosphere_strength": 1.0,
+    "star_strength": 1.0,
+    "cloud_strength": 1.0,
+    "atmosphere_multiple_scattering": 1.0,
+    "atmosphere_saturation": 1.0,
+    "city_light_strength": 1.0,
+    "exposure_ev": 0.0,
+    "adaptation_s": 0.75
+  }
+}
