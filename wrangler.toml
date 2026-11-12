@@ -1,0 +1,39 @@
+# Cloudflare Worker: static assets + API + live-update Durable Object + D1.
+# Local development: npm run dev:worker. Deploy: see docs/runbook.md.
+name = "routereplay-web"
+main = "src/server/worker.ts"
+compatibility_date = "2026-11-01"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+# Only these paths invoke the Worker; every other static file is served directly.
+run_worker_first = [
+  "/api/*",
+  "/agent-docs",
+  "/agent-docs.md",
+  "/acknowledgments",
+  "/llms.txt",
+  "/schemas/*",
+  "/s/*",
+  "/w/*",
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "routereplay"
+database_id = "786bdf85-d8da-41c8-9efb-f2c4fd42bc1e"
+migrations_dir = "migrations"
+
+[[durable_objects.bindings]]
+name = "LIVE"
+class_name = "SceneLive"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SceneLive"]
+
+[vars]
+# Optional canonical origin for generated links. Leave unset to use the request origin.
+# PUBLIC_ORIGIN = "https://routereplay.example"

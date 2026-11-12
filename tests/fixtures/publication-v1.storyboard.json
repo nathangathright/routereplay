@@ -1,0 +1,339 @@
+{
+  "durationSeconds": 20,
+  "aspectRatio": "16:9",
+  "onScreenSeconds": {
+    "startHold": 1.6,
+    "legs": [
+      {
+        "id": "ord-sfo",
+        "from": "ORD",
+        "to": "SFO",
+        "startsAt": 1.6,
+        "seconds": 4.75
+      },
+      {
+        "id": "sfo-akl",
+        "from": "SFO",
+        "to": "AKL",
+        "startsAt": 8.35,
+        "seconds": 8.95
+      }
+    ],
+    "stops": [
+      {
+        "airport": "SFO",
+        "afterLegId": "ord-sfo",
+        "startsAt": 6.35,
+        "seconds": 2,
+        "connectionMinutes": 525
+      }
+    ],
+    "endHold": 2.7
+  },
+  "keyframes": [
+    {
+      "t": 0,
+      "phase": "start",
+      "legId": "ord-sfo",
+      "legProgress": 0,
+      "summary": "At ORD before departure",
+      "utc": "2031-01-05T15:40:00Z",
+      "local": {
+        "ORD": "2031-01-05T09:40-06:00"
+      },
+      "aircraft": {
+        "lat": 41.98,
+        "lon": -87.9,
+        "sunElevationDeg": 18.1,
+        "daylight": true
+      },
+      "labels": [
+        "ORD"
+      ],
+      "camera": {
+        "centerLat": 41.98,
+        "centerLon": -87.9,
+        "viewRadiusKm": 760
+      }
+    },
+    {
+      "t": 1.82,
+      "phase": "flight",
+      "legId": "ord-sfo",
+      "legProgress": 0.001,
+      "summary": "Flying ORD → SFO, 0% of the way",
+      "utc": "2031-01-05T16:00:00Z",
+      "local": {
+        "ORD": "2031-01-05T10:00-06:00",
+        "SFO": "2031-01-05T08:00-08:00"
+      },
+      "aircraft": {
+        "lat": 41.98,
+        "lon": -87.94,
+        "sunElevationDeg": 20,
+        "daylight": true
+      },
+      "labels": [
+        "ORD"
+      ],
+      "camera": {
+        "centerLat": 41.98,
+        "centerLon": -87.94,
+        "viewRadiusKm": 760
+      }
+    },
+    {
+      "t": 3.64,
+      "phase": "flight",
+      "legId": "ord-sfo",
+      "legProgress": 0.368,
+      "summary": "Flying ORD → SFO, 37% of the way",
+      "utc": "2031-01-05T17:45:00Z",
+      "local": {
+        "ORD": "2031-01-05T11:45-06:00",
+        "SFO": "2031-01-05T09:45-08:00"
+      },
+      "aircraft": {
+        "lat": 41.6,
+        "lon": -101.06,
+        "sunElevationDeg": 24.1,
+        "daylight": true
+      },
+      "labels": [],
+      "camera": {
+        "centerLat": 41.6,
+        "centerLon": -101.06,
+        "viewRadiusKm": 1710
+      }
+    },
+    {
+      "t": 5.45,
+      "phase": "flight",
+      "legId": "ord-sfo",
+      "legProgress": 0.95,
+      "summary": "Flying ORD → SFO, 95% of the way",
+      "utc": "2031-01-05T20:31:00Z",
+      "local": {
+        "ORD": "2031-01-05T14:31-06:00",
+        "SFO": "2031-01-05T12:31-08:00"
+      },
+      "aircraft": {
+        "lat": 38.07,
+        "lon": -120.8,
+        "sunElevationDeg": 29.1,
+        "daylight": true
+      },
+      "labels": [
+        "SFO"
+      ],
+      "camera": {
+        "centerLat": 38.07,
+        "centerLon": -120.8,
+        "viewRadiusKm": 920
+      }
+    },
+    {
+      "t": 7.27,
+      "phase": "stop",
+      "legId": "ord-sfo",
+      "legProgress": 1,
+      "summary": "Connecting at SFO",
+      "utc": "2031-01-06T00:29:00Z",
+      "local": {
+        "SFO": "2031-01-05T16:29-08:00"
+      },
+      "aircraft": {
+        "lat": 37.62,
+        "lon": -122.37,
+        "sunElevationDeg": 5.4,
+        "daylight": true
+      },
+      "labels": [
+        "SFO"
+      ],
+      "camera": {
+        "centerLat": 37.62,
+        "centerLon": -122.37,
+        "viewRadiusKm": 760
+      }
+    },
+    {
+      "t": 9.09,
+      "phase": "flight",
+      "legId": "sfo-akl",
+      "legProgress": 0.005,
+      "summary": "Flying SFO → AKL, 0% of the way",
+      "utc": "2031-01-06T05:34:00Z",
+      "local": {
+        "SFO": "2031-01-05T21:34-08:00",
+        "AKL": "2031-01-06T18:34+13:00"
+      },
+      "aircraft": {
+        "lat": 37.29,
+        "lon": -122.79,
+        "sunElevationDeg": -52.1,
+        "daylight": false
+      },
+      "labels": [
+        "SFO"
+      ],
+      "camera": {
+        "centerLat": 37.29,
+        "centerLon": -122.79,
+        "viewRadiusKm": 820
+      }
+    },
+    {
+      "t": 10.91,
+      "phase": "flight",
+      "legId": "sfo-akl",
+      "legProgress": 0.145,
+      "summary": "Flying SFO → AKL, 14% of the way",
+      "utc": "2031-01-06T07:21:00Z",
+      "local": {
+        "SFO": "2031-01-05T23:21-08:00",
+        "AKL": "2031-01-06T20:21+13:00"
+      },
+      "aircraft": {
+        "lat": 27.49,
+        "lon": -133.33,
+        "sunElevationDeg": -67.2,
+        "daylight": false
+      },
+      "labels": [
+        "SFO"
+      ],
+      "camera": {
+        "centerLat": 27.49,
+        "centerLon": -133.33,
+        "viewRadiusKm": 2990
+      }
+    },
+    {
+      "t": 12.73,
+      "phase": "flight",
+      "legId": "sfo-akl",
+      "legProgress": 0.479,
+      "summary": "Flying SFO → AKL, 48% of the way",
+      "utc": "2031-01-06T11:37:00Z",
+      "local": {
+        "SFO": "2031-01-06T03:37-08:00",
+        "AKL": "2031-01-07T00:37+13:00"
+      },
+      "aircraft": {
+        "lat": 1.97,
+        "lon": -152.83,
+        "sunElevationDeg": -61.8,
+        "daylight": false
+      },
+      "labels": [],
+      "camera": {
+        "centerLat": 1.97,
+        "centerLon": -152.83,
+        "viewRadiusKm": 6700
+      }
+    },
+    {
+      "t": 14.55,
+      "phase": "flight",
+      "legId": "sfo-akl",
+      "legProgress": 0.826,
+      "summary": "Flying SFO → AKL, 83% of the way",
+      "utc": "2031-01-06T16:02:00Z",
+      "local": {
+        "SFO": "2031-01-06T08:02-08:00",
+        "AKL": "2031-01-07T05:02+13:00"
+      },
+      "aircraft": {
+        "lat": -24.7,
+        "lon": -172.52,
+        "sunElevationDeg": -10,
+        "daylight": false
+      },
+      "labels": [
+        "AKL"
+      ],
+      "camera": {
+        "centerLat": -24.7,
+        "centerLon": -172.52,
+        "viewRadiusKm": 3580
+      }
+    },
+    {
+      "t": 16.36,
+      "phase": "flight",
+      "legId": "sfo-akl",
+      "legProgress": 0.99,
+      "summary": "Flying SFO → AKL, 99% of the way",
+      "utc": "2031-01-06T18:08:00Z",
+      "local": {
+        "SFO": "2031-01-06T10:08-08:00",
+        "AKL": "2031-01-07T07:08+13:00"
+      },
+      "aircraft": {
+        "lat": -36.36,
+        "lon": 175.59,
+        "sunElevationDeg": 10.1,
+        "daylight": true
+      },
+      "labels": [
+        "AKL"
+      ],
+      "camera": {
+        "centerLat": -36.36,
+        "centerLon": 175.59,
+        "viewRadiusKm": 880
+      }
+    },
+    {
+      "t": 18.18,
+      "phase": "end",
+      "legId": "sfo-akl",
+      "legProgress": 1,
+      "summary": "Arrived at AKL",
+      "utc": "2031-01-06T18:19:00Z",
+      "local": {
+        "AKL": "2031-01-07T07:19+13:00"
+      },
+      "aircraft": {
+        "lat": -37.01,
+        "lon": 174.79,
+        "sunElevationDeg": 11.8,
+        "daylight": true
+      },
+      "labels": [
+        "AKL"
+      ],
+      "camera": {
+        "centerLat": -37.01,
+        "centerLon": 174.79,
+        "viewRadiusKm": 760
+      }
+    },
+    {
+      "t": 20,
+      "phase": "end",
+      "legId": "sfo-akl",
+      "legProgress": 1,
+      "summary": "Arrived at AKL",
+      "utc": "2031-01-06T18:35:00Z",
+      "local": {
+        "AKL": "2031-01-07T07:35+13:00"
+      },
+      "aircraft": {
+        "lat": -37.01,
+        "lon": 174.79,
+        "sunElevationDeg": 14.9,
+        "daylight": true
+      },
+      "labels": [
+        "AKL"
+      ],
+      "camera": {
+        "centerLat": -37.01,
+        "centerLon": 174.79,
+        "viewRadiusKm": 760
+      }
+    }
+  ]
+}

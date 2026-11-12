@@ -1,0 +1,264 @@
+import { useMemo } from 'react';
+import * as THREE from 'three';
+import type { Vec3 } from '../../shared/geo/vec';
+import type { EarthTextures } from './assets';
+import { CLOUD_GLSL, CLOUD_RADIUS, type CloudFrame, cloudUniforms, setCloudUniforms } from './Clouds';
+import { AIR_GLSL, ATMOSPHERE_TOP, CITY_GLSL, LIGHT_GLSL, type SkyLights, lightUniforms, setLightUniforms } from './lighting';
+
+export { ATMOSPHERE_TOP };
+
+const earthVertex = /* glsl */ `
+uniform vec3 sunDir;
+uniform vec3 moonDir;
+varying vec2 vUv;
+varying vec3 vNormalL;
+varying vec3 vNormalW;
+varying vec3 vPosW;
+varying vec3 vSunW;
+varying vec3 vMoonW;
+void main() {
+  vUv = uv;
+  vNormalL = normal;
+  vNormalW = normalize(mat3(modelMatrix) * normal);
+  vSunW = normalize(mat3(modelMatrix) * sunDir);
+  vMoonW = normalize(mat3(modelMatrix) * moonDir);
+  vec4 world = modelMatrix * vec4(position, 1.0);
+  vPosW = world.xyz;
+  gl_Position = projectionMatrix * viewMatrix * world;
+}
+`;
+
+const earthFragment = /* glsl */ `
+uniform sampler2D dayMap;
+uniform sampler2D nightMap;
+uniform sampler2D waterMap;
+varying vec2 vUv;
+varying vec3 vNormalL;
+varying vec3 vNormalW;
+varying vec3 vPosW;
+varying vec3 vSunW;
+varying vec3 vMoonW;
+${LIGHT_GLSL}
+${AIR_GLSL}
+${CITY_GLSL}
+${CLOUD_GLSL}
+
+// Sun glint on open water: a rough-water GGX lobe with Schlick Fresnel and Smith masking, as in the
+// offline renderer (routereplay surfacelighting.py). Roughness and gain are cinematic, not measured.
+float glint(vec3 N, vec3 V, vec3 L) {
+  float nl = clamp(dot(N, L), 0.0, 1.0);
+  float nv = clamp(dot(N, V), 0.0, 1.0);
+  vec3 H = normalize(L + V);
+  float nh = clamp(dot(N, H), 0.0, 1.0);
+  float lh = clamp(dot(H, L), 0.0, 1.0);
+  const float a2 = 0.0081; // alpha = 0.3^2
+  float d = nh * nh * (a2 - 1.0) + 1.0;
+  float distribution = a2 / (3.14159265 * d * d);
+  float fresnel = 0.02 + 0.98 * pow(1.0 - lh, 5.0);
+  float gl = 2.0 * nl / (nl + sqrt(a2 + (1.0 - a2) * nl * nl) + 1e-7);
+  float gv = 2.0 * nv / (nv + sqrt(a2 + (1.0 - a2) * nv * nv) + 1e-7);
+  return fresnel * distribution * gl * gv / (4.0 * nl * nv + 1e-6) * nl * (450.0 / 255.0);
+}
+
+// Cloud between this ground point g and a light in direction s: where the beam crosses the cloud layer.
+// Direct light keeps at least 46 % under thick cloud, as in routereplay's cloud_shadow.
+float cloudShadow(vec3 g, vec3 s) {
+  float gs = dot(g, s);
+  vec3 shell = normalize(g + s * (-gs + sqrt(gs * gs + ${(CLOUD_RADIUS * CLOUD_RADIUS - 1).toFixed(6)})));
+  return 1.0 - 0.54 * cloudOpacity(shell, false);
+}
+
+// Night-side floor: a trace of the map so coasts still read (routereplay render.py, its lunar-mode level).
+const vec3 NIGHT_FLOOR = vec3(0.00061, 0.00182, 0.00368);
+// The orange band of civil twilight along the terminator.
+const vec3 TWILIGHT = vec3(0.0075, 0.0030, 0.0009);
+
+void main() {
+  vec3 N = normalize(vNormalW);
+  vec3 V = normalize(cameraPosition - vPosW);
+  // Light is measured in the Earth's own frame, so day and night stay on the ground however the globe is turned.
+  vec3 g = normalize(vNormalL);
+  vec3 s = normalize(sunDir);
+  float mu = dot(g, s);
+  vec3 albedo = texture2D(dayMap, vUv).rgb;
+  float water = texture2D(waterMap, vUv).r;
+
+  // Day: Lambert ground with a little skylight, reddened as the Sun gets low, shadowed by cloud.
+  vec3 sun = groundLight(g, s);
+  float shadow = cloudShadow(g, s);
+  vec3 day = albedo * (0.035 + 0.965 * max(mu, 0.0) * shadow) * sun;
+  day += vec3(1.0, 0.96, 0.86) * glint(N, V, normalize(vSunW)) * water * shadow * sun;
+  float viewDepth = max(dot(N, V), 0.0);
+  vec3 night = (albedo * 0.0036 + NIGHT_FLOOR) * (0.72 + 0.28 * viewDepth);
+  vec3 color = mix(night, day, smoothstep(0.0, 1.0, (mu + 0.105) / 0.21));
+
+  // Moonlight: the same ground and water response, at the Moon's phase and through the same air and cloud.
+  float mm = dot(g, moonDir);
+  if (moonlight > 0.0 && mm > -0.05) {
+    vec3 moon = moonlight * groundLight(g, moonDir) * cloudShadow(g, moonDir);
+    color += (0.965 * albedo * max(mm, 0.0) + glint(N, V, normalize(vMoonW)) * water) * moon;
+  }
+
+  color += exp(-pow(mu / 0.065, 2.0)) * TWILIGHT;
+  color += cityLights(g, texture2D(nightMap, vUv).rgb);
+
+  gl_FragColor = vec4(color, 1.0);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}
+`;
+
+const atmosphereVertex = /* glsl */ `
+varying vec3 vPos;
+varying vec3 vCamera;
+void main() {
+  vPos = position;
+  // The camera in the Earth's own frame, where the planet is a unit sphere at the origin.
+  vCamera = (inverse(modelMatrix) * vec4(cameraPosition, 1.0)).xyz;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
+
+/**
+ * Single scattering by air (Rayleigh) and haze (Mie) with the offline renderer's constants (routereplay
+ * atmosphere.py): heights spread 7.2× with extinction divided by 7.2, so vertical optical depth stays
+ * physical; Henyey–Greenstein haze with g = 0.76; sunlight reddened by its path and blocked by the Earth with
+ * a finite solar disc; and the same bounded secondary-scattering term. Lengths are in Earth radii.
+ *
+ * Each step's optical depth is exact: the Chapman function gives the column from a point to space, and a
+ * segment is the difference of two columns taken looking up. So 8 steps per pixel suffice for the light.
+ */
+const atmosphereFragment = /* glsl */ `
+uniform vec3 sunDir;
+varying vec3 vPos;
+varying vec3 vCamera;
+${AIR_GLSL}
+
+// Sunlight in the same units as the ground's shading, where a white surface facing the Sun reads 1: that is
+// an irradiance of pi. (The offline renderer uses 11.4 to suit its own exposure and tone mapping.)
+const float SOLAR_RADIANCE = PI;
+
+void main() {
+  vec3 ro = vCamera;
+  vec3 rd = normalize(vPos - vCamera);
+  vec3 s = normalize(sunDir);
+  vec2 shell = sphere(ro, rd, TOP);
+  if (shell.y <= 0.0) discard;
+  float t0 = max(shell.x, 0.0);
+  float t1 = shell.y;
+  vec2 ground = sphere(ro, rd, 1.0);
+  if (ground.y > ground.x && ground.x > 0.0) t1 = min(t1, ground.x);
+  // Split the path at its lowest point, so every column is taken looking up.
+  float tLow = clamp(-dot(ro, rd), t0, t1);
+
+  float mu = dot(rd, s);
+  float phaseR = 3.0 / (16.0 * PI) * (1.0 + mu * mu);
+  const float g = 0.76;
+  float phaseM = (1.0 - g * g) / (4.0 * PI * pow(max(1.0 + g * g - 2.0 * g * mu, 1e-4), 1.5));
+  const float SECONDARY = 0.38 / (1.0 - 0.38);
+
+  vec3 light = vec3(0.0);
+  vec3 tau = vec3(0.0);
+  for (int i = 0; i < 8; i++) {
+    bool descending = i < 4;
+    float a = descending ? mix(t0, tLow, float(i) / 4.0) : mix(tLow, t1, float(i - 4) / 4.0);
+    float b = descending ? mix(t0, tLow, float(i + 1) / 4.0) : mix(tLow, t1, float(i - 3) / 4.0);
+    if (b <= a) continue;
+    vec3 pa = ro + rd * a;
+    vec3 pb = ro + rd * b;
+    vec2 col = descending ? columnUp(pb, -rd) - columnUp(pa, -rd) : columnUp(pa, rd) - columnUp(pb, rd);
+    col = max(col, vec2(0.0));
+    vec3 segment = extinction(col);
+    vec3 p = ro + rd * (0.5 * (a + b));
+    vec3 viewed = exp(-(tau + 0.5 * segment));
+    // Sunlight reaching p: reddened along its path, and cut off by the Earth.
+    float visible = discVisible(p, s);
+    vec3 sunTau = visible > 0.0 ? extinction(columnToLight(p, s)) : vec3(8.0);
+    vec3 sun = exp(-sunTau) * visible;
+    vec3 single = sun * (BETA_R * col.x * phaseR + BETA_M * col.y * phaseM);
+    // Light scattered more than once lingers briefly past the terminator, gone by ~10° of solar depression.
+    float cosine = dot(p, s) / length(p);
+    float hemisphere = smoothstep(0.0, 1.0, clamp((cosine + 0.18) / 0.30, 0.0, 1.0));
+    vec3 secondary = (BETA_R * col.x + BETA_M * col.y) / (4.0 * PI) * SECONDARY * (1.0 - exp(-min(sunTau, vec3(8.0)))) * hemisphere;
+    light += viewed * (single + secondary);
+    tau += segment;
+  }
+  light *= SOLAR_RADIANCE;
+  // What lies behind (ground, clouds, stars) shows through the air's transmittance.
+  vec3 through = exp(-tau);
+  float cover = 1.0 - dot(through, vec3(0.2126, 0.7152, 0.0722));
+  gl_FragColor = vec4(light, cover);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}
+`;
+
+/**
+ * `lights`: the Sun, Moon, and clock in the Earth's own frame (see vec.ts), whatever the Earth's parent rotation.
+ * `clouds`: the cloud layer's current frame, for cloud shadows on the ground.
+ */
+export function Earth({
+  textures,
+  lights,
+  segments,
+  clouds = null,
+}: {
+  textures: EarthTextures;
+  lights: SkyLights;
+  segments: number;
+  clouds?: CloudFrame | null;
+}) {
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        uniforms: {
+          dayMap: { value: textures.day },
+          nightMap: { value: textures.night },
+          waterMap: { value: textures.water },
+          ...cloudUniforms(),
+          ...lightUniforms(),
+        },
+        vertexShader: earthVertex,
+        fragmentShader: earthFragment,
+      }),
+    [textures],
+  );
+  setLightUniforms(material.uniforms, lights);
+  setCloudUniforms(material.uniforms, clouds);
+  return (
+    <mesh material={material} renderOrder={0}>
+      <sphereGeometry args={[1, segments, Math.round(segments / 2)]} />
+    </mesh>
+  );
+}
+
+/**
+ * The air around the Earth, drawn over the ground, clouds, and sky behind it (and under planes, routes, and
+ * labels): blue by day, white toward the limb, red where sunlight grazes through the terminator, with the
+ * Earth's shadow cast on it. `sun` is in the Earth's own frame.
+ */
+export function Atmosphere({ sun, segments }: { sun: Vec3; segments: number }) {
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        uniforms: { sunDir: { value: new THREE.Vector3() } },
+        vertexShader: atmosphereVertex,
+        fragmentShader: atmosphereFragment,
+        side: THREE.BackSide,
+        // Drawn over the ground and clouds wherever the air is, so it ignores their depth; premultiplied:
+        // in-scattered light plus what shows through.
+        depthTest: false,
+        depthWrite: false,
+        blending: THREE.CustomBlending,
+        blendSrc: THREE.OneFactor,
+        blendDst: THREE.OneMinusSrcAlphaFactor,
+      }),
+    [],
+  );
+  (material.uniforms.sunDir!.value as THREE.Vector3).set(sun[0], sun[1], sun[2]);
+  return (
+    <mesh material={material} renderOrder={0.75}>
+      <sphereGeometry args={[ATMOSPHERE_TOP, segments, Math.round(segments / 2)]} />
+    </mesh>
+  );
+}

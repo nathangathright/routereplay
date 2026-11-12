@@ -1,0 +1,74 @@
+{
+  "version": "2026-11-11",
+  "note": "Static assets for Route Replay Web. The aircraft model is generated in code (src/app/render/Aircraft.tsx).",
+  "files": [
+    {
+      "path": "earth-day-low.jpg",
+      "kind": "earth-day",
+      "quality": "low",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 291560,
+      "sha256": "6051f20d532a23f3281993cd37977ebf77a49af9e8b880163a0ad116f4239b2b",
+      "source": "https://commons.wikimedia.org/wiki/File:Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg",
+      "credit": "Reto Stöckli, NASA Earth Observatory (Blue Marble: Next Generation with topography and bathymetry)",
+      "license": "Public domain (NASA)"
+    },
+    {
+      "path": "earth-day-standard.jpg",
+      "kind": "earth-day",
+      "quality": "standard",
+      "width": 3600,
+      "height": 1800,
+      "bytes": 886195,
+      "sha256": "5bd1fc29588b663b245001ba9ae28fbbc6fa0d1a7ffbad14425632c24bc33a3a",
+      "source": "https://commons.wikimedia.org/wiki/File:Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg",
+      "credit": "Reto Stöckli, NASA Earth Observatory (Blue Marble: Next Generation with topography and bathymetry)",
+      "license": "Public domain (NASA)"
+    },
+    {
+      "path": "earth-night-low.jpg",
+      "kind": "earth-night",
+      "quality": "low",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 132489,
+      "sha256": "556d1124db1c891195a4a03c8d2a2f396bd2567162fbb08911581b55bc03a9ae",
+      "source": "https://commons.wikimedia.org/wiki/File:BlackMarble20161km.jpg",
+      "credit": "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA's Goddard Space Flight Center (Black Marble 2016)",
+      "license": "Public domain (NASA)"
+    },
+    {
+      "path": "earth-night-standard.jpg",
+      "kind": "earth-night",
+      "quality": "standard",
+      "width": 3600,
+      "height": 1800,
+      "bytes": 444420,
+      "sha256": "b3e2fb5d7b7cd0bd6990a843001e6560fabee9b5eb00acdc0933f96169b75bac",
+      "source": "https://commons.wikimedia.org/wiki/File:BlackMarble20161km.jpg",
+      "credit": "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA's Goddard Space Flight Center (Black Marble 2016)",
+      "license": "Public domain (NASA)"
+    },
+    {
+      "path": "earth-water.png",
+      "kind": "earth-water",
+      "width": 2048,
+      "height": 1024,
+      "bytes": 47581,
+      "sha256": "90d14e3e31445c1a7c72b55246baa6f69016737c8b03a01de7611e93d3303f0e",
+      "source": "https://www.naturalearthdata.com/downloads/50m-physical-vectors/ (ne_50m_land, ne_50m_lakes)",
+      "credit": "Made with Natural Earth",
+      "license": "Public domain (Natural Earth)"
+    },
+    {
+      "path": "Dosis-Variable.ttf",
+      "kind": "font",
+      "bytes": 117280,
+      "sha256": "b2238eef0b3464904fed097ef274c704bc63d21407369b7d7a5be7b0821a0e82",
+      "source": "https://github.com/google/fonts/tree/main/ofl/dosis",
+      "credit": "The Dosis Project Authors",
+      "license": "SIL Open Font License 1.1 (OFL.txt)"
+    }
+  ]
+}

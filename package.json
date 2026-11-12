@@ -1,0 +1,51 @@
+{
+  "name": "routereplay-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Route Replay Web: agent-authored journeys played on a browser-native 3D Earth",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "gen": "node scripts/generate.mjs",
+    "dev": "npm run gen && vite",
+    "build": "npm run typecheck && vite build",
+    "typecheck": "npm run gen && tsc -p tsconfig.app.json && tsc -p tsconfig.worker.json",
+    "test": "npm run gen && vitest run",
+    "db:migrate:local": "wrangler d1 migrations apply routereplay --local",
+    "smoke": "node scripts/smoke-api.mjs",
+    "assets:airports": "node scripts/build-airports.mjs",
+    "assets:textures": "python3 -I scripts/build-textures.py",
+    "usage": "node scripts/usage-report.mjs",
+    "dev:worker": "npm run build && npm run db:migrate:local && wrangler dev --port 8788",
+    "deploy": "npm run build && npm test && wrangler deploy"
+  },
+  "dependencies": {
+    "@react-three/fiber": "9.8.2",
+    "@remotion/player": "4.0.542",
+    "@remotion/three": "4.0.542",
+    "@remotion/web-renderer": "4.0.542",
+    "react": "19.2.9",
+    "react-dom": "19.2.9",
+    "remotion": "4.0.542",
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261110.1",
+    "@photostructure/tz-lookup": "11.8.0",
+    "@types/node": "24.19.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@types/three": "0.187.0",
+    "@vitejs/plugin-react": "5.2.0",
+    "ajv": "8.20.0",
+    "miniflare": "5.20261110.0-beta",
+    "puppeteer-core": "25.17.0",
+    "typescript": "5.9.3",
+    "vite": "7.3.8",
+    "vitest": "4.1.12",
+    "wrangler": "4.160.0"
+  }
+}

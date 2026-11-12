@@ -1,0 +1,2307 @@
+[
+  {
+    "icao": "BCS1",
+    "name": "Airbus A220-100",
+    "configuration": "Production configuration (formerly Bombardier CS100/CS300)",
+    "length_m": 34.98,
+    "span_m": 35.1,
+    "height_m": 11.78,
+    "fuselage_width_m": 3.5,
+    "fuselage_height_m": 3.72,
+    "wing_area_m2": 112.3,
+    "wing_sweep_qc_deg": 27.0,
+    "tailplane_span_m": 12.26,
+    "engine_count": 2,
+    "engine_type": "PW1500G",
+    "engine_offsets_m": [
+      4.9
+    ],
+    "nacelle_max_diameter_m": 2.4,
+    "nose_to_inlet_m": [
+      10.03
+    ],
+    "wingtip_device": "small canted winglet",
+    "alternates": {
+      "span_m_baseline_unloaded": 34.98
+    },
+    "notes": "The A220 ACP's dimension figures do not render in the published PDF (sheets show only locator letters or the wrong artwork), so lettered values from Tables 2/3 'General aircraft dimensions' were mapped by matching the A220-100 table against the A220-100 text labels that survive on PDF pp.108–110 (e.g. A=1377 in=114 ft 9 in length, D=482.85 in=40 ft 3 in tailplane, V=193.5 in=16 ft 1.5 in, K=395 in=32 ft 11 in, Y=265 in=22 ft 1 in gear track).",
+    "sources": {
+      "length_m": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, data module BD500-A-J06-10-00-00AAA-030A-A, Table 2 (A220-100) General aircraft dimensions, locator A: 34.98 m (Airbus marketing 35.0 m) — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf",
+      "span_m": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, data module BD500-A-J06-10-00-00AAA-030A-A, Table 2 (A220-100) General aircraft dimensions, locator E: 1381.32 in fuel loaded (35.09 m) / 1377.32 in baseline (34.98 m); Airbus quotes 35.1 m — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf",
+      "height_m": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, data module BD500-A-J06-10-00-00AAA-030A-A, Table 2 (A220-100) General aircraft dimensions, locator C: maximum value — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf",
+      "fuselage_width_m": "SECONDARY: Wikipedia 'Airbus A220' spec table 'Fuselage diameter 3.5 m' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A220; ACP A220-100 sheet text '11.5 ft (3,5 m)' (label mapping not confirmable)",
+      "fuselage_height_m": "ESTIMATE: ACP locator B = 146.5 in (3.72 m), same for both variants; interpreted as maximum fuselage depth (sheet text '12 ft 2.5 in (3,7 m)'), not confirmable because the drawing is missing",
+      "wing_area_m2": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, Table 6 General aircraft area: ESDU wing area 1209 ft² (112.3 m²) — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: not published by Airbus; ~27° placeholder typical of this Mach 0.78–0.82 class (Wikipedia notes only 'moderate wing sweep'), ±2°",
+      "tailplane_span_m": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, data module BD500-A-J06-10-00-00AAA-030A-A, Table 2 (A220-100) General aircraft dimensions, locator D: 482.8 in (12.26 m); sheet text '40 ft 3 in (12,3 m)' — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf",
+      "engine_offsets_m": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, data module BD500-A-J06-10-00-00AAA-030A-A, Table 2 (A220-100) General aircraft dimensions, locator V: engine centreline lateral offset (mapped from sheet text '16 ft 1.5 in (4,9 m)') — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: not published; taken as ≈ the E-Jet E2 PW1900G nacelle width scaled from Embraer APM 5824 (2.46 m), same 73-in fan PW1000G family",
+      "nose_to_inlet_m": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, data module BD500-A-J06-10-00-00AAA-030A-A, Table 2 (A220-100) General aircraft dimensions, locator K: interpreted as nose to nacelle inlet (mapped from sheet text '32 ft 11 in (10,0 m)'); mapping not confirmable — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf"
+    }
+  },
+  {
+    "icao": "BCS3",
+    "name": "Airbus A220-300",
+    "configuration": "Production configuration (formerly Bombardier CS100/CS300)",
+    "length_m": 38.69,
+    "span_m": 35.1,
+    "height_m": 11.73,
+    "fuselage_width_m": 3.5,
+    "fuselage_height_m": 3.72,
+    "wing_area_m2": 112.3,
+    "wing_sweep_qc_deg": 27.0,
+    "tailplane_span_m": 12.26,
+    "engine_count": 2,
+    "engine_type": "PW1500G",
+    "engine_offsets_m": [
+      4.94
+    ],
+    "nacelle_max_diameter_m": 2.4,
+    "nose_to_inlet_m": [
+      12.17
+    ],
+    "wingtip_device": "small canted winglet",
+    "alternates": {
+      "span_m_baseline_unloaded": 34.98
+    },
+    "notes": "The A220 ACP's dimension figures do not render in the published PDF (sheets show only locator letters or the wrong artwork), so lettered values from Tables 2/3 'General aircraft dimensions' were mapped by matching the A220-100 table against the A220-100 text labels that survive on PDF pp.108–110 (e.g. A=1377 in=114 ft 9 in length, D=482.85 in=40 ft 3 in tailplane, V=193.5 in=16 ft 1.5 in, K=395 in=32 ft 11 in, Y=265 in=22 ft 1 in gear track).",
+    "sources": {
+      "length_m": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, data module BD500-A-J06-10-00-00AAA-030A-A, Table 3 (A220-300) General aircraft dimensions, locator A: 38.69 m (Airbus marketing 38.7 m) — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf",
+      "span_m": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, data module BD500-A-J06-10-00-00AAA-030A-A, Table 3 (A220-300) General aircraft dimensions, locator E: 1381.32 in fuel loaded (35.09 m) / 1377.32 in baseline (34.98 m); Airbus quotes 35.1 m — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf",
+      "height_m": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, data module BD500-A-J06-10-00-00AAA-030A-A, Table 3 (A220-300) General aircraft dimensions, locator C: maximum value — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf",
+      "fuselage_width_m": "SECONDARY: Wikipedia 'Airbus A220' spec table 'Fuselage diameter 3.5 m' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A220; ACP A220-100 sheet text '11.5 ft (3,5 m)' (label mapping not confirmable)",
+      "fuselage_height_m": "ESTIMATE: ACP locator B = 146.5 in (3.72 m), same for both variants; interpreted as maximum fuselage depth (sheet text '12 ft 2.5 in (3,7 m)'), not confirmable because the drawing is missing",
+      "wing_area_m2": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, Table 6 General aircraft area: ESDU wing area 1209 ft² (112.3 m²) — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: not published by Airbus; ~27° placeholder typical of this Mach 0.78–0.82 class (Wikipedia notes only 'moderate wing sweep'), ±2°",
+      "tailplane_span_m": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, data module BD500-A-J06-10-00-00AAA-030A-A, Table 3 (A220-300) General aircraft dimensions, locator D: 482.8 in (12.26 m); sheet text '40 ft 3 in (12,3 m)' — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf",
+      "engine_offsets_m": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, data module BD500-A-J06-10-00-00AAA-030A-A, Table 3 (A220-300) General aircraft dimensions, locator V: engine centreline lateral offset (mapped from sheet text '16 ft 1.5 in (4,9 m)') — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: not published; taken as ≈ the E-Jet E2 PW1900G nacelle width scaled from Embraer APM 5824 (2.46 m), same 73-in fan PW1000G family",
+      "nose_to_inlet_m": "Airbus A220 Aircraft Characteristics Publication (ACP), Oct 2026, data module BD500-A-J06-10-00-00AAA-030A-A, Table 3 (A220-300) General aircraft dimensions, locator K: interpreted as nose to nacelle inlet (mapped from sheet text '32 ft 11 in (10,0 m)'); mapping not confirmable — https://mediaassets.airbus.com/pm_38_943_943905-x1g4kvdbru.pdf?fileName=a220-aircraft-characteristics-publication-acp-oct-2026.pdf"
+    }
+  },
+  {
+    "icao": "A318",
+    "name": "Airbus A318",
+    "configuration": "A318-100 (wingtip fences; no sharklet option). CFM56-5B inlet position",
+    "length_m": 31.45,
+    "span_m": 34.1,
+    "height_m": 12.89,
+    "fuselage_width_m": 3.95,
+    "fuselage_height_m": 4.14,
+    "wing_area_m2": 122.4,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 12.45,
+    "engine_count": 2,
+    "engine_type": "CFM56-5B or PW6000",
+    "engine_offsets_m": [
+      5.75
+    ],
+    "nacelle_max_diameter_m": 2.0,
+    "nose_to_inlet_m": [
+      8.81
+    ],
+    "wingtip_device": "wingtip fence",
+    "alternates": {
+      "nose_to_inlet_m_pw6000": 9.1
+    },
+    "sources": {
+      "length_m": "Airbus A318 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 (Wing Tip Fence), PDF pp.34–35: overall length — https://mediaassets.airbus.com/pm_38_916_916233-ndc78dwuma.pdf?fileName=aca31801-jul-2026.pdf",
+      "span_m": "Airbus A318 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 (Wing Tip Fence), PDF pp.34–35: wing span — https://mediaassets.airbus.com/pm_38_916_916233-ndc78dwuma.pdf?fileName=aca31801-jul-2026.pdf",
+      "height_m": "Airbus A318 AC (Jul 01/26), 2-3-0 Ground Clearances table, VT (vertical tail) — largest in-service value (light weight/maintenance column; jacked value excluded) — https://mediaassets.airbus.com/pm_38_916_916233-ndc78dwuma.pdf?fileName=aca31801-jul-2026.pdf",
+      "fuselage_width_m": "Airbus A318 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 (Wing Tip Fence), PDF pp.34–35: plan view fuselage width 3.95 m — https://mediaassets.airbus.com/pm_38_916_916233-ndc78dwuma.pdf?fileName=aca31801-jul-2026.pdf",
+      "fuselage_height_m": "Airbus A318 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 (Wing Tip Fence), PDF pp.34–35: side view fuselage depth 4.14 m — https://mediaassets.airbus.com/pm_38_916_916233-ndc78dwuma.pdf?fileName=aca31801-jul-2026.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Airbus A320 family' spec table: wing area 122.4 m² (A318), 124 m² (A319/A320), 128 m² (A321); note Airbus usually quotes 122.6 m² reference area for A318–A320 (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A320 family' spec table 'Wingsweep 25 degrees' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "tailplane_span_m": "Airbus A318 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 (Wing Tip Fence), PDF pp.34–35: front view horizontal tail span 12.45 m — https://mediaassets.airbus.com/pm_38_916_916233-ndc78dwuma.pdf?fileName=aca31801-jul-2026.pdf",
+      "engine_offsets_m": "Airbus A318 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 (Wing Tip Fence), PDF pp.34–35: plan view engine centreline 5.75 m from aircraft centreline — https://mediaassets.airbus.com/pm_38_916_916233-ndc78dwuma.pdf?fileName=aca31801-jul-2026.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: CFM56-5B/V2500 nacelle maximum width scaled from A320 AC plan view (FIGURE-2-2-0-991-004-A01 sheet 4, 300 dpi, fuselage 3.95 m as scale): ≈2.0 m; consistent with A318 AC published PW6000 nacelle max width 2.08 m (FIGURE-2-12-0-991-016-A01)",
+      "nose_to_inlet_m": "Airbus A318 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 (Wing Tip Fence), PDF pp.34–35: plan view nose-to-nacelle-inlet distance (engine-specific) — https://mediaassets.airbus.com/pm_38_916_916233-ndc78dwuma.pdf?fileName=aca31801-jul-2026.pdf"
+    }
+  },
+  {
+    "icao": "A319",
+    "name": "Airbus A319",
+    "configuration": "A319ceo with wingtip fences (most A319ceos were built before sharklets became available in 2012). CFM56-5B inlet position",
+    "length_m": 33.84,
+    "span_m": 34.1,
+    "height_m": 12.11,
+    "fuselage_width_m": 3.95,
+    "fuselage_height_m": 4.14,
+    "wing_area_m2": 124.0,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 12.45,
+    "engine_count": 2,
+    "engine_type": "CFM56-5B or V2500",
+    "engine_offsets_m": [
+      5.75
+    ],
+    "nacelle_max_diameter_m": 2.0,
+    "nose_to_inlet_m": [
+      9.59
+    ],
+    "wingtip_device": "wingtip fence",
+    "alternates": {
+      "nose_to_inlet_m_v2500": 9.52,
+      "span_m_with_sharklets": 35.8
+    },
+    "sources": {
+      "length_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 (Wing Tip Fence sheets 1–2), PDF pp.42–43: overall length — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "span_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 (Wing Tip Fence sheets 1–2), PDF pp.42–43: wing span — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "height_m": "Airbus A319 AC (Jul 01/26), 2-3-0 Ground Clearances table, VT (vertical tail) — largest in-service value (light weight/maintenance column; jacked value excluded) — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "fuselage_width_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 (Wing Tip Fence sheets 1–2), PDF pp.42–43: plan view fuselage width 3.95 m — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "fuselage_height_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 (Wing Tip Fence sheets 1–2), PDF pp.42–43: side view fuselage depth 4.14 m — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Airbus A320 family' spec table: wing area 122.4 m² (A318), 124 m² (A319/A320), 128 m² (A321); note Airbus usually quotes 122.6 m² reference area for A318–A320 (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A320 family' spec table 'Wingsweep 25 degrees' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "tailplane_span_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 (Wing Tip Fence sheets 1–2), PDF pp.42–43: front view horizontal tail span 12.45 m — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "engine_offsets_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 (Wing Tip Fence sheets 1–2), PDF pp.42–43: plan view engine centreline 5.75 m from aircraft centreline — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: CFM56-5B/V2500 nacelle maximum width scaled from A320 AC plan view (FIGURE-2-2-0-991-004-A01 sheet 4, 300 dpi, fuselage 3.95 m as scale): ≈2.0 m; consistent with A318 AC published PW6000 nacelle max width 2.08 m (FIGURE-2-12-0-991-016-A01)",
+      "nose_to_inlet_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 (Wing Tip Fence sheets 1–2), PDF pp.42–43: plan view nose-to-nacelle-inlet distance (engine-specific) — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf"
+    }
+  },
+  {
+    "icao": "A320",
+    "name": "Airbus A320",
+    "configuration": "A320ceo with wingtip fences (still the larger share of A320ceos; sharklet-equipped ceos are 35.80 m). CFM56-5B inlet position",
+    "length_m": 37.57,
+    "span_m": 34.1,
+    "height_m": 12.08,
+    "fuselage_width_m": 3.95,
+    "fuselage_height_m": 4.14,
+    "wing_area_m2": 124.0,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 12.45,
+    "engine_count": 2,
+    "engine_type": "CFM56-5B or V2500",
+    "engine_offsets_m": [
+      5.75
+    ],
+    "nacelle_max_diameter_m": 2.0,
+    "nose_to_inlet_m": [
+      11.19
+    ],
+    "wingtip_device": "wingtip fence",
+    "alternates": {
+      "nose_to_inlet_m_v2500": 11.12,
+      "span_m_with_sharklets": 35.8
+    },
+    "sources": {
+      "length_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-004-A01 (Wing Tip Fence sheets 1–2; Sharklet sheets 3–4), PDF pp.44–47: overall length — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "span_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-004-A01 (Wing Tip Fence sheets 1–2; Sharklet sheets 3–4), PDF pp.44–47: wing span — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "height_m": "Airbus A320 AC (Jul 01/26), 2-3-0 Ground Clearances table, VT (vertical tail) — largest in-service value (light weight/maintenance column; jacked value excluded) — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "fuselage_width_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-004-A01 (Wing Tip Fence sheets 1–2; Sharklet sheets 3–4), PDF pp.44–47: plan view fuselage width 3.95 m — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "fuselage_height_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-004-A01 (Wing Tip Fence sheets 1–2; Sharklet sheets 3–4), PDF pp.44–47: side view fuselage depth 4.14 m — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Airbus A320 family' spec table: wing area 122.4 m² (A318), 124 m² (A319/A320), 128 m² (A321); note Airbus usually quotes 122.6 m² reference area for A318–A320 (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A320 family' spec table 'Wingsweep 25 degrees' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "tailplane_span_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-004-A01 (Wing Tip Fence sheets 1–2; Sharklet sheets 3–4), PDF pp.44–47: front view horizontal tail span 12.45 m — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "engine_offsets_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-004-A01 (Wing Tip Fence sheets 1–2; Sharklet sheets 3–4), PDF pp.44–47: plan view engine centreline 5.75 m from aircraft centreline — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: CFM56-5B/V2500 nacelle maximum width scaled from A320 AC plan view (FIGURE-2-2-0-991-004-A01 sheet 4, 300 dpi, fuselage 3.95 m as scale): ≈2.0 m; consistent with A318 AC published PW6000 nacelle max width 2.08 m (FIGURE-2-12-0-991-016-A01)",
+      "nose_to_inlet_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-004-A01 (Wing Tip Fence sheets 1–2; Sharklet sheets 3–4), PDF pp.44–47: plan view nose-to-nacelle-inlet distance (engine-specific) — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf"
+    }
+  },
+  {
+    "icao": "A321",
+    "name": "Airbus A321",
+    "configuration": "A321ceo with sharklets (roughly half of A321ceos, built 2013+, have them; fence version 34.10 m). CFM56-5B inlet position",
+    "length_m": 44.51,
+    "span_m": 35.8,
+    "height_m": 12.1,
+    "fuselage_width_m": 3.95,
+    "fuselage_height_m": 4.14,
+    "wing_area_m2": 128.0,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 12.45,
+    "engine_count": 2,
+    "engine_type": "CFM56-5B or V2500",
+    "engine_offsets_m": [
+      5.75
+    ],
+    "nacelle_max_diameter_m": 2.0,
+    "nose_to_inlet_m": [
+      15.46
+    ],
+    "wingtip_device": "sharklet",
+    "alternates": {
+      "nose_to_inlet_m_v2500": 15.39,
+      "span_m_with_wingtip_fences": 34.1
+    },
+    "sources": {
+      "length_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-005-A01 (Sharklet sheets 3–4), PDF pp.69–70: overall length — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "span_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-005-A01 (Sharklet sheets 3–4), PDF pp.69–70: wing span — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "height_m": "Airbus A321 AC (Jul 01/26), 2-3-0 Ground Clearances table, VT (vertical tail) — largest in-service value (light weight/maintenance column; jacked value excluded) — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "fuselage_width_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-005-A01 (Sharklet sheets 3–4), PDF pp.69–70: plan view fuselage width 3.95 m — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "fuselage_height_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-005-A01 (Sharklet sheets 3–4), PDF pp.69–70: side view fuselage depth 4.14 m — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Airbus A320 family' spec table: wing area 122.4 m² (A318), 124 m² (A319/A320), 128 m² (A321); note Airbus usually quotes 122.6 m² reference area for A318–A320 (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A320 family' spec table 'Wingsweep 25 degrees' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "tailplane_span_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-005-A01 (Sharklet sheets 3–4), PDF pp.69–70: front view horizontal tail span 12.45 m — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "engine_offsets_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-005-A01 (Sharklet sheets 3–4), PDF pp.69–70: plan view engine centreline 5.75 m from aircraft centreline — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: CFM56-5B/V2500 nacelle maximum width scaled from A320 AC plan view (FIGURE-2-2-0-991-004-A01 sheet 4, 300 dpi, fuselage 3.95 m as scale): ≈2.0 m; consistent with A318 AC published PW6000 nacelle max width 2.08 m (FIGURE-2-12-0-991-016-A01)",
+      "nose_to_inlet_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-005-A01 (Sharklet sheets 3–4), PDF pp.69–70: plan view nose-to-nacelle-inlet distance (engine-specific) — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf"
+    }
+  },
+  {
+    "icao": "A19N",
+    "name": "Airbus A319neo",
+    "configuration": "A319neo (sharklets standard)",
+    "length_m": 33.84,
+    "span_m": 35.8,
+    "height_m": 12.11,
+    "fuselage_width_m": 3.95,
+    "fuselage_height_m": 4.14,
+    "wing_area_m2": 124.0,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 12.45,
+    "engine_count": 2,
+    "engine_type": "LEAP-1A or PW1100G",
+    "engine_offsets_m": [
+      5.75
+    ],
+    "nacelle_max_diameter_m": 2.7,
+    "nose_to_inlet_m": [
+      9.54
+    ],
+    "wingtip_device": "sharklet",
+    "sources": {
+      "length_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-008-A01, PDF pp.46–47: overall length — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "span_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-008-A01, PDF pp.46–47: wing span — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "height_m": "Airbus A319 AC (Jul 01/26), 2-3-0 Ground Clearances table, VT (vertical tail) — largest in-service value (light weight/maintenance column; jacked value excluded) — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "fuselage_width_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-008-A01, PDF pp.46–47: plan view fuselage width 3.95 m — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "fuselage_height_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-008-A01, PDF pp.46–47: side view fuselage depth 4.14 m — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Airbus A320 family' spec table: wing area 122.4 m² (A318), 124 m² (A319/A320), 128 m² (A321); note Airbus usually quotes 122.6 m² reference area for A318–A320 (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A320 family' spec table 'Wingsweep 25 degrees' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "tailplane_span_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-008-A01, PDF pp.46–47: front view horizontal tail span 12.45 m — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "engine_offsets_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-008-A01, PDF pp.46–47: plan view engine centreline 5.75 m from aircraft centreline — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: LEAP-1A/PW1100G nacelle maximum width scaled from A320neo AC plan view (FIGURE-2-2-0-991-009-A01 sheet 2, 300 dpi, fuselage 3.95 m as scale): 2.72–2.78 m. Method checked against Airbus-published A330neo/A380 nacelle widths (within ~3%), but it overstated the A350 by ~15%, so treat as ±0.2 m",
+      "nose_to_inlet_m": "Airbus A319 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-008-A01, PDF pp.46–47: plan view nose-to-nacelle-inlet distance (engine-specific) — https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf"
+    }
+  },
+  {
+    "icao": "A20N",
+    "name": "Airbus A320neo",
+    "configuration": "A320neo (sharklets standard)",
+    "length_m": 37.57,
+    "span_m": 35.8,
+    "height_m": 12.08,
+    "fuselage_width_m": 3.95,
+    "fuselage_height_m": 4.14,
+    "wing_area_m2": 124.0,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 12.45,
+    "engine_count": 2,
+    "engine_type": "LEAP-1A or PW1100G",
+    "engine_offsets_m": [
+      5.75
+    ],
+    "nacelle_max_diameter_m": 2.7,
+    "nose_to_inlet_m": [
+      11.14
+    ],
+    "wingtip_device": "sharklet",
+    "sources": {
+      "length_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-009-A01, PDF pp.48–49: overall length — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "span_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-009-A01, PDF pp.48–49: wing span — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "height_m": "Airbus A320 AC (Jul 01/26), 2-3-0 Ground Clearances table, VT (vertical tail) — largest in-service value (light weight/maintenance column; jacked value excluded) — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "fuselage_width_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-009-A01, PDF pp.48–49: plan view fuselage width 3.95 m — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "fuselage_height_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-009-A01, PDF pp.48–49: side view fuselage depth 4.14 m — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Airbus A320 family' spec table: wing area 122.4 m² (A318), 124 m² (A319/A320), 128 m² (A321); note Airbus usually quotes 122.6 m² reference area for A318–A320 (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A320 family' spec table 'Wingsweep 25 degrees' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "tailplane_span_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-009-A01, PDF pp.48–49: front view horizontal tail span 12.45 m — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "engine_offsets_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-009-A01, PDF pp.48–49: plan view engine centreline 5.75 m from aircraft centreline — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: LEAP-1A/PW1100G nacelle maximum width scaled from A320neo AC plan view (FIGURE-2-2-0-991-009-A01 sheet 2, 300 dpi, fuselage 3.95 m as scale): 2.72–2.78 m. Method checked against Airbus-published A330neo/A380 nacelle widths (within ~3%), but it overstated the A350 by ~15%, so treat as ±0.2 m",
+      "nose_to_inlet_m": "Airbus A320 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-009-A01, PDF pp.48–49: plan view nose-to-nacelle-inlet distance (engine-specific) — https://mediaassets.airbus.com/pm_38_916_916266-iujedqawwy.pdf?fileName=aca32001-jul-2026-2.pdf"
+    }
+  },
+  {
+    "icao": "A21N",
+    "name": "Airbus A321neo",
+    "configuration": "A321neo (also covers ACF/LR/XLR, same external dimensions)",
+    "length_m": 44.51,
+    "span_m": 35.8,
+    "height_m": 12.1,
+    "fuselage_width_m": 3.95,
+    "fuselage_height_m": 4.14,
+    "wing_area_m2": 128.0,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 12.45,
+    "engine_count": 2,
+    "engine_type": "LEAP-1A or PW1100G",
+    "engine_offsets_m": [
+      5.75
+    ],
+    "nacelle_max_diameter_m": 2.7,
+    "nose_to_inlet_m": [
+      15.4
+    ],
+    "wingtip_device": "sharklet",
+    "sources": {
+      "length_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-010-A01 (and -012-A01 for ACF/XLR, identical values), PDF pp.71–74: overall length — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "span_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-010-A01 (and -012-A01 for ACF/XLR, identical values), PDF pp.71–74: wing span — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "height_m": "Airbus A321 AC (Jul 01/26), 2-3-0 Ground Clearances table, VT (vertical tail) — largest in-service value (light weight/maintenance column; jacked value excluded) — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "fuselage_width_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-010-A01 (and -012-A01 for ACF/XLR, identical values), PDF pp.71–74: plan view fuselage width 3.95 m — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "fuselage_height_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-010-A01 (and -012-A01 for ACF/XLR, identical values), PDF pp.71–74: side view fuselage depth 4.14 m — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Airbus A320 family' spec table: wing area 122.4 m² (A318), 124 m² (A319/A320), 128 m² (A321); note Airbus usually quotes 122.6 m² reference area for A318–A320 (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A320 family' spec table 'Wingsweep 25 degrees' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A320_family",
+      "tailplane_span_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-010-A01 (and -012-A01 for ACF/XLR, identical values), PDF pp.71–74: front view horizontal tail span 12.45 m — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "engine_offsets_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-010-A01 (and -012-A01 for ACF/XLR, identical values), PDF pp.71–74: plan view engine centreline 5.75 m from aircraft centreline — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: LEAP-1A/PW1100G nacelle maximum width scaled from A320neo AC plan view (FIGURE-2-2-0-991-009-A01 sheet 2, 300 dpi, fuselage 3.95 m as scale): 2.72–2.78 m. Method checked against Airbus-published A330neo/A380 nacelle widths (within ~3%), but it overstated the A350 by ~15%, so treat as ±0.2 m",
+      "nose_to_inlet_m": "Airbus A321 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-010-A01 (and -012-A01 for ACF/XLR, identical values), PDF pp.71–74: plan view nose-to-nacelle-inlet distance (engine-specific) — https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf"
+    }
+  },
+  {
+    "icao": "B736",
+    "name": "Boeing 737-600",
+    "configuration": "Basic wing, no winglets (737-600W exists but is rare)",
+    "length_m": 31.24,
+    "span_m": 34.32,
+    "height_m": 12.57,
+    "fuselage_width_m": 3.76,
+    "fuselage_height_m": 4.01,
+    "wing_area_m2": 124.6,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 14.35,
+    "engine_count": 2,
+    "engine_type": "CFM56-7B",
+    "engine_offsets_m": [
+      4.83
+    ],
+    "nacelle_max_diameter_m": 2.3,
+    "nose_to_inlet_m": [
+      8.84
+    ],
+    "wingtip_device": "plain (no winglet)",
+    "sources": {
+      "length_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.1 General Dimensions 737-600, p.2-9: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "span_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.1 General Dimensions 737-600, p.2-9: wing span — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "height_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.1 General Dimensions 737-600, p.2-9: overall height (tail) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "fuselage_width_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.1 General Dimensions 737-600, p.2-9: fuselage width 12 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "fuselage_height_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.1–2.2.4 General Dimensions side view, fuselage depth 13 ft 2 in (4.01 m); NG and MAX share the 737 fuselage cross-section — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 737 Next Generation' infobox/spec 'wing area sqm=124.60' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_737_Next_Generation",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-published 737NG quarter-chord sweep 25.02° (widely quoted, e.g. Boeing 737 technical characteristics page, archived)",
+      "tailplane_span_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.1 General Dimensions 737-600, p.2-9: horizontal stabilizer span 47 ft 1 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "engine_offsets_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.1 General Dimensions 737-600, p.2-9: engine centreline 15 ft 10 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: CFM56-7B nacelle maximum width scaled from the ACAPS plan view (737-700W §2.2.4 and 737-800W §2.2.6 drawings rendered at 300 dpi; drawing scale from overall length / fuselage width): 2.30–2.38 m. Width as seen from above (the 737 nacelle is flattened, so this exceeds its height)",
+      "nose_to_inlet_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.1 General Dimensions 737-600, p.2-9: nose to engine inlet dimension — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf"
+    }
+  },
+  {
+    "icao": "B737",
+    "name": "Boeing 737-700",
+    "configuration": "737-700W with Aviation Partners Boeing blended winglets (most in-service -700s, e.g. Southwest)",
+    "length_m": 33.63,
+    "span_m": 35.79,
+    "height_m": 12.57,
+    "fuselage_width_m": 3.76,
+    "fuselage_height_m": 4.01,
+    "wing_area_m2": 124.6,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 14.35,
+    "engine_count": 2,
+    "engine_type": "CFM56-7B",
+    "engine_offsets_m": [
+      4.83
+    ],
+    "nacelle_max_diameter_m": 2.3,
+    "nose_to_inlet_m": [
+      10.36
+    ],
+    "wingtip_device": "blended winglet (some retrofitted to split scimitar; span essentially unchanged)",
+    "sources": {
+      "length_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.4 General Dimensions 737-700W, BBJ1, p.2-12: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "span_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.4 General Dimensions 737-700W, BBJ1, p.2-12: wing span — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "height_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.4 General Dimensions 737-700W, BBJ1, p.2-12: overall height (tail) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "fuselage_width_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.4 General Dimensions 737-700W, BBJ1, p.2-12: fuselage width 12 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "fuselage_height_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.1–2.2.4 General Dimensions side view, fuselage depth 13 ft 2 in (4.01 m); NG and MAX share the 737 fuselage cross-section — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 737 Next Generation' infobox/spec 'wing area sqm=124.60' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_737_Next_Generation",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-published 737NG quarter-chord sweep 25.02° (widely quoted, e.g. Boeing 737 technical characteristics page, archived)",
+      "tailplane_span_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.4 General Dimensions 737-700W, BBJ1, p.2-12: horizontal stabilizer span 47 ft 1 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "engine_offsets_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.4 General Dimensions 737-700W, BBJ1, p.2-12: engine centreline 15 ft 10 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: CFM56-7B nacelle maximum width scaled from the ACAPS plan view (737-700W §2.2.4 and 737-800W §2.2.6 drawings rendered at 300 dpi; drawing scale from overall length / fuselage width): 2.30–2.38 m. Width as seen from above (the 737 nacelle is flattened, so this exceeds its height)",
+      "nose_to_inlet_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.4 General Dimensions 737-700W, BBJ1, p.2-12: nose to engine inlet dimension — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf"
+    }
+  },
+  {
+    "icao": "B738",
+    "name": "Boeing 737-800",
+    "configuration": "737-800W with blended winglets (most in-service -800s; many now split scimitar, which ACAPS does not show)",
+    "length_m": 39.47,
+    "span_m": 35.79,
+    "height_m": 12.55,
+    "fuselage_width_m": 3.76,
+    "fuselage_height_m": 4.01,
+    "wing_area_m2": 124.6,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 14.35,
+    "engine_count": 2,
+    "engine_type": "CFM56-7B",
+    "engine_offsets_m": [
+      4.83
+    ],
+    "nacelle_max_diameter_m": 2.3,
+    "nose_to_inlet_m": [
+      13.36
+    ],
+    "wingtip_device": "blended winglet (many retrofitted to split scimitar)",
+    "sources": {
+      "length_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.6 General Dimensions 737-800W, BBJ2, -800BCF, p.2-14: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "span_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.6 General Dimensions 737-800W, BBJ2, -800BCF, p.2-14: wing span — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "height_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.6 General Dimensions 737-800W, BBJ2, -800BCF, p.2-14: overall height (tail) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "fuselage_width_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.6 General Dimensions 737-800W, BBJ2, -800BCF, p.2-14: fuselage width 12 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "fuselage_height_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.1–2.2.4 General Dimensions side view, fuselage depth 13 ft 2 in (4.01 m); NG and MAX share the 737 fuselage cross-section — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 737 Next Generation' infobox/spec 'wing area sqm=124.60' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_737_Next_Generation",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-published 737NG quarter-chord sweep 25.02° (widely quoted, e.g. Boeing 737 technical characteristics page, archived)",
+      "tailplane_span_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.6 General Dimensions 737-800W, BBJ2, -800BCF, p.2-14: horizontal stabilizer span 47 ft 1 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "engine_offsets_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.6 General Dimensions 737-800W, BBJ2, -800BCF, p.2-14: engine centreline 15 ft 10 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: CFM56-7B nacelle maximum width scaled from the ACAPS plan view (737-700W §2.2.4 and 737-800W §2.2.6 drawings rendered at 300 dpi; drawing scale from overall length / fuselage width): 2.30–2.38 m. Width as seen from above (the 737 nacelle is flattened, so this exceeds its height)",
+      "nose_to_inlet_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.6 General Dimensions 737-800W, BBJ2, -800BCF, p.2-14: nose to engine inlet dimension — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf"
+    }
+  },
+  {
+    "icao": "B739",
+    "name": "Boeing 737-900ER",
+    "configuration": "737-900ERW with blended winglets (the -900ER is most of the B739 fleet; many split scimitar)",
+    "length_m": 42.11,
+    "span_m": 35.79,
+    "height_m": 12.55,
+    "fuselage_width_m": 3.76,
+    "fuselage_height_m": 4.01,
+    "wing_area_m2": 124.6,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 14.35,
+    "engine_count": 2,
+    "engine_type": "CFM56-7B",
+    "engine_offsets_m": [
+      4.83
+    ],
+    "nacelle_max_diameter_m": 2.3,
+    "nose_to_inlet_m": [
+      14.73
+    ],
+    "wingtip_device": "blended winglet (many retrofitted to split scimitar)",
+    "sources": {
+      "length_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.8 General Dimensions 737-900W, -900ERW, p.2-16: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "span_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.8 General Dimensions 737-900W, -900ERW, p.2-16: wing span — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "height_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.8 General Dimensions 737-900W, -900ERW, p.2-16: overall height (tail) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "fuselage_width_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.8 General Dimensions 737-900W, -900ERW, p.2-16: fuselage width 12 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "fuselage_height_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.1–2.2.4 General Dimensions side view, fuselage depth 13 ft 2 in (4.01 m); NG and MAX share the 737 fuselage cross-section — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 737 Next Generation' infobox/spec 'wing area sqm=124.60' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_737_Next_Generation",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-published 737NG quarter-chord sweep 25.02° (widely quoted, e.g. Boeing 737 technical characteristics page, archived)",
+      "tailplane_span_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.8 General Dimensions 737-900W, -900ERW, p.2-16: horizontal stabilizer span 47 ft 1 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "engine_offsets_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.8 General Dimensions 737-900W, -900ERW, p.2-16: engine centreline 15 ft 10 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: CFM56-7B nacelle maximum width scaled from the ACAPS plan view (737-700W §2.2.4 and 737-800W §2.2.6 drawings rendered at 300 dpi; drawing scale from overall length / fuselage width): 2.30–2.38 m. Width as seen from above (the 737 nacelle is flattened, so this exceeds its height)",
+      "nose_to_inlet_m": "Boeing D6-58325-7 Rev C (Oct 2025) 737NG ACAPS, §2.2.8 General Dimensions 737-900W, -900ERW, p.2-16: nose to engine inlet dimension — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737NG_REV_C.pdf"
+    }
+  },
+  {
+    "icao": "B37M",
+    "name": "Boeing 737 MAX 7",
+    "configuration": "Production configuration with Advanced Technology (AT) winglet",
+    "length_m": 35.56,
+    "span_m": 35.92,
+    "height_m": 12.5,
+    "fuselage_width_m": 3.76,
+    "fuselage_height_m": 4.01,
+    "wing_area_m2": 124.6,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 14.35,
+    "engine_count": 2,
+    "engine_type": "CFM LEAP-1B",
+    "engine_offsets_m": [
+      4.82
+    ],
+    "nacelle_max_diameter_m": 2.5,
+    "nose_to_inlet_m": [
+      10.77
+    ],
+    "wingtip_device": "Advanced Technology (AT) winglet (dual-feather, upper and lower blade)",
+    "sources": {
+      "length_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.1 General Dimensions 737-7, p.2-9: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "span_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.1 General Dimensions 737-7, p.2-9: wing span 117 ft 10 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "height_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, Ground clearances §2.3.1 p.2-13: vertical stabilizer, maximum nominal — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "fuselage_width_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.1 General Dimensions 737-7, p.2-9: fuselage width 12 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "fuselage_height_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.1 General Dimensions 737-7, p.2-9: fuselage depth 13 ft 2 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "wing_area_m2": "ESTIMATE: Boeing does not publish a MAX reference area; value is the 737NG reference area (124.6 m², Wikipedia 737NG spec), the MAX keeps the NG wing planform with a new tip/winglet. Secondary sources sometimes quote ~127 m² including winglet",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-published 737NG quarter-chord sweep 25.02° (widely quoted, e.g. Boeing 737 technical characteristics page, archived); MAX keeps the NG wing sweep",
+      "tailplane_span_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.1 General Dimensions 737-7, p.2-9: horizontal stabilizer span 47 ft 1 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "engine_offsets_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.1 General Dimensions 737-7, p.2-9: engine centreline 15 ft 10 in (4.82 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: LEAP-1B nacelle maximum width scaled from ACAPS 737-8 plan view (§2.2.2, 300 dpi) using drawing scale from the overall length: ≈2.5 m (±0.15)",
+      "nose_to_inlet_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.1 General Dimensions 737-7, p.2-9: nose to engine inlet dimension — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf"
+    }
+  },
+  {
+    "icao": "B38M",
+    "name": "Boeing 737 MAX 8",
+    "configuration": "Production configuration with Advanced Technology (AT) winglet",
+    "length_m": 39.47,
+    "span_m": 35.92,
+    "height_m": 12.45,
+    "fuselage_width_m": 3.76,
+    "fuselage_height_m": 4.01,
+    "wing_area_m2": 124.6,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 14.35,
+    "engine_count": 2,
+    "engine_type": "CFM LEAP-1B",
+    "engine_offsets_m": [
+      4.82
+    ],
+    "nacelle_max_diameter_m": 2.5,
+    "nose_to_inlet_m": [
+      13.0
+    ],
+    "wingtip_device": "Advanced Technology (AT) winglet (dual-feather, upper and lower blade)",
+    "sources": {
+      "length_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.2 General Dimensions 737-8/-8-200/BBJ MAX 8, p.2-10: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "span_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.2 General Dimensions 737-8/-8-200/BBJ MAX 8, p.2-10: wing span 117 ft 10 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "height_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, Ground clearances §2.3.2 p.2-14: vertical stabilizer, maximum nominal — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "fuselage_width_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.2 General Dimensions 737-8/-8-200/BBJ MAX 8, p.2-10: fuselage width 12 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "fuselage_height_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.2 General Dimensions 737-8/-8-200/BBJ MAX 8, p.2-10: fuselage depth 13 ft 2 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "wing_area_m2": "ESTIMATE: Boeing does not publish a MAX reference area; value is the 737NG reference area (124.6 m², Wikipedia 737NG spec), the MAX keeps the NG wing planform with a new tip/winglet. Secondary sources sometimes quote ~127 m² including winglet",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-published 737NG quarter-chord sweep 25.02° (widely quoted, e.g. Boeing 737 technical characteristics page, archived); MAX keeps the NG wing sweep",
+      "tailplane_span_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.2 General Dimensions 737-8/-8-200/BBJ MAX 8, p.2-10: horizontal stabilizer span 47 ft 1 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "engine_offsets_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.2 General Dimensions 737-8/-8-200/BBJ MAX 8, p.2-10: engine centreline 15 ft 10 in (4.82 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: LEAP-1B nacelle maximum width scaled from ACAPS 737-8 plan view (§2.2.2, 300 dpi) using drawing scale from the overall length: ≈2.5 m (±0.15)",
+      "nose_to_inlet_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.2 General Dimensions 737-8/-8-200/BBJ MAX 8, p.2-10: nose to engine inlet dimension — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf"
+    }
+  },
+  {
+    "icao": "B39M",
+    "name": "Boeing 737 MAX 9",
+    "configuration": "Production configuration with Advanced Technology (AT) winglet",
+    "length_m": 42.11,
+    "span_m": 35.92,
+    "height_m": 12.4,
+    "fuselage_width_m": 3.76,
+    "fuselage_height_m": 4.01,
+    "wing_area_m2": 124.6,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 14.35,
+    "engine_count": 2,
+    "engine_type": "CFM LEAP-1B",
+    "engine_offsets_m": [
+      4.82
+    ],
+    "nacelle_max_diameter_m": 2.5,
+    "nose_to_inlet_m": [
+      14.58
+    ],
+    "wingtip_device": "Advanced Technology (AT) winglet (dual-feather, upper and lower blade)",
+    "sources": {
+      "length_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.3 General Dimensions 737-9/BBJ MAX 9, p.2-11: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "span_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.3 General Dimensions 737-9/BBJ MAX 9, p.2-11: wing span 117 ft 10 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "height_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, Ground clearances §2.3.3 p.2-15: vertical stabilizer, maximum nominal — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "fuselage_width_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.3 General Dimensions 737-9/BBJ MAX 9, p.2-11: fuselage width 12 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "fuselage_height_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.3 General Dimensions 737-9/BBJ MAX 9, p.2-11: fuselage depth 13 ft 2 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "wing_area_m2": "ESTIMATE: Boeing does not publish a MAX reference area; value is the 737NG reference area (124.6 m², Wikipedia 737NG spec), the MAX keeps the NG wing planform with a new tip/winglet. Secondary sources sometimes quote ~127 m² including winglet",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-published 737NG quarter-chord sweep 25.02° (widely quoted, e.g. Boeing 737 technical characteristics page, archived); MAX keeps the NG wing sweep",
+      "tailplane_span_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.3 General Dimensions 737-9/BBJ MAX 9, p.2-11: horizontal stabilizer span 47 ft 1 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "engine_offsets_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.3 General Dimensions 737-9/BBJ MAX 9, p.2-11: engine centreline 15 ft 10 in (4.82 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: LEAP-1B nacelle maximum width scaled from ACAPS 737-8 plan view (§2.2.2, 300 dpi) using drawing scale from the overall length: ≈2.5 m (±0.15)",
+      "nose_to_inlet_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.3 General Dimensions 737-9/BBJ MAX 9, p.2-11: nose to engine inlet dimension — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf"
+    }
+  },
+  {
+    "icao": "B3XM",
+    "name": "Boeing 737 MAX 10",
+    "configuration": "Production configuration with Advanced Technology (AT) winglet",
+    "length_m": 43.79,
+    "span_m": 35.92,
+    "height_m": 12.45,
+    "fuselage_width_m": 3.76,
+    "fuselage_height_m": 4.01,
+    "wing_area_m2": 124.6,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 14.35,
+    "engine_count": 2,
+    "engine_type": "CFM LEAP-1B",
+    "engine_offsets_m": [
+      4.82
+    ],
+    "nacelle_max_diameter_m": 2.5,
+    "nose_to_inlet_m": [
+      15.6
+    ],
+    "wingtip_device": "Advanced Technology (AT) winglet (dual-feather, upper and lower blade)",
+    "sources": {
+      "length_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.4 General Dimensions 737-10 (preliminary), p.2-12: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "span_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.4 General Dimensions 737-10 (preliminary), p.2-12: wing span 117 ft 10 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "height_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, Ground clearances §2.3.4 p.2-16: vertical stabilizer, maximum nominal — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "fuselage_width_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.4 General Dimensions 737-10 (preliminary), p.2-12: fuselage width 12 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "fuselage_height_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.4 General Dimensions 737-10 (preliminary), p.2-12: fuselage depth 13 ft 2 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "wing_area_m2": "ESTIMATE: Boeing does not publish a MAX reference area; value is the 737NG reference area (124.6 m², Wikipedia 737NG spec), the MAX keeps the NG wing planform with a new tip/winglet. Secondary sources sometimes quote ~127 m² including winglet",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-published 737NG quarter-chord sweep 25.02° (widely quoted, e.g. Boeing 737 technical characteristics page, archived); MAX keeps the NG wing sweep",
+      "tailplane_span_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.4 General Dimensions 737-10 (preliminary), p.2-12: horizontal stabilizer span 47 ft 1 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "engine_offsets_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.4 General Dimensions 737-10 (preliminary), p.2-12: engine centreline 15 ft 10 in (4.82 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: LEAP-1B nacelle maximum width scaled from ACAPS 737-8 plan view (§2.2.2, 300 dpi) using drawing scale from the overall length: ≈2.5 m (±0.15)",
+      "nose_to_inlet_m": "Boeing D6-38A004 Rev K (Jul 2025) 737 MAX ACAPS, §2.2.4 General Dimensions 737-10 (preliminary), p.2-12: nose to engine inlet dimension — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/737MAX_RevK.pdf"
+    }
+  },
+  {
+    "icao": "B752",
+    "name": "Boeing 757-200",
+    "configuration": "With Aviation Partners Boeing blended winglets (retrofit fitted to most passenger 757s at Delta/United/Icelandair etc.; most 757-200 freighters lack them). Rolls-Royce RB211-535 inlet position chosen",
+    "length_m": 47.32,
+    "span_m": 41.07,
+    "height_m": 13.74,
+    "fuselage_width_m": 3.76,
+    "fuselage_height_m": 4.01,
+    "wing_area_m2": 185.25,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 15.21,
+    "engine_count": 2,
+    "engine_type": "RB211-535 or PW2000",
+    "engine_offsets_m": [
+      6.48
+    ],
+    "nacelle_max_diameter_m": 2.4,
+    "nose_to_inlet_m": [
+      16.84
+    ],
+    "wingtip_device": "blended winglet (APB retrofit)",
+    "alternates": {
+      "span_m_without_winglets": 38.05,
+      "nose_to_inlet_m_pw2000": 16.61
+    },
+    "notes": "~Half the B752 population (freighters) has the 38.05 m plain tip.",
+    "sources": {
+      "length_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, §2.2.1 General Dimensions 757-200, -200PF, p.2-10: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+      "span_m": "Boeing airport FAQ 'wingletspans.pdf' (APB blended winglet spans); URL now returns 404/redirect, value taken from a search-engine summary of that document, not re-read in full, 757-200/-300 maximum span with winglets 134 ft 9 in — https://www.boeing.com/resources/boeingdotcom/commercial/airports/faqs/wingletspans.pdf",
+      "height_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, Ground clearances §2.3.1 p.2-12, dimension K maximum (largest dimension, taken as vertical-tail tip) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+      "fuselage_width_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, §2.2.1 General Dimensions 757-200, -200PF, p.2-10: fuselage width 12 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+      "fuselage_height_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, §2.2.1 p.2-10 side view: fuselage depth 13 ft 2 in (4.01 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 757' infobox 'wing area sqm=185.25' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_757",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Boeing 757' text: 'swept at 25 degrees' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_757",
+      "tailplane_span_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, §2.2.1 General Dimensions 757-200, -200PF, p.2-10: horizontal stabilizer span 49 ft 11 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+      "engine_offsets_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, §2.2.1 General Dimensions 757-200, -200PF, p.2-10: engine centreline 21 ft 3 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: RB211-535 nacelle maximum width scaled from ACAPS 757-200 plan view (§2.2.1, 300 dpi, blue-outline mask, fuselage width 3.76 m as scale): ≈2.4 m",
+      "nose_to_inlet_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, §2.2.1 General Dimensions 757-200, -200PF, p.2-10: nose to inlet, (RR) value; (PW) value in alternates — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf"
+    }
+  },
+  {
+    "icao": "B753",
+    "name": "Boeing 757-300",
+    "configuration": "With Aviation Partners Boeing blended winglets (retrofit fitted to most passenger 757s at Delta/United/Icelandair etc.; most 757-200 freighters lack them). Rolls-Royce RB211-535 inlet position chosen",
+    "length_m": 54.43,
+    "span_m": 41.07,
+    "height_m": 13.64,
+    "fuselage_width_m": 3.76,
+    "fuselage_height_m": 4.01,
+    "wing_area_m2": 185.25,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 15.22,
+    "engine_count": 2,
+    "engine_type": "RB211-535 or PW2000",
+    "engine_offsets_m": [
+      6.5
+    ],
+    "nacelle_max_diameter_m": 2.4,
+    "nose_to_inlet_m": [
+      20.9
+    ],
+    "wingtip_device": "blended winglet (APB retrofit)",
+    "alternates": {
+      "span_m_without_winglets": 38.06,
+      "nose_to_inlet_m_pw2000": 20.68
+    },
+    "notes": "Earlier research used 41.10 m for the 757 winglet span; the Boeing winglet FAQ gives 134 ft 9 in = 41.07 m (computed). Difference is 3 cm.",
+    "sources": {
+      "length_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, §2.2.2 General Dimensions 757-300, p.2-11: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+      "span_m": "Boeing airport FAQ 'wingletspans.pdf' (APB blended winglet spans); URL now returns 404/redirect, value taken from a search-engine summary of that document, not re-read in full, 757-200/-300 maximum span with winglets 134 ft 9 in — https://www.boeing.com/resources/boeingdotcom/commercial/airports/faqs/wingletspans.pdf",
+      "height_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, Ground clearances §2.3.2 p.2-13, dimension K maximum (largest dimension, taken as vertical-tail tip) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+      "fuselage_width_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, §2.2.2 General Dimensions 757-300, p.2-11: fuselage width 12 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+      "fuselage_height_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, §2.2.1 p.2-10 side view: fuselage depth 13 ft 2 in (4.01 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 757' infobox 'wing area sqm=185.25' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_757",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Boeing 757' text: 'swept at 25 degrees' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_757",
+      "tailplane_span_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, §2.2.2 General Dimensions 757-300, p.2-11: horizontal stabilizer span 49 ft 11 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+      "engine_offsets_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, §2.2.2 General Dimensions 757-300, p.2-11: engine centreline 21 ft 3 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: RB211-535 nacelle maximum width scaled from ACAPS 757-200 plan view (§2.2.1, 300 dpi, blue-outline mask, fuselage width 3.76 m as scale): ≈2.4 m",
+      "nose_to_inlet_m": "Boeing D6-58327 Rev H (Dec 2024) 757 ACAPS, §2.2.2 General Dimensions 757-300, p.2-11: nose to inlet, (RR) value; (PW) value in alternates — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/757_Rev_H.pdf"
+    }
+  },
+  {
+    "icao": "B762",
+    "name": "Boeing 767-200ER",
+    "configuration": "767-200/-200ER basic wing (no winglets). GE CF6-80C2 inlet position chosen",
+    "length_m": 48.51,
+    "span_m": 47.57,
+    "height_m": 16.13,
+    "fuselage_width_m": 5.03,
+    "fuselage_height_m": 5.41,
+    "wing_area_m2": 283.3,
+    "wing_sweep_qc_deg": 31.5,
+    "tailplane_span_m": 18.62,
+    "engine_count": 2,
+    "engine_type": "CF6-80C2 or PW4000 (or RB211-524H on some -300ERs)",
+    "engine_offsets_m": [
+      7.92
+    ],
+    "nacelle_max_diameter_m": 2.7,
+    "nose_to_inlet_m": [
+      15.47
+    ],
+    "wingtip_device": "plain (no winglet)",
+    "alternates": {
+      "nose_to_inlet_m_pw_rr": 15.65
+    },
+    "sources": {
+      "length_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.1 General Dimensions 767-200, -200ER, p.2-8: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "span_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.1 General Dimensions 767-200, -200ER, p.2-8: wing span — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "height_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, Ground clearances §2.3.1 p.2-12, dimension J maximum (largest dimension, taken as vertical-tail tip) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "fuselage_width_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.1 General Dimensions 767-200, -200ER, p.2-8: fuselage width 16 ft 6 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "fuselage_height_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.1 General Dimensions 767-200, -200ER, p.2-8: side view fuselage depth 17 ft 9 in (5.41 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 767' spec table '3,050 sq ft (283.3 m²), 31.5° sweepback' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_767",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Boeing 767' spec table '31.5° sweepback' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_767",
+      "tailplane_span_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.1 General Dimensions 767-200, -200ER, p.2-8: horizontal stabilizer span 61 ft 1 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "engine_offsets_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.1 General Dimensions 767-200, -200ER, p.2-8: engine centreline 26 ft 0 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: CF6-80C2/PW4000 nacelle maximum width scaled from ACAPS 767-300 and 767-400ER plan views (300 dpi, blue-outline mask, fuselage width 5.03 m as scale): 2.73–2.77 m",
+      "nose_to_inlet_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.1 General Dimensions 767-200, -200ER, p.2-8: nose to inlet, GE value; RR/PW value in alternates — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf"
+    }
+  },
+  {
+    "icao": "B763",
+    "name": "Boeing 767-300ER",
+    "configuration": "Basic wing without winglets, because the large 767-300F freighter fleets (FedEx, UPS) dominate B763 traffic; passenger -300ERs at United/Delta mostly carry APB winglets (span 50.90 m). GE CF6-80C2 inlet position chosen",
+    "length_m": 54.94,
+    "span_m": 47.57,
+    "height_m": 16.03,
+    "fuselage_width_m": 5.03,
+    "fuselage_height_m": 5.41,
+    "wing_area_m2": 283.3,
+    "wing_sweep_qc_deg": 31.5,
+    "tailplane_span_m": 18.62,
+    "engine_count": 2,
+    "engine_type": "CF6-80C2 or PW4000 (or RB211-524H on some -300ERs)",
+    "engine_offsets_m": [
+      7.92
+    ],
+    "nacelle_max_diameter_m": 2.7,
+    "nose_to_inlet_m": [
+      18.54
+    ],
+    "wingtip_device": "plain (no winglet) — APB blended winglet on many passenger aircraft",
+    "alternates": {
+      "span_m_with_apb_winglets": 50.9,
+      "nose_to_inlet_m_pw_rr": 18.72
+    },
+    "sources": {
+      "length_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.2 General Dimensions 767-300, -300ER, p.2-9: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "span_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.2 General Dimensions 767-300, -300ER, p.2-9: wing span — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "height_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, Ground clearances §2.3.2 p.2-13, dimension J maximum (largest dimension, taken as vertical-tail tip) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "fuselage_width_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.2 General Dimensions 767-300, -300ER, p.2-9: fuselage width 16 ft 6 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "fuselage_height_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.2 General Dimensions 767-300, -300ER, p.2-9: side view fuselage depth 17 ft 9 in (5.41 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 767' spec table '3,050 sq ft (283.3 m²), 31.5° sweepback' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_767",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Boeing 767' spec table '31.5° sweepback' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_767",
+      "tailplane_span_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.2 General Dimensions 767-300, -300ER, p.2-9: horizontal stabilizer span 61 ft 1 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "engine_offsets_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.2 General Dimensions 767-300, -300ER, p.2-9: engine centreline 26 ft 0 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: CF6-80C2/PW4000 nacelle maximum width scaled from ACAPS 767-300 and 767-400ER plan views (300 dpi, blue-outline mask, fuselage width 5.03 m as scale): 2.73–2.77 m",
+      "nose_to_inlet_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.2 General Dimensions 767-300, -300ER, p.2-9: nose to inlet, GE value; RR/PW value in alternates — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "alternates.span_m_with_apb_winglets": "Boeing airport FAQ 'wingletspans.pdf' (APB blended winglet spans); URL now returns 404/redirect, value taken from a search-engine summary of that document, not re-read in full, 767-300ER maximum span with winglets 167 ft 0 in (50.90 m computed) — https://www.boeing.com/resources/boeingdotcom/commercial/airports/faqs/wingletspans.pdf"
+    }
+  },
+  {
+    "icao": "B764",
+    "name": "Boeing 767-400ER",
+    "configuration": "Production configuration with raked wingtips. GE CF6-80C2 inlet position chosen",
+    "length_m": 61.37,
+    "span_m": 51.92,
+    "height_m": 17.01,
+    "fuselage_width_m": 5.03,
+    "fuselage_height_m": 5.41,
+    "wing_area_m2": 290.7,
+    "wing_sweep_qc_deg": 31.5,
+    "tailplane_span_m": 18.62,
+    "engine_count": 2,
+    "engine_type": "CF6-80C2 or PW4000 (or RB211-524H on some -300ERs)",
+    "engine_offsets_m": [
+      7.92
+    ],
+    "nacelle_max_diameter_m": 2.7,
+    "nose_to_inlet_m": [
+      21.9
+    ],
+    "wingtip_device": "raked wingtip",
+    "alternates": {
+      "nose_to_inlet_m_pw_rr": 22.07
+    },
+    "sources": {
+      "length_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.4 General Dimensions 767-400ER, p.2-11: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "span_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.4 General Dimensions 767-400ER, p.2-11: wing span — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "height_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, Ground clearances §2.3.4 p.2-15, dimension J maximum (largest dimension, taken as vertical-tail tip) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "fuselage_width_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.4 General Dimensions 767-400ER, p.2-11: fuselage width 16 ft 6 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "fuselage_height_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.4 General Dimensions 767-400ER, p.2-11: side view fuselage depth 17 ft 9 in (5.41 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 767' spec table '3,130 sq ft (290.7 m²)' for -400ER (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_767",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Boeing 767' spec table '31.5° sweepback' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_767",
+      "tailplane_span_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.4 General Dimensions 767-400ER, p.2-11: horizontal stabilizer span 61 ft 1 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "engine_offsets_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.4 General Dimensions 767-400ER, p.2-11: engine centreline 26 ft 0 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: CF6-80C2/PW4000 nacelle maximum width scaled from ACAPS 767-300 and 767-400ER plan views (300 dpi, blue-outline mask, fuselage width 5.03 m as scale): 2.73–2.77 m",
+      "nose_to_inlet_m": "Boeing D6-58328 Rev K (Dec 2024) 767 ACAPS, §2.2.4 General Dimensions 767-400ER, p.2-11: nose to inlet, GE value; RR/PW value in alternates — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/767_REV_K.pdf"
+    }
+  },
+  {
+    "icao": "B772",
+    "name": "Boeing 777-200ER",
+    "configuration": "777-200/-200ER (same airframe dimensions). GE90-94B inlet position chosen",
+    "length_m": 63.73,
+    "span_m": 60.93,
+    "height_m": 18.76,
+    "fuselage_width_m": 6.2,
+    "fuselage_height_m": 6.2,
+    "wing_area_m2": 427.8,
+    "wing_sweep_qc_deg": 31.6,
+    "tailplane_span_m": 21.53,
+    "engine_count": 2,
+    "engine_type": "GE90-94B, PW4090 or Trent 800",
+    "engine_offsets_m": [
+      9.61
+    ],
+    "nacelle_max_diameter_m": 3.9,
+    "nose_to_inlet_m": [
+      20.42
+    ],
+    "wingtip_device": "plain (no winglet)",
+    "alternates": {
+      "nose_to_inlet_m_pw4000": 20.22,
+      "nose_to_inlet_m_trent800": 20.13
+    },
+    "sources": {
+      "length_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.1 General Dimensions 777-200, p.2-8: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "span_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.1 General Dimensions 777-200, p.2-8: wing span — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "height_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, Ground clearances §2.3.1 p.2-10, dimension K maximum (largest dimension, taken as vertical-tail tip) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "fuselage_width_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.1 General Dimensions 777-200, p.2-8: fuselage width 20 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "fuselage_height_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.1 General Dimensions 777-200, p.2-8: side view fuselage depth 20 ft 4 in (6.2 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 777' spec table '427.8 m²' (-200/-200ER/-300) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_777",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Boeing 777' spec table '31.6° wing sweep' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_777",
+      "tailplane_span_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.1 General Dimensions 777-200, p.2-8: horizontal stabilizer span 70 ft 7.5 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "engine_offsets_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.1 General Dimensions 777-200, p.2-8: engine centreline 31 ft 6.5 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: GE90/PW4090/Trent 800 nacelle maximum width scaled from ACAPS 777-200 (§2.2.1) and 777-300ER (§2.2.2, D6-58329-2) plan views at 300 dpi: 3.84–4.0 m (GE90 as drawn)",
+      "nose_to_inlet_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.1 General Dimensions 777-200, p.2-8: nose to engine inlet (engine-specific values) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf"
+    }
+  },
+  {
+    "icao": "B77L",
+    "name": "Boeing 777-200LR / 777F",
+    "configuration": "777-200LR and 777 Freighter share this designator and the raked-tip wing; 777-200LR drawing used",
+    "length_m": 63.73,
+    "span_m": 64.8,
+    "height_m": 18.75,
+    "fuselage_width_m": 6.2,
+    "fuselage_height_m": 6.2,
+    "wing_area_m2": 436.8,
+    "wing_sweep_qc_deg": 31.6,
+    "tailplane_span_m": 21.53,
+    "engine_count": 2,
+    "engine_type": "GE90-110B1/-115B",
+    "engine_offsets_m": [
+      9.61
+    ],
+    "nacelle_max_diameter_m": 3.9,
+    "nose_to_inlet_m": [
+      20.42
+    ],
+    "wingtip_device": "raked wingtip",
+    "sources": {
+      "length_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.1 General Dimensions 777-200LR, p.2-3: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "span_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.1 General Dimensions 777-200LR, p.2-3: wing span — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "height_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, Ground clearances §2.3.1 p.2-6, dimension K maximum (largest dimension, taken as vertical-tail tip) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "fuselage_width_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.1 General Dimensions 777-200LR, p.2-3: fuselage width 20 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "fuselage_height_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.1 General Dimensions 777-200LR, p.2-3: side view fuselage depth 20 ft 4 in (6.2 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 777' infobox 'wing area sqm=436.8' (-200LR/-300ER/F) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_777",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Boeing 777' spec table '31.6° wing sweep' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_777",
+      "tailplane_span_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.1 General Dimensions 777-200LR, p.2-3: horizontal stabilizer span 70 ft 7.5 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "engine_offsets_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.1 General Dimensions 777-200LR, p.2-3: engine centreline 31 ft 6.5 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: GE90/PW4090/Trent 800 nacelle maximum width scaled from ACAPS 777-200 (§2.2.1) and 777-300ER (§2.2.2, D6-58329-2) plan views at 300 dpi: 3.84–4.0 m (GE90 as drawn)",
+      "nose_to_inlet_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.1 General Dimensions 777-200LR, p.2-3: nose to engine inlet (engine-specific values) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf"
+    }
+  },
+  {
+    "icao": "B773",
+    "name": "Boeing 777-300",
+    "configuration": "777-300 (original, non-ER). Trent 800 inlet position chosen (most -300s are RR-powered)",
+    "length_m": 73.86,
+    "span_m": 60.93,
+    "height_m": 18.76,
+    "fuselage_width_m": 6.2,
+    "fuselage_height_m": 6.2,
+    "wing_area_m2": 427.8,
+    "wing_sweep_qc_deg": 31.6,
+    "tailplane_span_m": 21.53,
+    "engine_count": 2,
+    "engine_type": "Trent 800 or PW4090 (GE90 rare)",
+    "engine_offsets_m": [
+      9.61
+    ],
+    "nacelle_max_diameter_m": 3.9,
+    "nose_to_inlet_m": [
+      25.47
+    ],
+    "wingtip_device": "plain (no winglet)",
+    "alternates": {
+      "nose_to_inlet_m_pw4000": 25.66
+    },
+    "sources": {
+      "length_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.2 General Dimensions 777-300, p.2-9: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "span_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.2 General Dimensions 777-300, p.2-9: wing span — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "height_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, Ground clearances §2.3.2 p.2-11, dimension K maximum (largest dimension, taken as vertical-tail tip) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "fuselage_width_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.2 General Dimensions 777-300, p.2-9: fuselage width 20 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "fuselage_height_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.2 General Dimensions 777-300, p.2-9: side view fuselage depth 20 ft 4 in (6.2 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 777' spec table '427.8 m²' (-200/-200ER/-300) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_777",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Boeing 777' spec table '31.6° wing sweep' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_777",
+      "tailplane_span_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.2 General Dimensions 777-300, p.2-9: horizontal stabilizer span 70 ft 7.5 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "engine_offsets_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.2 General Dimensions 777-300, p.2-9: engine centreline 31 ft 6.5 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: GE90/PW4090/Trent 800 nacelle maximum width scaled from ACAPS 777-200 (§2.2.1) and 777-300ER (§2.2.2, D6-58329-2) plan views at 300 dpi: 3.84–4.0 m (GE90 as drawn)",
+      "nose_to_inlet_m": "Boeing D6-58329 Rev E (Dec 2024) 777-200/-200ER/-300 ACAPS, §2.2.2 General Dimensions 777-300, p.2-9: nose to engine inlet (engine-specific values) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200-200ER-300_Rev_E.pdf"
+    }
+  },
+  {
+    "icao": "B77W",
+    "name": "Boeing 777-300ER",
+    "configuration": "Production configuration with raked wingtips",
+    "length_m": 73.86,
+    "span_m": 64.8,
+    "height_m": 18.85,
+    "fuselage_width_m": 6.2,
+    "fuselage_height_m": 6.2,
+    "wing_area_m2": 436.8,
+    "wing_sweep_qc_deg": 31.6,
+    "tailplane_span_m": 21.53,
+    "engine_count": 2,
+    "engine_type": "GE90-115B",
+    "engine_offsets_m": [
+      9.61
+    ],
+    "nacelle_max_diameter_m": 3.9,
+    "nose_to_inlet_m": [
+      25.76
+    ],
+    "wingtip_device": "raked wingtip",
+    "sources": {
+      "length_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.2 General Dimensions 777-300ER, p.2-4: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "span_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.2 General Dimensions 777-300ER, p.2-4: wing span — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "height_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, Ground clearances §2.3.2 p.2-7, dimension K maximum (largest dimension, taken as vertical-tail tip) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "fuselage_width_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.2 General Dimensions 777-300ER, p.2-4: fuselage width 20 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "fuselage_height_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.2 General Dimensions 777-300ER, p.2-4: side view fuselage depth 20 ft 4 in (6.2 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 777' infobox 'wing area sqm=436.8' (-200LR/-300ER/F) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_777",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Boeing 777' spec table '31.6° wing sweep' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_777",
+      "tailplane_span_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.2 General Dimensions 777-300ER, p.2-4: horizontal stabilizer span 70 ft 7.5 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "engine_offsets_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.2 General Dimensions 777-300ER, p.2-4: engine centreline 31 ft 6.5 in from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: GE90/PW4090/Trent 800 nacelle maximum width scaled from ACAPS 777-200 (§2.2.1) and 777-300ER (§2.2.2, D6-58329-2) plan views at 300 dpi: 3.84–4.0 m (GE90 as drawn)",
+      "nose_to_inlet_m": "Boeing D6-58329-2 Rev G (Dec 2024) 777-200LR/-300ER/F ACAPS, §2.2.2 General Dimensions 777-300ER, p.2-4: nose to engine inlet (engine-specific values) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777-200LR-300ER-F_Rev_G.pdf"
+    }
+  },
+  {
+    "icao": "B778",
+    "name": "Boeing 777-8",
+    "configuration": "Wingtips extended; not yet in service, dimensions are Boeing design values. Wing, tail and engine geometry assumed identical to 777-9",
+    "length_m": 70.86,
+    "span_m": 71.76,
+    "height_m": 19.53,
+    "fuselage_width_m": 6.2,
+    "fuselage_height_m": 6.2,
+    "wing_area_m2": 516.7,
+    "wing_sweep_qc_deg": 30.0,
+    "tailplane_span_m": 24.56,
+    "engine_count": 2,
+    "engine_type": "GE9X",
+    "engine_offsets_m": [
+      10.64
+    ],
+    "nacelle_max_diameter_m": 4.5,
+    "nose_to_inlet_m": [
+      22.85
+    ],
+    "wingtip_device": "folding wingtip (raked tip folds up on the ground)",
+    "alternates": {
+      "span_m_folded": 64.85
+    },
+    "notes": "The current 777X ACAPS (Rev G) only covers the 777-9; 777-8 was stretched ~1.1 m during development, so older secondary sources quote ~69.8 m.",
+    "sources": {
+      "length_m": "Boeing 777X product page, dimension table: 777-8 length 232 ft 6 in (70.9 m) — https://www.boeing.com/commercial/777x",
+      "span_m": "Boeing 777X product page, wingspan extended 235 ft 5 in, on ground 212 ft 9 in — https://www.boeing.com/commercial/777x",
+      "height_m": "Boeing 777X product page, height 64 ft 1 in (19.5 m) — https://www.boeing.com/commercial/777x",
+      "fuselage_width_m": "ESTIMATE: assumed equal to 777-9 (777X ACAPS Fig 2-1, 6.20 m)",
+      "fuselage_height_m": "ESTIMATE: assumed equal to 777-9 (6.20 m)",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 777X' infobox 'wing area sqft = 5562' (= 516.7 m²) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_777X",
+      "wing_sweep_qc_deg": "ESTIMATE: not published. Boeing/Wikipedia state only that the 777X wing has less sweep than the 777 (31.6°) and 787; ~30° is a placeholder, ±2°",
+      "tailplane_span_m": "ESTIMATE: assumed equal to 777-9 (24.56 m, 777X ACAPS Fig 2-1)",
+      "engine_offsets_m": "ESTIMATE: assumed equal to 777-9 (10.64 m)",
+      "nacelle_max_diameter_m": "ESTIMATE: GE9X nacelle maximum width scaled from 777X ACAPS Figure 2-1 plan view (300 dpi; scale from fuselage width 6.20 m and from overall length): 4.3–4.6 m",
+      "nose_to_inlet_m": "ESTIMATE: 777-9 inlet 25.96 m minus ~53% of the 5.87 m length difference (share of the 777-200LR→-300ER stretch that was ahead of the engines: 25.76−20.42 = 5.34 of 10.13 m)"
+    }
+  },
+  {
+    "icao": "B779",
+    "name": "Boeing 777-9",
+    "configuration": "Wingtips extended (flight/airport-gate figure: 64.85 m folded on ground)",
+    "length_m": 76.73,
+    "span_m": 71.76,
+    "height_m": 19.53,
+    "fuselage_width_m": 6.2,
+    "fuselage_height_m": 6.2,
+    "wing_area_m2": 516.7,
+    "wing_sweep_qc_deg": 30.0,
+    "tailplane_span_m": 24.56,
+    "engine_count": 2,
+    "engine_type": "GE9X",
+    "engine_offsets_m": [
+      10.64
+    ],
+    "nacelle_max_diameter_m": 4.5,
+    "nose_to_inlet_m": [
+      25.96
+    ],
+    "wingtip_device": "folding wingtip (raked tip folds up on the ground)",
+    "alternates": {
+      "span_m_folded": 64.85
+    },
+    "sources": {
+      "length_m": "Boeing D6-86073 Rev G (Sep 2025) 777X ACAPS (preliminary), §2.2.1 Figure 2-1 General Dimensions 777-9, p.2-3: overall length 251 ft 9 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777X_Rev_G.pdf",
+      "span_m": "Boeing D6-86073 Rev G (Sep 2025) 777X ACAPS (preliminary), §2.2.1 Figure 2-1 General Dimensions 777-9, p.2-3: wing span extended 235 ft 5 in; folded 212 ft 9 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777X_Rev_G.pdf",
+      "height_m": "Boeing D6-86073 Rev G (Sep 2025) 777X ACAPS (preliminary), §2.2.1 Figure 2-1 General Dimensions 777-9, p.2-3: overall height 64 ft 1 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777X_Rev_G.pdf",
+      "fuselage_width_m": "Boeing D6-86073 Rev G (Sep 2025) 777X ACAPS (preliminary), §2.2.1 Figure 2-1 General Dimensions 777-9, p.2-3: fuselage width 20 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777X_Rev_G.pdf",
+      "fuselage_height_m": "Boeing D6-86073 Rev G (Sep 2025) 777X ACAPS (preliminary), §2.2.1 Figure 2-1 General Dimensions 777-9, p.2-3: side view fuselage depth 20 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777X_Rev_G.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 777X' infobox 'wing area sqft = 5562' (= 516.7 m²) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_777X",
+      "wing_sweep_qc_deg": "ESTIMATE: not published. Boeing/Wikipedia state only that the 777X wing has less sweep than the 777 (31.6°) and 787; ~30° is a placeholder, ±2°",
+      "tailplane_span_m": "Boeing D6-86073 Rev G (Sep 2025) 777X ACAPS (preliminary), §2.2.1 Figure 2-1 General Dimensions 777-9, p.2-3: horizontal stabilizer span 80 ft 7 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777X_Rev_G.pdf",
+      "engine_offsets_m": "Boeing D6-86073 Rev G (Sep 2025) 777X ACAPS (preliminary), §2.2.1 Figure 2-1 General Dimensions 777-9, p.2-3: engine centreline 34 ft 11 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777X_Rev_G.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: GE9X nacelle maximum width scaled from 777X ACAPS Figure 2-1 plan view (300 dpi; scale from fuselage width 6.20 m and from overall length): 4.3–4.6 m",
+      "nose_to_inlet_m": "Boeing D6-86073 Rev G (Sep 2025) 777X ACAPS (preliminary), §2.2.1 Figure 2-1 General Dimensions 777-9, p.2-3: nose to inlet 85 ft 2 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/777X_Rev_G.pdf"
+    }
+  },
+  {
+    "icao": "B788",
+    "name": "Boeing 787-8",
+    "configuration": "Production configuration (raked wingtip, no winglet)",
+    "length_m": 56.72,
+    "span_m": 60.12,
+    "height_m": 16.92,
+    "fuselage_width_m": 5.77,
+    "fuselage_height_m": 5.94,
+    "wing_area_m2": 360.0,
+    "wing_sweep_qc_deg": 32.2,
+    "tailplane_span_m": 19.81,
+    "engine_count": 2,
+    "engine_type": "GEnx-1B or Trent 1000",
+    "engine_offsets_m": [
+      9.73
+    ],
+    "nacelle_max_diameter_m": 3.8,
+    "nose_to_inlet_m": [
+      17.76
+    ],
+    "wingtip_device": "raked wingtip (curved, no winglet)",
+    "sources": {
+      "length_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.1 General Dimensions 787-8, p.2-5: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "span_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.1 General Dimensions 787-8, p.2-5: wing span 197 ft 3 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "height_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.1 General Dimensions 787-8, p.2-5: overall height (tail) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "fuselage_width_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.1 General Dimensions 787-8, p.2-5: fuselage width 18 ft 11 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "fuselage_height_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.1 General Dimensions 787-8, p.2-5: side view fuselage depth 19 ft 6 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "wing_area_m2": "SECONDARY (not re-verified this session): commonly cited Boeing figures 787-8 ≈360 m² (3,880 ft²), 787-9/-10 ≈377 m² (4,058 ft²); Wikipedia 787 article fetched but its spec template left wing area blank",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-quoted 32.2° quarter-chord sweep; Wikipedia 787 photo caption says '32° wing sweep'",
+      "tailplane_span_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.1 General Dimensions 787-8, p.2-5: horizontal stabilizer span 65 ft 0 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "engine_offsets_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.1 General Dimensions 787-8, p.2-5: engine centreline from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: GEnx-1B/Trent 1000 nacelle maximum width scaled from ACAPS 787-8 and 787-9 plan views (300 dpi; fuselage width 5.77 m and overall length as scale): 3.75–3.89 m",
+      "nose_to_inlet_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.1 General Dimensions 787-8, p.2-5: nose to engine inlet — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf"
+    }
+  },
+  {
+    "icao": "B789",
+    "name": "Boeing 787-9",
+    "configuration": "Production configuration (raked wingtip, no winglet)",
+    "length_m": 62.81,
+    "span_m": 60.12,
+    "height_m": 17.02,
+    "fuselage_width_m": 5.77,
+    "fuselage_height_m": 5.94,
+    "wing_area_m2": 377.0,
+    "wing_sweep_qc_deg": 32.2,
+    "tailplane_span_m": 19.81,
+    "engine_count": 2,
+    "engine_type": "GEnx-1B or Trent 1000",
+    "engine_offsets_m": [
+      9.91
+    ],
+    "nacelle_max_diameter_m": 3.8,
+    "nose_to_inlet_m": [
+      20.8
+    ],
+    "wingtip_device": "raked wingtip (curved, no winglet)",
+    "sources": {
+      "length_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.2 General Dimensions 787-9, p.2-6: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "span_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.2 General Dimensions 787-9, p.2-6: wing span 197 ft 3 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "height_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.2 General Dimensions 787-9, p.2-6: overall height (tail) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "fuselage_width_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.2 General Dimensions 787-9, p.2-6: fuselage width 18 ft 11 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "fuselage_height_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.2 General Dimensions 787-9, p.2-6: side view fuselage depth 19 ft 6 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "wing_area_m2": "SECONDARY (not re-verified this session): commonly cited Boeing figures 787-8 ≈360 m² (3,880 ft²), 787-9/-10 ≈377 m² (4,058 ft²); Wikipedia 787 article fetched but its spec template left wing area blank",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-quoted 32.2° quarter-chord sweep; Wikipedia 787 photo caption says '32° wing sweep'",
+      "tailplane_span_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.2 General Dimensions 787-9, p.2-6: horizontal stabilizer span 65 ft 0 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "engine_offsets_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.2 General Dimensions 787-9, p.2-6: engine centreline from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: GEnx-1B/Trent 1000 nacelle maximum width scaled from ACAPS 787-8 and 787-9 plan views (300 dpi; fuselage width 5.77 m and overall length as scale): 3.75–3.89 m",
+      "nose_to_inlet_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.2 General Dimensions 787-9, p.2-6: nose to engine inlet — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf"
+    }
+  },
+  {
+    "icao": "B78X",
+    "name": "Boeing 787-10",
+    "configuration": "Production configuration (raked wingtip, no winglet)",
+    "length_m": 68.3,
+    "span_m": 60.12,
+    "height_m": 17.02,
+    "fuselage_width_m": 5.77,
+    "fuselage_height_m": 5.94,
+    "wing_area_m2": 377.0,
+    "wing_sweep_qc_deg": 32.2,
+    "tailplane_span_m": 19.81,
+    "engine_count": 2,
+    "engine_type": "GEnx-1B or Trent 1000",
+    "engine_offsets_m": [
+      9.71
+    ],
+    "nacelle_max_diameter_m": 3.8,
+    "nose_to_inlet_m": [
+      23.85
+    ],
+    "wingtip_device": "raked wingtip (curved, no winglet)",
+    "sources": {
+      "length_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.3 General Dimensions 787-10, p.2-7: overall length — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "span_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.3 General Dimensions 787-10, p.2-7: wing span 197 ft 3 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "height_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.3 General Dimensions 787-10, p.2-7: overall height (tail) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "fuselage_width_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.3 General Dimensions 787-10, p.2-7: fuselage width 18 ft 11 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "fuselage_height_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.3 General Dimensions 787-10, p.2-7: side view fuselage depth 19 ft 6 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "wing_area_m2": "SECONDARY (not re-verified this session): commonly cited Boeing figures 787-8 ≈360 m² (3,880 ft²), 787-9/-10 ≈377 m² (4,058 ft²); Wikipedia 787 article fetched but its spec template left wing area blank",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-quoted 32.2° quarter-chord sweep; Wikipedia 787 photo caption says '32° wing sweep'",
+      "tailplane_span_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.3 General Dimensions 787-10, p.2-7: horizontal stabilizer span 65 ft 0 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "engine_offsets_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.3 General Dimensions 787-10, p.2-7: engine centreline from airplane centreline — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: GEnx-1B/Trent 1000 nacelle maximum width scaled from ACAPS 787-8 and 787-9 plan views (300 dpi; fuselage width 5.77 m and overall length as scale): 3.75–3.89 m",
+      "nose_to_inlet_m": "Boeing D6-58333 Rev Q (Oct 2025) 787 ACAPS, §2.2.3 General Dimensions 787-10, p.2-7: nose to engine inlet — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf"
+    }
+  },
+  {
+    "icao": "A332",
+    "name": "Airbus A330-200",
+    "configuration": "A330-200 (post-mod 48979 length). Trent 772 inlet position chosen",
+    "length_m": 58.82,
+    "span_m": 60.3,
+    "height_m": 17.98,
+    "fuselage_width_m": 5.64,
+    "fuselage_height_m": 5.64,
+    "wing_area_m2": 361.6,
+    "wing_sweep_qc_deg": 30.0,
+    "tailplane_span_m": 19.4,
+    "engine_count": 2,
+    "engine_type": "Trent 700, CF6-80E1 or PW4000",
+    "engine_offsets_m": [
+      10.88
+    ],
+    "nacelle_max_diameter_m": 3.1,
+    "nose_to_inlet_m": [
+      18.08
+    ],
+    "wingtip_device": "small canted winglet",
+    "alternates": {
+      "nose_to_inlet_m_cf6_80e1": 17.94,
+      "nose_to_inlet_m_pw4000": 18.25
+    },
+    "notes": "Side-view and plan-view overall lengths differ slightly in the AC (e.g. A330-900 63.66 vs 63.69 m; A330-200 58.82 vs 58.37 m); the side-view value, which matches Airbus marketing figures, is used.",
+    "sources": {
+      "length_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 sheets 2–3, PDF pp.63–64: side view overall length — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "span_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 sheets 2–3, PDF pp.63–64: front view wing span — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "height_m": "Airbus A330 AC (Dec 01/25), 2-3-0 Ground Clearances, VT, MRW forward-CG column (table has no light-weight column; jacked 18.23 excluded) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "fuselage_width_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 sheets 2–3, PDF pp.63–64: fuselage diameter 5.64 m (circular section) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "fuselage_height_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 sheets 2–3, PDF pp.63–64: side view fuselage depth 5.64 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Airbus A330' spec table '361.6 m², 25% chord wingsweep: 30°' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A330",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A330' spec table '25% chord wingsweep: 30°' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A330",
+      "tailplane_span_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 sheets 2–3, PDF pp.63–64: front view horizontal tail span 19.40 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "engine_offsets_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 sheets 2–3, PDF pp.63–64: plan view engine centreline 10.88 m from aircraft centreline — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "nacelle_max_diameter_m": "Airbus A330 AC (Dec 01/25), 2-12-0 Engine and Nacelle, Nacelle Dimensions figures: PW4000 max width 3.16 m (FIGURE-2-12-0-991-002-A01), CF6-80E1 3.08 m (…-010-A01), Trent 700 ≈3.05–3.2 m (…-006-A01, labels ambiguous) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "nose_to_inlet_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-A01 sheets 2–3, PDF pp.63–64: plan view nose-to-inlet (engine-specific) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf"
+    }
+  },
+  {
+    "icao": "A333",
+    "name": "Airbus A330-300",
+    "configuration": "A330-300. Trent 772 inlet position chosen",
+    "length_m": 63.67,
+    "span_m": 60.3,
+    "height_m": 17.18,
+    "fuselage_width_m": 5.64,
+    "fuselage_height_m": 5.64,
+    "wing_area_m2": 361.6,
+    "wing_sweep_qc_deg": 30.0,
+    "tailplane_span_m": 19.4,
+    "engine_count": 2,
+    "engine_type": "Trent 700, CF6-80E1 or PW4000",
+    "engine_offsets_m": [
+      10.88
+    ],
+    "nacelle_max_diameter_m": 3.1,
+    "nose_to_inlet_m": [
+      21.28
+    ],
+    "wingtip_device": "small canted winglet",
+    "alternates": {
+      "nose_to_inlet_m_cf6_80e1": 21.14,
+      "nose_to_inlet_m_pw4000": 21.45
+    },
+    "notes": "Side-view and plan-view overall lengths differ slightly in the AC (e.g. A330-900 63.66 vs 63.69 m; A330-200 58.82 vs 58.37 m); the side-view value, which matches Airbus marketing figures, is used.",
+    "sources": {
+      "length_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.60–61: side view overall length — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "span_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.60–61: front view wing span — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "height_m": "Airbus A330 AC (Dec 01/25), 2-3-0 Ground Clearances, VT, light-weight column (jacked 17.62 excluded) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "fuselage_width_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.60–61: fuselage diameter 5.64 m (circular section) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "fuselage_height_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.60–61: side view fuselage depth 5.64 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Airbus A330' spec table '361.6 m², 25% chord wingsweep: 30°' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A330",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A330' spec table '25% chord wingsweep: 30°' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A330",
+      "tailplane_span_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.60–61: front view horizontal tail span 19.40 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "engine_offsets_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.60–61: plan view engine centreline 10.88 m from aircraft centreline — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "nacelle_max_diameter_m": "Airbus A330 AC (Dec 01/25), 2-12-0 Nacelle Dimensions figures (PW4000 3.16 m, CF6-80E1 3.08 m, Trent 700 ≈3.05–3.2 m) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "nose_to_inlet_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.60–61: plan view nose-to-inlet (engine-specific) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf"
+    }
+  },
+  {
+    "icao": "A338",
+    "name": "Airbus A330-800",
+    "configuration": "A330-800 (A330neo)",
+    "length_m": 58.82,
+    "span_m": 64.0,
+    "height_m": 18.29,
+    "fuselage_width_m": 5.64,
+    "fuselage_height_m": 5.64,
+    "wing_area_m2": 465.0,
+    "wing_sweep_qc_deg": 30.0,
+    "tailplane_span_m": 19.4,
+    "engine_count": 2,
+    "engine_type": "Trent 7000",
+    "engine_offsets_m": [
+      10.88
+    ],
+    "nacelle_max_diameter_m": 3.71,
+    "nose_to_inlet_m": [
+      17.86
+    ],
+    "wingtip_device": "sharklet-style blended winglet (A350-style)",
+    "notes": "Side-view and plan-view overall lengths differ slightly in the AC (e.g. A330-900 63.66 vs 63.69 m; A330-200 58.82 vs 58.37 m); the side-view value, which matches Airbus marketing figures, is used.",
+    "sources": {
+      "length_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-012-A01 sheets 1–2, PDF pp.67–68: side view overall length — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "span_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-012-A01 sheets 1–2, PDF pp.67–68: front view wing span — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "height_m": "Airbus A330 AC (Dec 01/25), 2-3-0 Ground Clearances, VT, light-weight column (jacked 18.62 excluded) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "fuselage_width_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-012-A01 sheets 1–2, PDF pp.67–68: fuselage diameter 5.64 m (circular section) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "fuselage_height_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-012-A01 sheets 1–2, PDF pp.67–68: side view fuselage depth 5.64 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "wing_area_m2": "SECONDARY (not re-verified this session): Airbus-quoted A330neo wing area ≈465 m² (new 64 m span wing with 3.7 m span extension); Wikipedia A330neo spec template left blank",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A330' spec table '25% chord wingsweep: 30°' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A330",
+      "tailplane_span_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-012-A01 sheets 1–2, PDF pp.67–68: front view horizontal tail span 19.40 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "engine_offsets_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-012-A01 sheets 1–2, PDF pp.67–68: plan view engine centreline 10.88 m from aircraft centreline — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "nacelle_max_diameter_m": "Airbus A330 AC (Dec 01/25), 2-12-0 Nacelle Dimensions - TRENT 7000, FIGURE-2-12-0-991-027-A01: max width W = 3.71 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "nose_to_inlet_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-012-A01 sheets 1–2, PDF pp.67–68: plan view nose-to-inlet (engine-specific) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf"
+    }
+  },
+  {
+    "icao": "A339",
+    "name": "Airbus A330-900",
+    "configuration": "A330-900 (A330neo)",
+    "length_m": 63.66,
+    "span_m": 64.0,
+    "height_m": 17.13,
+    "fuselage_width_m": 5.64,
+    "fuselage_height_m": 5.64,
+    "wing_area_m2": 465.0,
+    "wing_sweep_qc_deg": 30.0,
+    "tailplane_span_m": 19.4,
+    "engine_count": 2,
+    "engine_type": "Trent 7000",
+    "engine_offsets_m": [
+      10.88
+    ],
+    "nacelle_max_diameter_m": 3.71,
+    "nose_to_inlet_m": [
+      21.05
+    ],
+    "wingtip_device": "sharklet-style blended winglet (A350-style)",
+    "notes": "Side-view and plan-view overall lengths differ slightly in the AC (e.g. A330-900 63.66 vs 63.69 m; A330-200 58.82 vs 58.37 m); the side-view value, which matches Airbus marketing figures, is used.",
+    "sources": {
+      "length_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-011-A01 sheets 1–2, PDF pp.65–66: side view overall length — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "span_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-011-A01 sheets 1–2, PDF pp.65–66: front view wing span — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "height_m": "Airbus A330 AC (Dec 01/25), 2-3-0 Ground Clearances, VT, light-weight column (jacked 17.62 excluded) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "fuselage_width_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-011-A01 sheets 1–2, PDF pp.65–66: fuselage diameter 5.64 m (circular section) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "fuselage_height_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-011-A01 sheets 1–2, PDF pp.65–66: side view fuselage depth 5.64 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "wing_area_m2": "SECONDARY (not re-verified this session): Airbus-quoted A330neo wing area ≈465 m²; Wikipedia A330neo spec template left blank",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A330' spec table '25% chord wingsweep: 30°' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A330",
+      "tailplane_span_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-011-A01 sheets 1–2, PDF pp.65–66: front view horizontal tail span 19.40 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "engine_offsets_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-011-A01 sheets 1–2, PDF pp.65–66: plan view engine centreline 10.88 m from aircraft centreline — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "nacelle_max_diameter_m": "Airbus A330 AC (Dec 01/25), 2-12-0 Nacelle Dimensions - TRENT 7000, FIGURE-2-12-0-991-027-A01: max width W = 3.71 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf",
+      "nose_to_inlet_m": "Airbus A330 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-011-A01 sheets 1–2, PDF pp.65–66: plan view nose-to-inlet (engine-specific) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A330_20251201.pdf"
+    }
+  },
+  {
+    "icao": "A359",
+    "name": "Airbus A350-900",
+    "configuration": "Production configuration",
+    "length_m": 66.8,
+    "span_m": 64.75,
+    "height_m": 17.47,
+    "fuselage_width_m": 5.96,
+    "fuselage_height_m": 6.09,
+    "wing_area_m2": 442.0,
+    "wing_sweep_qc_deg": 31.9,
+    "tailplane_span_m": 18.79,
+    "engine_count": 2,
+    "engine_type": "Trent XWB-84 / XWB-97",
+    "engine_offsets_m": [
+      10.5
+    ],
+    "nacelle_max_diameter_m": 3.94,
+    "nose_to_inlet_m": [
+      21.97
+    ],
+    "wingtip_device": "curved blended winglet (sharklet-style)",
+    "sources": {
+      "length_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.50–51: plan view overall length — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "span_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.50–51: front view wing span 64.75 m — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "height_m": "Airbus A350 AC (Jul 01/26), 2-3-0 Ground Clearances, VT light-weight column 17.47 (jacked 18.27 excluded) — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "fuselage_width_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.50–51: plan view fuselage width 5.96 m — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "fuselage_height_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.50–51: side view fuselage depth 6.09 m — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Airbus A350' text and infobox 'wing area sqm = 442' (-900) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A350",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A350' text: 'the A350's wing has a 31.9° sweep angle' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A350",
+      "tailplane_span_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.50–51: front view horizontal tail span 18.79 m — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "engine_offsets_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.50–51: plan view engine centreline 10.50 m — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "nacelle_max_diameter_m": "Airbus A350 AC (Jul 01/26), 2-12-0 Engine and Nacelle FIGURE-2-12-0-991-001-A01 sheet 1, PDF p.187: nacelle max width 3.94 m (height 3.52 m) — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "nose_to_inlet_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-001-A01 sheets 1–2, PDF pp.50–51: plan view nose-to-inlet distance — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf"
+    }
+  },
+  {
+    "icao": "A35K",
+    "name": "Airbus A350-1000",
+    "configuration": "Production configuration",
+    "length_m": 73.79,
+    "span_m": 64.75,
+    "height_m": 17.41,
+    "fuselage_width_m": 5.96,
+    "fuselage_height_m": 6.09,
+    "wing_area_m2": 464.3,
+    "wing_sweep_qc_deg": 31.9,
+    "tailplane_span_m": 18.79,
+    "engine_count": 2,
+    "engine_type": "Trent XWB-84 / XWB-97",
+    "engine_offsets_m": [
+      10.5
+    ],
+    "nacelle_max_diameter_m": 3.94,
+    "nose_to_inlet_m": [
+      25.78
+    ],
+    "wingtip_device": "curved blended winglet (sharklet-style)",
+    "sources": {
+      "length_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-C01 sheets 1–2, PDF pp.52–53: plan view overall length — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "span_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-C01 sheets 1–2, PDF pp.52–53: front view wing span 64.75 m — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "height_m": "Airbus A350 AC (Jul 01/26), 2-3-0 Ground Clearances, VT light-weight column 17.41 (jacked 18.27 excluded) — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "fuselage_width_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-C01 sheets 1–2, PDF pp.52–53: plan view fuselage width 5.96 m — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "fuselage_height_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-C01 sheets 1–2, PDF pp.52–53: side view fuselage depth 6.09 m — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Airbus A350' text: -1000 wing is 22.3 m² larger than the 442 m² -900 wing (= 464.3 m²) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A350",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A350' text: 'the A350's wing has a 31.9° sweep angle' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A350",
+      "tailplane_span_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-C01 sheets 1–2, PDF pp.52–53: front view horizontal tail span 18.79 m — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "engine_offsets_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-C01 sheets 1–2, PDF pp.52–53: plan view engine centreline 10.50 m — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "nacelle_max_diameter_m": "Airbus A350 AC (Jul 01/26), 2-12-0 Engine and Nacelle FIGURE-2-12-0-991-001-A01 sheet 1, PDF p.187: nacelle max width 3.94 m (height 3.52 m) — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf",
+      "nose_to_inlet_m": "Airbus A350 AC (Jul 01/26), 2-2-0 General Aircraft Dimensions, FIGURE-2-2-0-991-002-C01 sheets 1–2, PDF pp.52–53: plan view nose-to-inlet distance — https://mediaassets.airbus.com/pm_38_916_916746-gxtwm2qvq4.pdf?fileName=a350-aircraft-characteristics-airport-and-maintenance-planning.pdf"
+    }
+  },
+  {
+    "icao": "B744",
+    "name": "Boeing 747-400",
+    "configuration": "747-400 passenger with canted winglets; CF6-80C2 inlet positions chosen",
+    "length_m": 70.67,
+    "span_m": 64.44,
+    "height_m": 19.51,
+    "fuselage_width_m": 6.5,
+    "fuselage_height_m": 7.8,
+    "wing_area_m2": 525.0,
+    "wing_sweep_qc_deg": 37.5,
+    "tailplane_span_m": 22.17,
+    "engine_count": 4,
+    "engine_type": "CF6-80C2, PW4056 or RB211-524G/H",
+    "engine_offsets_m": [
+      11.68,
+      21.03
+    ],
+    "nacelle_max_diameter_m": 2.8,
+    "nose_to_inlet_m": [
+      23.01,
+      32.16
+    ],
+    "wingtip_device": "canted winglet",
+    "alternates": {
+      "span_m_at_max_gross_weight": 64.92,
+      "nose_to_inlet_m_pw4000": [
+        23.24,
+        32.41
+      ],
+      "nose_to_inlet_m_rb211": [
+        24.05,
+        32.77
+      ]
+    },
+    "sources": {
+      "length_m": "Boeing D6-58326-1 Rev F (Dec 2024) 747-400 ACAPS, §2.2.1 General Dimensions 747-400, -400 Combi, -400ER, p.2-14: overall length 231 ft 10.25 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-400_Rev_F.pdf",
+      "span_m": "Boeing D6-58326-1 Rev F (Dec 2024) 747-400 ACAPS, §2.2.1 General Dimensions 747-400, -400 Combi, -400ER, p.2-14: wing span 211 ft 5 in at jig position (213 ft 0 in at max gross weight) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-400_Rev_F.pdf",
+      "height_m": "Boeing D6-58326-1 Rev F (Dec 2024) 747-400 ACAPS, Ground clearances §2.3.1 p.2-17, dimension K maximum (largest; taken as vertical-tail tip) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-400_Rev_F.pdf",
+      "fuselage_width_m": "Boeing D6-58326-1 Rev F (Dec 2024) 747-400 ACAPS, §2.2.1 General Dimensions 747-400, -400 Combi, -400ER, p.2-14: fuselage width 21 ft 4 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-400_Rev_F.pdf",
+      "fuselage_height_m": "ESTIMATE: 747 maximum external fuselage height (main deck + upper deck hump) scaled from Boeing D6-58326-3 §2.5.2 cabin cross-section p.2-11 using the labelled 6.50 m fuselage width: ≈7.8 m (±0.15)",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 747-400' infobox 'wing area sqm = 525' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_747-400",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-quoted 37.5° quarter-chord sweep, unchanged on the 747-8",
+      "tailplane_span_m": "Boeing D6-58326-1 Rev F (Dec 2024) 747-400 ACAPS, §2.2.1 General Dimensions 747-400, -400 Combi, -400ER, p.2-14: horizontal stabilizer span 72 ft 9 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-400_Rev_F.pdf",
+      "engine_offsets_m": "Boeing D6-58326-1 Rev F (Dec 2024) 747-400 ACAPS, §2.2.1 General Dimensions 747-400, -400 Combi, -400ER, p.2-14: inboard engine centreline 38 ft 4 in (11.68 m); outboard engine '69 FT (21 M)' (69 ft = 21.03 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-400_Rev_F.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: nacelle maximum width scaled from the §2.2.1 plan view (300 dpi, scale from overall length 70.67 m): ≈2.75 m",
+      "nose_to_inlet_m": "Boeing D6-58326-1 Rev F (Dec 2024) 747-400 ACAPS, §2.2.1 General Dimensions 747-400, -400 Combi, -400ER, p.2-14: table of nose-to-inlet distances per engine type (inboard, outboard) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-400_Rev_F.pdf"
+    }
+  },
+  {
+    "icao": "B748",
+    "name": "Boeing 747-8 Intercontinental",
+    "configuration": "747-8I (747-8F shares the wing; its length is the same, upper deck shorter)",
+    "length_m": 76.25,
+    "span_m": 68.4,
+    "height_m": 19.51,
+    "fuselage_width_m": 6.5,
+    "fuselage_height_m": 7.8,
+    "wing_area_m2": 554.0,
+    "wing_sweep_qc_deg": 37.5,
+    "tailplane_span_m": 21.99,
+    "engine_count": 4,
+    "engine_type": "GEnx-2B67",
+    "engine_offsets_m": [
+      11.93,
+      21.18
+    ],
+    "nacelle_max_diameter_m": 3.5,
+    "nose_to_inlet_m": [
+      27.25,
+      35.86
+    ],
+    "wingtip_device": "raked wingtip",
+    "sources": {
+      "length_m": "Boeing D6-58326-3 Rev E (Jan 2026) 747-8 ACAPS, §2.2.2 General Dimensions 747-8, p.2-5: overall length 250 ft 2 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-8_Rev_E.pdf",
+      "span_m": "Boeing D6-58326-3 Rev E (Jan 2026) 747-8 ACAPS, §2.2.2 General Dimensions 747-8, p.2-5: wing span 224 ft 5 in — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-8_Rev_E.pdf",
+      "height_m": "Boeing D6-58326-3 Rev E (Jan 2026) 747-8 ACAPS, Ground clearances §2.3.2 p.2-7, dimension K maximum (largest; taken as vertical-tail tip) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-8_Rev_E.pdf",
+      "fuselage_width_m": "Boeing D6-58326-3 Rev E (Jan 2026) 747-8 ACAPS, §2.2.2 General Dimensions 747-8, p.2-5: fuselage width 21 ft 4 in; also §2.5.2 p.2-11 'constant cabin cross-section 21 ft 4 in (6.50 m)' — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-8_Rev_E.pdf",
+      "fuselage_height_m": "ESTIMATE: 747 maximum external fuselage height (main deck + upper deck hump) scaled from Boeing D6-58326-3 §2.5.2 cabin cross-section p.2-11 using the labelled 6.50 m fuselage width: ≈7.8 m (±0.15)",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Boeing 747-8' infobox 'wing area sqm = 554' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Boeing_747-8",
+      "wing_sweep_qc_deg": "SECONDARY (not re-verified this session): Boeing-quoted 37.5° quarter-chord sweep, unchanged on the 747-8",
+      "tailplane_span_m": "Boeing D6-58326-3 Rev E (Jan 2026) 747-8 ACAPS, §2.2.2 General Dimensions 747-8, p.2-5: horizontal stabilizer span 72 ft 2 in (21.99 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-8_Rev_E.pdf",
+      "engine_offsets_m": "Boeing D6-58326-3 Rev E (Jan 2026) 747-8 ACAPS, §2.2.2 General Dimensions 747-8, p.2-5: inboard 39 ft 2 in (11.93 m), outboard 69 ft 6 in (21.18 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-8_Rev_E.pdf",
+      "nacelle_max_diameter_m": "ESTIMATE: GEnx-2B nacelle maximum width scaled from §2.2.2 plan view (300 dpi, scale from overall length): ≈3.5 m",
+      "nose_to_inlet_m": "Boeing D6-58326-3 Rev E (Jan 2026) 747-8 ACAPS, §2.2.2 General Dimensions 747-8, p.2-5: nose to inboard inlet 89 ft 5 in (27.25 m), outboard 117 ft 8 in (35.86 m) — https://www.boeing.com/content/dam/boeing/v2/airports/acaps/747-8_Rev_E.pdf"
+    }
+  },
+  {
+    "icao": "A388",
+    "name": "Airbus A380-800",
+    "configuration": "Production configuration; Trent 900 / GP7200 positions identical",
+    "length_m": 72.73,
+    "span_m": 79.75,
+    "height_m": 24.27,
+    "fuselage_width_m": 7.14,
+    "fuselage_height_m": 8.41,
+    "wing_area_m2": 845.0,
+    "wing_sweep_qc_deg": 33.5,
+    "tailplane_span_m": 30.37,
+    "engine_count": 4,
+    "engine_type": "Trent 900 or GP7200",
+    "engine_offsets_m": [
+      14.8,
+      25.7
+    ],
+    "nacelle_max_diameter_m": 3.9,
+    "nose_to_inlet_m": [
+      22.23,
+      29.94
+    ],
+    "wingtip_device": "wingtip fence (large, above and below)",
+    "notes": "Plan-view length in the same figure is 72.57 m; side view 72.73 m (Airbus marketing 72.72 m).",
+    "sources": {
+      "length_m": "Airbus A380 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions FIGURE-2-2-0-991-001-A01, PDF pp.34–35: side view overall length 72.73 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A380_20251201.pdf",
+      "span_m": "Airbus A380 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions FIGURE-2-2-0-991-001-A01, PDF pp.34–35: front view wing span 79.75 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A380_20251201.pdf",
+      "height_m": "Airbus A380 AC (Dec 01/25), 2-3-0 Ground Clearances, VT light-weight column 24.27 m (jacked 26.11 excluded) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A380_20251201.pdf",
+      "fuselage_width_m": "Airbus A380 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions FIGURE-2-2-0-991-001-A01, PDF pp.34–35: front view fuselage width 7.14 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A380_20251201.pdf",
+      "fuselage_height_m": "Airbus A380 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions FIGURE-2-2-0-991-001-A01, PDF pp.34–35: side view fuselage depth 8.41 m (8.56 m at a second station) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A380_20251201.pdf",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Airbus A380' spec table '845 m²' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A380",
+      "wing_sweep_qc_deg": "SECONDARY: Wikipedia 'Airbus A380' spec table '33.5° sweep' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Airbus_A380",
+      "tailplane_span_m": "Airbus A380 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions FIGURE-2-2-0-991-001-A01, PDF pp.34–35: front view horizontal tail span 30.37 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A380_20251201.pdf",
+      "engine_offsets_m": "Airbus A380 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions FIGURE-2-2-0-991-001-A01, PDF pp.34–35: front view engine spacing 29.6 m (inboard pair) and 51.4 m (outboard pair), halved — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A380_20251201.pdf",
+      "nacelle_max_diameter_m": "Airbus A380 AC (Dec 01/25), 2-12-0 Power Plant Handling, Nacelle Dimensions Trent 900 (FIGURE-2-12-0-991-009-A01, 3.88/3.9 m) and GP7200 (…-004-A01, 3.8/3.9 m) — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A380_20251201.pdf",
+      "nose_to_inlet_m": "Airbus A380 AC (Dec 01/25), 2-2-0 General Aircraft Dimensions FIGURE-2-2-0-991-001-A01, PDF pp.34–35: plan view nose to inboard inlet 22.23 m, outboard 29.94 m — https://www.aircraft.airbus.com/sites/default/files/2025-12/AC_A380_20251201.pdf"
+    }
+  },
+  {
+    "icao": "E170",
+    "name": "Embraer 170",
+    "configuration": "ERJ 170-100 (original 26.0 m wing with small winglets)",
+    "length_m": 29.9,
+    "span_m": 26.0,
+    "height_m": 9.83,
+    "fuselage_width_m": 3.01,
+    "fuselage_height_m": 3.35,
+    "wing_area_m2": 72.72,
+    "wing_sweep_qc_deg": 23.0,
+    "tailplane_span_m": 10.0,
+    "engine_count": 2,
+    "engine_type": "CF34-8E",
+    "engine_offsets_m": [
+      4.09
+    ],
+    "nacelle_max_diameter_m": 1.9,
+    "nose_to_inlet_m": [
+      7.2
+    ],
+    "wingtip_device": "small winglet",
+    "notes": "No E170 APM was found online (Embraer's site now 404s for it); wing, tail and engines are shared with the E175 standard wing, so those values come from the E175 APM.",
+    "sources": {
+      "length_m": "SECONDARY: Wikipedia 'Embraer E-Jet family' spec table E170 length 29.90 m (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Embraer_E-Jet_family",
+      "span_m": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2.1 span over winglets 26.00 m (same wing as E170) — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf; Wikipedia gives 26.01 m",
+      "height_m": "SECONDARY: Wikipedia 'Embraer E-Jet family' spec table E170 height 9.83 m (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Embraer_E-Jet_family",
+      "fuselage_width_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "fuselage_height_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "wing_area_m2": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2.3 wing reference area 72.72 m² (same wing) — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: not published by Embraer; ~23° placeholder for the E1 wing (typical of Mach 0.78–0.82 regional jets), ±3°",
+      "tailplane_span_m": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2.5 horizontal tail span 10.00 m (same tail) — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf",
+      "engine_offsets_m": "ESTIMATE: scaled from E175 APM Figure 2.2 plan view (300 dpi, fuselage width 3.01 m as scale): 4.09 m; same wing/engine installation",
+      "nacelle_max_diameter_m": "ESTIMATE: CF34-8E nacelle width scaled from E175 APM Figure 2.2 plan view: 1.86–1.88 m",
+      "nose_to_inlet_m": "ESTIMATE: E175 scaled value 8.06 m minus half of the 1.78 m E175 stretch (assumed split fore/aft), ±0.5 m"
+    }
+  },
+  {
+    "icao": "E75L",
+    "name": "Embraer 175 (long wing)",
+    "configuration": "ERJ 170-200 with the enhanced (extended) wingtip, post-mod SB 170-57-0058 — the standard for E175s delivered to US regionals since ~2014",
+    "length_m": 31.68,
+    "span_m": 28.65,
+    "height_m": 9.86,
+    "fuselage_width_m": 3.01,
+    "fuselage_height_m": 3.35,
+    "wing_area_m2": 72.72,
+    "wing_sweep_qc_deg": 23.0,
+    "tailplane_span_m": 10.0,
+    "engine_count": 2,
+    "engine_type": "CF34-8E",
+    "engine_offsets_m": [
+      4.09
+    ],
+    "nacelle_max_diameter_m": 1.9,
+    "nose_to_inlet_m": [
+      8.06
+    ],
+    "wingtip_device": "extended raked wingtip ('enhanced wingtip')",
+    "notes": "ICAO E75L/E75S split is by wing (long = enhanced wingtip 28.65 m; short = 26.00 m). The APM keeps the 72.72 m² reference area for both.",
+    "sources": {
+      "length_m": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2.1/2.2.2 overall length 31.68 m — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf",
+      "span_m": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2.2 span 28.65 m; Figure 2.2 (enhanced wingtip) — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf",
+      "height_m": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2 height (maximum) 9.86 m — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf",
+      "fuselage_width_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "fuselage_height_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "wing_area_m2": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2.3 wing reference area 72.72 m² — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: not published by Embraer; ~23° placeholder for the E1 wing (typical of Mach 0.78–0.82 regional jets), ±3°",
+      "tailplane_span_m": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2.5 horizontal tail span 10.00 m — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf",
+      "engine_offsets_m": "ESTIMATE: scaled from E175 APM Figure 2.2 plan view (300 dpi, fuselage width 3.01 m as scale)",
+      "nacelle_max_diameter_m": "ESTIMATE: CF34-8E nacelle width scaled from E175 APM Figure 2.2 plan view: 1.86–1.88 m",
+      "nose_to_inlet_m": "ESTIMATE: scaled from E175 APM Figure 2.2 plan view (overall length 31.68 m as scale), ±0.4 m"
+    }
+  },
+  {
+    "icao": "E75S",
+    "name": "Embraer 175 (short wing)",
+    "configuration": "ERJ 170-200 with the original wing and small winglets (pre-mod SB 170-57-0058)",
+    "length_m": 31.68,
+    "span_m": 26.0,
+    "height_m": 9.86,
+    "fuselage_width_m": 3.01,
+    "fuselage_height_m": 3.35,
+    "wing_area_m2": 72.72,
+    "wing_sweep_qc_deg": 23.0,
+    "tailplane_span_m": 10.0,
+    "engine_count": 2,
+    "engine_type": "CF34-8E",
+    "engine_offsets_m": [
+      4.09
+    ],
+    "nacelle_max_diameter_m": 1.9,
+    "nose_to_inlet_m": [
+      8.06
+    ],
+    "wingtip_device": "small winglet",
+    "notes": "ICAO E75L/E75S split is by wing (long = enhanced wingtip 28.65 m; short = 26.00 m). The APM keeps the 72.72 m² reference area for both.",
+    "sources": {
+      "length_m": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2.1/2.2.2 overall length 31.68 m — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf",
+      "span_m": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2.1 span 26.0 m; Figure 2.1 (winglet) — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf",
+      "height_m": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2 height (maximum) 9.86 m — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf",
+      "fuselage_width_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "fuselage_height_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "wing_area_m2": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2.3 wing reference area 72.72 m² — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: not published by Embraer; ~23° placeholder for the E1 wing (typical of Mach 0.78–0.82 regional jets), ±3°",
+      "tailplane_span_m": "Embraer 175 APM 2259 Rev 22 (Nov 29/24); original URL now 404, retrieved from web.archive.org snapshot 2025-09-13, §2.2.5 horizontal tail span 10.00 m — https://www.embraercommercialaviation.com/wp-content/uploads/2017/06/E175-APM_APM_175-1.pdf",
+      "engine_offsets_m": "ESTIMATE: scaled from E175 APM Figure 2.2 plan view (300 dpi, fuselage width 3.01 m as scale)",
+      "nacelle_max_diameter_m": "ESTIMATE: CF34-8E nacelle width scaled from E175 APM Figure 2.2 plan view: 1.86–1.88 m",
+      "nose_to_inlet_m": "ESTIMATE: scaled from E175 APM Figure 2.2 plan view (overall length 31.68 m as scale), ±0.4 m"
+    }
+  },
+  {
+    "icao": "E190",
+    "name": "Embraer 190",
+    "configuration": "Production configuration (28.72 m wing with winglets)",
+    "length_m": 36.24,
+    "span_m": 28.72,
+    "height_m": 10.55,
+    "fuselage_width_m": 3.01,
+    "fuselage_height_m": 3.35,
+    "wing_area_m2": 92.5,
+    "wing_sweep_qc_deg": 23.0,
+    "tailplane_span_m": 12.08,
+    "engine_count": 2,
+    "engine_type": "CF34-10E",
+    "engine_offsets_m": [
+      4.48
+    ],
+    "nacelle_max_diameter_m": 2.05,
+    "nose_to_inlet_m": [
+      11.9
+    ],
+    "wingtip_device": "winglet",
+    "sources": {
+      "length_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.2.1 overall length 36.24 m — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "span_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.2.1 span over winglets 28.72 m (same wing on E195) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "height_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.2.1 height (maximum) 10.55 m (Figure 2.1 shows 10.57 m) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "fuselage_width_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "fuselage_height_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "wing_area_m2": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.2.2 wing reference area 92.50 m² — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: not published by Embraer; ~23° placeholder for the E1 wing (typical of Mach 0.78–0.82 regional jets), ±3°",
+      "tailplane_span_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.2.4 horizontal tail span 12.08 m — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "engine_offsets_m": "ESTIMATE: scaled from E190 APM Figure 2.1 plan view (300 dpi; fuselage 3.01 m and tail span 12.08 m as scale): 4.48 m; front-view check 4.50 m",
+      "nacelle_max_diameter_m": "ESTIMATE: CF34-10E nacelle width scaled from E190 APM Figure 2.1 plan view: ≈2.05 m (front view suggests 2.0–2.2 m)",
+      "nose_to_inlet_m": "ESTIMATE: scaled from E190 APM Figure 2.1 plan view (overall length as scale), ±0.5 m"
+    }
+  },
+  {
+    "icao": "E195",
+    "name": "Embraer 195",
+    "configuration": "Production configuration (28.72 m wing with winglets)",
+    "length_m": 38.65,
+    "span_m": 28.72,
+    "height_m": 10.55,
+    "fuselage_width_m": 3.01,
+    "fuselage_height_m": 3.35,
+    "wing_area_m2": 92.5,
+    "wing_sweep_qc_deg": 23.0,
+    "tailplane_span_m": 12.08,
+    "engine_count": 2,
+    "engine_type": "CF34-10E",
+    "engine_offsets_m": [
+      4.48
+    ],
+    "nacelle_max_diameter_m": 2.05,
+    "nose_to_inlet_m": [
+      13.1
+    ],
+    "wingtip_device": "winglet",
+    "notes": "No E195 APM was found online; the E195 shares the E190 wing and engines.",
+    "sources": {
+      "length_m": "SECONDARY: Wikipedia 'Embraer E-Jet family' spec table E195 length 38.66 m (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Embraer_E-Jet_family; 38.65 m per Skybrary/other secondary sources",
+      "span_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.2.1 span over winglets 28.72 m (same wing on E195) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "height_m": "SECONDARY: Wikipedia 'Embraer E-Jet family' spec table E195 height 10.54 m (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Embraer_E-Jet_family; Skybrary 10.55 m",
+      "fuselage_width_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "fuselage_height_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "wing_area_m2": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.2.2 wing reference area 92.50 m² — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: not published by Embraer; ~23° placeholder for the E1 wing (typical of Mach 0.78–0.82 regional jets), ±3°",
+      "tailplane_span_m": "ESTIMATE: assumed equal to E190 (12.08 m, E190 APM §2.2.4); one secondary source (aviatorinsider.com) also lists 12.08 m for the E195",
+      "engine_offsets_m": "ESTIMATE: scaled from E190 APM Figure 2.1 plan view (300 dpi; fuselage 3.01 m and tail span 12.08 m as scale): 4.48 m; front-view check 4.50 m",
+      "nacelle_max_diameter_m": "ESTIMATE: CF34-10E nacelle width scaled from E190 APM Figure 2.1 plan view: ≈2.05 m (front view suggests 2.0–2.2 m)",
+      "nose_to_inlet_m": "ESTIMATE: E190 scaled value plus half of the 2.41 m E195 stretch (assumed split fore/aft), ±0.5 m"
+    }
+  },
+  {
+    "icao": "E290",
+    "name": "Embraer 190-E2",
+    "configuration": "Production configuration (swept-back wingtip)",
+    "length_m": 36.24,
+    "span_m": 33.72,
+    "height_m": 10.95,
+    "fuselage_width_m": 3.01,
+    "fuselage_height_m": 3.35,
+    "wing_area_m2": 103.0,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 10.0,
+    "engine_count": 2,
+    "engine_type": "PW1900G",
+    "engine_offsets_m": [
+      4.83
+    ],
+    "nacelle_max_diameter_m": 2.45,
+    "nose_to_inlet_m": [
+      10.3
+    ],
+    "wingtip_device": "swept-back (raked) wingtip, no winglet",
+    "notes": "APM text gives 36.24 m length while Figure 2.1 shows 36.33 m; text gives HT span 9.84 m while Figures 2.1/2.2 show 10.0 m (text value '9.84 m (9 ft 10.1 in)' has an inconsistent imperial conversion, so the figure value is used).",
+    "sources": {
+      "length_m": "Embraer E-Jets E2 APM 5824 Rev 25 (Nov 29/24), §2.2.1 overall length — https://www.embraer.com/media/vmsjxvk5/e-jets-e2_apm_e-jetse2.pdf",
+      "span_m": "Embraer E-Jets E2 APM 5824 Rev 25 (Nov 29/24), §2.2.1 span over swept back wingtip — https://www.embraer.com/media/vmsjxvk5/e-jets-e2_apm_e-jetse2.pdf",
+      "height_m": "Embraer E-Jets E2 APM 5824 Rev 25 (Nov 29/24), §2.2.1 height (maximum) — https://www.embraer.com/media/vmsjxvk5/e-jets-e2_apm_e-jetse2.pdf",
+      "fuselage_width_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "fuselage_height_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "wing_area_m2": "Embraer E-Jets E2 APM 5824 Rev 25 (Nov 29/24), §2.2.4 wing reference area 103 m² (E190-E2 and E195-E2) — https://www.embraer.com/media/vmsjxvk5/e-jets-e2_apm_e-jetse2.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: not published by Embraer; ~25° placeholder for the E2 wing, ±3°",
+      "tailplane_span_m": "Embraer E-Jets E2 APM 5824 Rev 25 (Nov 29/24), Figure 2.1 plan view horizontal tail span 10.0 m (§2.2.9 text says 9.84 m) — https://www.embraer.com/media/vmsjxvk5/e-jets-e2_apm_e-jetse2.pdf",
+      "engine_offsets_m": "ESTIMATE: scaled from E2 APM Figure 2.1 (E190-E2) plan view at 300 dpi, fuselage 3.01 m as scale: 4.83 m; E195-E2 assumed identical (same wing)",
+      "nacelle_max_diameter_m": "ESTIMATE: PW1900G nacelle width scaled from E2 APM Figure 2.1 plan view: 2.37–2.46 m",
+      "nose_to_inlet_m": "ESTIMATE: scaled from E2 APM Figure 2.1 plan view (overall length as scale), ±0.5 m"
+    }
+  },
+  {
+    "icao": "E295",
+    "name": "Embraer 195-E2",
+    "configuration": "Production configuration (swept-back wingtip)",
+    "length_m": 41.6,
+    "span_m": 35.12,
+    "height_m": 10.78,
+    "fuselage_width_m": 3.01,
+    "fuselage_height_m": 3.35,
+    "wing_area_m2": 103.0,
+    "wing_sweep_qc_deg": 25.0,
+    "tailplane_span_m": 10.0,
+    "engine_count": 2,
+    "engine_type": "PW1900G",
+    "engine_offsets_m": [
+      4.83
+    ],
+    "nacelle_max_diameter_m": 2.45,
+    "nose_to_inlet_m": [
+      12.8
+    ],
+    "wingtip_device": "swept-back (raked) wingtip, no winglet",
+    "notes": "APM text gives HT span 9.84 m while Figure 2.2 shows 10.0 m; figure value used. Height 10.78 m is the +54 °C maximum (10.32 m at −40 °C).",
+    "sources": {
+      "length_m": "Embraer E-Jets E2 APM 5824 Rev 25 (Nov 29/24), §2.2.2 overall length — https://www.embraer.com/media/vmsjxvk5/e-jets-e2_apm_e-jetse2.pdf",
+      "span_m": "Embraer E-Jets E2 APM 5824 Rev 25 (Nov 29/24), §2.2.2 span over swept back wingtip — https://www.embraer.com/media/vmsjxvk5/e-jets-e2_apm_e-jetse2.pdf",
+      "height_m": "Embraer E-Jets E2 APM 5824 Rev 25 (Nov 29/24), §2.2.2 height (maximum) — https://www.embraer.com/media/vmsjxvk5/e-jets-e2_apm_e-jetse2.pdf",
+      "fuselage_width_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "fuselage_height_m": "Embraer 190 APM 1901 Rev 24 (Nov 29/24), §2.5 Passenger Cabin Cross Section, Figure 2.5 (Section 02 p.16): external width 3.01 m, external height 3.35 m (same cross-section on all E-Jets) — https://embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+      "wing_area_m2": "Embraer E-Jets E2 APM 5824 Rev 25 (Nov 29/24), §2.2.4 wing reference area 103 m² (E190-E2 and E195-E2) — https://www.embraer.com/media/vmsjxvk5/e-jets-e2_apm_e-jetse2.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: not published by Embraer; ~25° placeholder for the E2 wing, ±3°",
+      "tailplane_span_m": "Embraer E-Jets E2 APM 5824 Rev 25 (Nov 29/24), Figure 2.2 plan view horizontal tail span 10.0 m (§2.2.9 text says 9.84 m) — https://www.embraer.com/media/vmsjxvk5/e-jets-e2_apm_e-jetse2.pdf",
+      "engine_offsets_m": "ESTIMATE: scaled from E2 APM Figure 2.1 (E190-E2) plan view at 300 dpi, fuselage 3.01 m as scale: 4.83 m; E195-E2 assumed identical (same wing)",
+      "nacelle_max_diameter_m": "ESTIMATE: PW1900G nacelle width scaled from E2 APM Figure 2.1 plan view: 2.37–2.46 m",
+      "nose_to_inlet_m": "ESTIMATE: scaled from E2 APM Figure 2.2 plan view (overall length as scale), ±0.5 m"
+    }
+  },
+  {
+    "icao": "CRJ2",
+    "name": "Mitsubishi (Bombardier) CRJ200",
+    "configuration": "CRJ200 (CRJ100/200/440 share the airframe)",
+    "length_m": 26.77,
+    "span_m": 21.21,
+    "height_m": 6.22,
+    "fuselage_width_m": 2.69,
+    "fuselage_height_m": 2.69,
+    "wing_area_m2": 48.35,
+    "wing_sweep_qc_deg": 26.5,
+    "tailplane_span_m": 6.4,
+    "engine_count": 2,
+    "engine_type": "CF34-3B1 (rear fuselage)",
+    "engine_offsets_m": [
+      2.1
+    ],
+    "nacelle_max_diameter_m": 1.3,
+    "nose_to_inlet_m": [
+      17.3
+    ],
+    "wingtip_device": "winglet",
+    "notes": "Conflicts: MHI gives span 21.21 m / height 6.22 m; Wikipedia gives 21.18 m / 6.30 m. No CRJ200 APM was accessible (only unofficial Scribd copies), so tail, engine and inlet values are rough estimates.",
+    "sources": {
+      "length_m": "MHI CRJ product page (dimension table), CRJ200 length 26.77 m — https://www.mhi.com/business/products-services/aviation/aircraft-aftermarket-service/crj",
+      "span_m": "MHI CRJ product page (dimension table), CRJ200 wingspan 21.21 m — https://www.mhi.com/business/products-services/aviation/aircraft-aftermarket-service/crj",
+      "height_m": "MHI CRJ product page (dimension table), CRJ200 height 6.22 m — https://www.mhi.com/business/products-services/aviation/aircraft-aftermarket-service/crj",
+      "fuselage_width_m": "SECONDARY: Wikipedia 'Bombardier CRJ100/200' spec table fuselage diameter 2.69 m (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Bombardier_CRJ100/200",
+      "fuselage_height_m": "SECONDARY: Wikipedia 'Bombardier CRJ100/200' fuselage diameter 2.69 m (circular) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Bombardier_CRJ100/200",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Bombardier CRJ100/200' spec table wing area 48.35 m² (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Bombardier_CRJ100/200",
+      "wing_sweep_qc_deg": "ESTIMATE: not found in a primary source; ~26.5° placeholder (secondary references commonly give ≈26–27° for the CRJ wing family), ±2°",
+      "tailplane_span_m": "ESTIMATE: no source found; ~6.4 m placeholder (CRJ200 tailplane is visibly smaller than the CRJ700/900's 8.54 m), ±0.5 m",
+      "engine_offsets_m": "ESTIMATE: CRJ900 inner-nacelle clearance from centreline (1.51 m, APM) plus half of the estimated 1.3 m nacelle = ~2.1 m, ±0.2 m",
+      "nacelle_max_diameter_m": "ESTIMATE: CRJ900 APM nacelle width 1.55 m scaled by fan diameter ratio CF34-3 (44 in) / CF34-8C (52 in): ~1.3 m",
+      "nose_to_inlet_m": "ESTIMATE: rough: CRJ200 is 9.5 m shorter than the CRJ900, mostly ahead of the engines; ±1 m"
+    }
+  },
+  {
+    "icao": "CRJ7",
+    "name": "Mitsubishi (Bombardier) CRJ700",
+    "configuration": "CRJ700 series 701/702 (standard wing with winglets)",
+    "length_m": 32.3,
+    "span_m": 23.2,
+    "height_m": 7.6,
+    "fuselage_width_m": 2.69,
+    "fuselage_height_m": 2.69,
+    "wing_area_m2": 70.6,
+    "wing_sweep_qc_deg": 26.5,
+    "tailplane_span_m": 8.54,
+    "engine_count": 2,
+    "engine_type": "CF34-8C1/C5 (rear fuselage)",
+    "engine_offsets_m": [
+      2.29
+    ],
+    "nacelle_max_diameter_m": 1.55,
+    "nose_to_inlet_m": [
+      22.1
+    ],
+    "wingtip_device": "winglet",
+    "notes": "No public CRJ700 APM was found; only overall dimensions come from MHI. Empennage and engine installation assumed shared with the CRJ900.",
+    "sources": {
+      "length_m": "MHI CRJ product page (dimension table), CRJ700 length 32.3 m — https://www.mhi.com/business/products-services/aviation/aircraft-aftermarket-service/crj",
+      "span_m": "MHI CRJ product page (dimension table), CRJ700 wingspan 23.2 m — https://www.mhi.com/business/products-services/aviation/aircraft-aftermarket-service/crj",
+      "height_m": "MHI CRJ product page (dimension table), CRJ700 height 7.6 m — https://www.mhi.com/business/products-services/aviation/aircraft-aftermarket-service/crj",
+      "fuselage_width_m": "ESTIMATE: same fuselage diameter as CRJ900 (APM 2.69 m)",
+      "fuselage_height_m": "ESTIMATE: same circular fuselage as CRJ900 (2.69 m)",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Bombardier CRJ700 series' spec table 70.6 m² (CRJ700) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Bombardier_CRJ700_series",
+      "wing_sweep_qc_deg": "ESTIMATE: not found in a primary source; ~26.5° placeholder (secondary references commonly give ≈26–27° for the CRJ wing family), ±2°",
+      "tailplane_span_m": "ESTIMATE: assumed equal to CRJ900 APM value 8.54 m (shared empennage)",
+      "engine_offsets_m": "ESTIMATE: assumed equal to CRJ900 APM-derived 2.29 m",
+      "nacelle_max_diameter_m": "ESTIMATE: assumed equal to CRJ900 APM nacelle width 1.55 m (same CF34-8C family)",
+      "nose_to_inlet_m": "ESTIMATE: CRJ900 estimate (26.0 m) minus the 3.9 m length difference, assuming both CRJ900 plugs are ahead of the rear-mounted engines, ±0.5 m"
+    }
+  },
+  {
+    "icao": "CRJ9",
+    "name": "Mitsubishi (Bombardier) CRJ900",
+    "configuration": "CRJ900 with extended wingtip/winglet (most aircraft; early 15001–15035 etc. have 23.24 m span)",
+    "length_m": 36.24,
+    "span_m": 24.85,
+    "height_m": 7.35,
+    "fuselage_width_m": 2.69,
+    "fuselage_height_m": 2.69,
+    "wing_area_m2": 71.07,
+    "wing_sweep_qc_deg": 26.5,
+    "tailplane_span_m": 8.54,
+    "engine_count": 2,
+    "engine_type": "CF34-8C5 (rear fuselage)",
+    "engine_offsets_m": [
+      2.29
+    ],
+    "nacelle_max_diameter_m": 1.55,
+    "nose_to_inlet_m": [
+      26.0
+    ],
+    "wingtip_device": "winglet",
+    "alternates": {
+      "span_m_early_aircraft": 23.24
+    },
+    "sources": {
+      "length_m": "Bombardier CRJ900 Airport Planning Manual CSP C-020 Rev 11 (Dec 17/2015), 00-02-02 Table 1 General Aircraft Dimensions and Areas (A/C 15036-15037, 15040-15041, 15043-15990), PDF p.36: total aircraft length 1426.70 in — https://customer.aero.bombardier.com/webd/BAG/CustSite/BRAD/RACSDocument.nsf/51aae8b2b3bfdf6685256c300045ff31/ec63f8639ff3ab9d85257c1500635bd8/$FILE/ATTQF1EY.pdf",
+      "span_m": "Bombardier CRJ900 Airport Planning Manual CSP C-020 Rev 11 (Dec 17/2015), 00-02-02 Table 1 General Aircraft Dimensions and Areas (A/C 15036-15037, 15040-15041, 15043-15990), PDF p.36: wing span 978.34 in (24.85 m) — https://customer.aero.bombardier.com/webd/BAG/CustSite/BRAD/RACSDocument.nsf/51aae8b2b3bfdf6685256c300045ff31/ec63f8639ff3ab9d85257c1500635bd8/$FILE/ATTQF1EY.pdf",
+      "height_m": "Bombardier CRJ900 Airport Planning Manual CSP C-020 Rev 11 (Dec 17/2015), 00-02-02 Table 1 General Aircraft Dimensions and Areas (A/C 15036-15037, 15040-15041, 15043-15990), PDF p.36: total aircraft height 289.40 in (7.35 m) — https://customer.aero.bombardier.com/webd/BAG/CustSite/BRAD/RACSDocument.nsf/51aae8b2b3bfdf6685256c300045ff31/ec63f8639ff3ab9d85257c1500635bd8/$FILE/ATTQF1EY.pdf; MHI page rounds to 7.5 m",
+      "fuselage_width_m": "Bombardier CRJ900 Airport Planning Manual CSP C-020 Rev 11 (Dec 17/2015), 00-02-02 Table 1 General Aircraft Dimensions and Areas (A/C 15036-15037, 15040-15041, 15043-15990), PDF p.36: fuselage external diameter 105.96 in (2.69 m) — https://customer.aero.bombardier.com/webd/BAG/CustSite/BRAD/RACSDocument.nsf/51aae8b2b3bfdf6685256c300045ff31/ec63f8639ff3ab9d85257c1500635bd8/$FILE/ATTQF1EY.pdf",
+      "fuselage_height_m": "Bombardier CRJ900 Airport Planning Manual CSP C-020 Rev 11 (Dec 17/2015), 00-02-02 Table 1 General Aircraft Dimensions and Areas (A/C 15036-15037, 15040-15041, 15043-15990), PDF p.36: fuselage external diameter 2.69 m (circular) — https://customer.aero.bombardier.com/webd/BAG/CustSite/BRAD/RACSDocument.nsf/51aae8b2b3bfdf6685256c300045ff31/ec63f8639ff3ab9d85257c1500635bd8/$FILE/ATTQF1EY.pdf",
+      "wing_area_m2": "Bombardier CRJ900 Airport Planning Manual CSP C-020 Rev 11 (Dec 17/2015), 00-02-02 Table 1 General Aircraft Dimensions and Areas (A/C 15036-15037, 15040-15041, 15043-15990), PDF p.36: total wing area 764.95 ft² (71.07 m²) — https://customer.aero.bombardier.com/webd/BAG/CustSite/BRAD/RACSDocument.nsf/51aae8b2b3bfdf6685256c300045ff31/ec63f8639ff3ab9d85257c1500635bd8/$FILE/ATTQF1EY.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: not found in a primary source; ~26.5° placeholder (secondary references commonly give ≈26–27° for the CRJ wing family), ±2°",
+      "tailplane_span_m": "Bombardier CRJ900 Airport Planning Manual CSP C-020 Rev 11 (Dec 17/2015), 00-02-02 Table 1 General Aircraft Dimensions and Areas (A/C 15036-15037, 15040-15041, 15043-15990), PDF p.36: total horizontal stabilizer span 336.40 in (8.54 m) — https://customer.aero.bombardier.com/webd/BAG/CustSite/BRAD/RACSDocument.nsf/51aae8b2b3bfdf6685256c300045ff31/ec63f8639ff3ab9d85257c1500635bd8/$FILE/ATTQF1EY.pdf",
+      "engine_offsets_m": "Bombardier CRJ900 Airport Planning Manual CSP C-020 Rev 11 (Dec 17/2015), 00-02-02 Aircraft Dimensions, Figure 4 (Sheet 2 of 2) detail A, PDF p.39: centreline to nacelle outer edge 120.70 in (3.06 m) minus half the 61.10 in (1.55 m) nacelle width = 2.29 m — https://customer.aero.bombardier.com/webd/BAG/CustSite/BRAD/RACSDocument.nsf/51aae8b2b3bfdf6685256c300045ff31/ec63f8639ff3ab9d85257c1500635bd8/$FILE/ATTQF1EY.pdf",
+      "nacelle_max_diameter_m": "Bombardier CRJ900 Airport Planning Manual CSP C-020 Rev 11 (Dec 17/2015), 00-02-02 Aircraft Dimensions, Figure 4 (Sheet 2 of 2) detail A, PDF p.39: nacelle width 61.10 in (1.55 m) — https://customer.aero.bombardier.com/webd/BAG/CustSite/BRAD/RACSDocument.nsf/51aae8b2b3bfdf6685256c300045ff31/ec63f8639ff3ab9d85257c1500635bd8/$FILE/ATTQF1EY.pdf",
+      "nose_to_inlet_m": "ESTIMATE: scaled from CRJ900 APM Figure 4 sheet 2 plan view (overall length as scale), ±0.5 m"
+    }
+  },
+  {
+    "icao": "CRJX",
+    "name": "Mitsubishi (Bombardier) CRJ1000",
+    "configuration": "CRJ1000 (extended wingtip with winglets)",
+    "length_m": 39.1,
+    "span_m": 26.2,
+    "height_m": 7.5,
+    "fuselage_width_m": 2.69,
+    "fuselage_height_m": 2.69,
+    "wing_area_m2": 77.4,
+    "wing_sweep_qc_deg": 26.5,
+    "tailplane_span_m": 8.54,
+    "engine_count": 2,
+    "engine_type": "CF34-8C5A1 (rear fuselage)",
+    "engine_offsets_m": [
+      2.29
+    ],
+    "nacelle_max_diameter_m": 1.55,
+    "nose_to_inlet_m": [
+      28.9
+    ],
+    "wingtip_device": "winglet",
+    "notes": "No public CRJ1000 APM was found; only overall dimensions come from MHI.",
+    "sources": {
+      "length_m": "MHI CRJ product page (dimension table), CRJ1000 length 39.1 m — https://www.mhi.com/business/products-services/aviation/aircraft-aftermarket-service/crj",
+      "span_m": "MHI CRJ product page (dimension table), CRJ1000 wingspan 26.2 m — https://www.mhi.com/business/products-services/aviation/aircraft-aftermarket-service/crj",
+      "height_m": "MHI CRJ product page (dimension table), CRJ1000 height 7.5 m — https://www.mhi.com/business/products-services/aviation/aircraft-aftermarket-service/crj",
+      "fuselage_width_m": "ESTIMATE: same fuselage diameter as CRJ900 (APM 2.69 m)",
+      "fuselage_height_m": "ESTIMATE: same circular fuselage as CRJ900 (2.69 m)",
+      "wing_area_m2": "SECONDARY: Wikipedia 'Bombardier CRJ700 series' spec table 77.4 m² (CRJ1000) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/Bombardier_CRJ700_series",
+      "wing_sweep_qc_deg": "ESTIMATE: not found in a primary source; ~26.5° placeholder (secondary references commonly give ≈26–27° for the CRJ wing family), ±2°",
+      "tailplane_span_m": "ESTIMATE: assumed equal to CRJ900 APM value 8.54 m",
+      "engine_offsets_m": "ESTIMATE: assumed equal to CRJ900 APM-derived 2.29 m",
+      "nacelle_max_diameter_m": "ESTIMATE: assumed equal to CRJ900 APM nacelle width 1.55 m",
+      "nose_to_inlet_m": "ESTIMATE: CRJ900 estimate (26.0 m) plus the 2.9 m length difference, ±0.5 m"
+    }
+  },
+  {
+    "icao": "AT43",
+    "name": "ATR 42-300/-320",
+    "configuration": "ATR 42-300/-320 (4-blade Hamilton Standard 14SF propellers)",
+    "length_m": 22.67,
+    "span_m": 24.57,
+    "height_m": 7.59,
+    "fuselage_width_m": 2.87,
+    "fuselage_height_m": 2.6,
+    "wing_area_m2": 54.5,
+    "wing_sweep_qc_deg": 3.0,
+    "tailplane_span_m": 7.1,
+    "engine_count": 2,
+    "engine_type": "PW120/PW121 turboprop",
+    "engine_offsets_m": [
+      4.05
+    ],
+    "propeller_diameter_m": 3.96,
+    "nose_to_inlet_m": [
+      7.2
+    ],
+    "nose_to_inlet_note": "distance to propeller plane",
+    "wingtip_device": "plain",
+    "notes": "Older variants share the -600 airframe dimensions (Wikipedia ATR 42/72 spec tables list one length/span/height for all variants); -600 factsheet values used.",
+    "sources": {
+      "length_m": "ATR 42-600 factsheet, side view overall length (42-600 sheet) — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf; same for all variants per SECONDARY: Wikipedia 'ATR 42' Specifications table (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/ATR_42",
+      "span_m": "ATR 42-600 factsheet, front view wing span — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "height_m": "ATR 42-600 factsheet, side view overall height — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "fuselage_width_m": "ESTIMATE: max external width ≈ ATR max cabin width 2.57 m (72-600 factsheet cross-section; Wikipedia '2.57 m cabin, maximum') + ~0.15 m wall each side = ~2.87 m",
+      "fuselage_height_m": "ESTIMATE: no published external height found; ~2.6 m placeholder (cabin height 1.91 m per 72-600 factsheet plus floor/crown structure), ±0.2 m",
+      "wing_area_m2": "ATR 42-600 factsheet, 'WING AREA: 54.5 m2' — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: straight-tapered high wing; quarter-chord sweep ≈3° placeholder, ±2°",
+      "tailplane_span_m": "ESTIMATE: scaled from the 72-600 factsheet front-view render (span 27.05 m and prop axes 8.10 m as scale): 7.0–7.2 m; the image is a perspective render, so ±0.3 m",
+      "engine_offsets_m": "ATR 42-600 factsheet, front view distance between propeller axes 8.10 m, halved — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "propeller_diameter_m": "ESTIMATE: Hamilton Standard 14SF 4-blade, ~3.96 m (13 ft) — from memory of type data, not re-verified this session",
+      "nose_to_inlet_m": "ESTIMATE: propeller plane scaled from the 72-600 factsheet side view (length 27.166 m as scale): ≈9.2 m; ATR 42 = 72 value minus the 1.99 m wheelbase difference (10.77 vs 8.78 m, factsheets) ≈7.2 m; ±0.4 m"
+    }
+  },
+  {
+    "icao": "AT45",
+    "name": "ATR 42-500",
+    "configuration": "ATR 42-500 (6-blade Hamilton Standard 568F propellers)",
+    "length_m": 22.67,
+    "span_m": 24.57,
+    "height_m": 7.59,
+    "fuselage_width_m": 2.87,
+    "fuselage_height_m": 2.6,
+    "wing_area_m2": 54.5,
+    "wing_sweep_qc_deg": 3.0,
+    "tailplane_span_m": 7.1,
+    "engine_count": 2,
+    "engine_type": "PW127E/M turboprop",
+    "engine_offsets_m": [
+      4.05
+    ],
+    "propeller_diameter_m": 3.93,
+    "nose_to_inlet_m": [
+      7.2
+    ],
+    "nose_to_inlet_note": "distance to propeller plane",
+    "wingtip_device": "plain",
+    "notes": "Older variants share the -600 airframe dimensions (Wikipedia ATR 42/72 spec tables list one length/span/height for all variants); -600 factsheet values used.",
+    "sources": {
+      "length_m": "ATR 42-600 factsheet, side view overall length (42-600 sheet) — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf; same for all variants per SECONDARY: Wikipedia 'ATR 42' Specifications table (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/ATR_42",
+      "span_m": "ATR 42-600 factsheet, front view wing span — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "height_m": "ATR 42-600 factsheet, side view overall height — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "fuselage_width_m": "ESTIMATE: max external width ≈ ATR max cabin width 2.57 m (72-600 factsheet cross-section; Wikipedia '2.57 m cabin, maximum') + ~0.15 m wall each side = ~2.87 m",
+      "fuselage_height_m": "ESTIMATE: no published external height found; ~2.6 m placeholder (cabin height 1.91 m per 72-600 factsheet plus floor/crown structure), ±0.2 m",
+      "wing_area_m2": "ATR 42-600 factsheet, 'WING AREA: 54.5 m2' — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: straight-tapered high wing; quarter-chord sweep ≈3° placeholder, ±2°",
+      "tailplane_span_m": "ESTIMATE: scaled from the 72-600 factsheet front-view render (span 27.05 m and prop axes 8.10 m as scale): 7.0–7.2 m; the image is a perspective render, so ±0.3 m",
+      "engine_offsets_m": "ATR 42-600 factsheet, front view distance between propeller axes 8.10 m, halved — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "propeller_diameter_m": "ATR 42-600 factsheet, propeller 568F, 6 blades, diameter 3.93 m (42-600 sheet; -500 uses the same 568F propeller) — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "nose_to_inlet_m": "ESTIMATE: propeller plane scaled from the 72-600 factsheet side view (length 27.166 m as scale): ≈9.2 m; ATR 42 = 72 value minus the 1.99 m wheelbase difference (10.77 vs 8.78 m, factsheets) ≈7.2 m; ±0.4 m"
+    }
+  },
+  {
+    "icao": "AT46",
+    "name": "ATR 42-600",
+    "configuration": "ATR 42-600",
+    "length_m": 22.67,
+    "span_m": 24.57,
+    "height_m": 7.59,
+    "fuselage_width_m": 2.87,
+    "fuselage_height_m": 2.6,
+    "wing_area_m2": 54.5,
+    "wing_sweep_qc_deg": 3.0,
+    "tailplane_span_m": 7.1,
+    "engine_count": 2,
+    "engine_type": "PW127M/XT-M turboprop",
+    "engine_offsets_m": [
+      4.05
+    ],
+    "propeller_diameter_m": 3.93,
+    "nose_to_inlet_m": [
+      7.2
+    ],
+    "nose_to_inlet_note": "distance to propeller plane",
+    "wingtip_device": "plain",
+    "sources": {
+      "length_m": "ATR 42-600 factsheet, side view overall length (42-600 sheet) — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "span_m": "ATR 42-600 factsheet, front view wing span — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "height_m": "ATR 42-600 factsheet, side view overall height — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "fuselage_width_m": "ESTIMATE: max external width ≈ ATR max cabin width 2.57 m (72-600 factsheet cross-section; Wikipedia '2.57 m cabin, maximum') + ~0.15 m wall each side = ~2.87 m",
+      "fuselage_height_m": "ESTIMATE: no published external height found; ~2.6 m placeholder (cabin height 1.91 m per 72-600 factsheet plus floor/crown structure), ±0.2 m",
+      "wing_area_m2": "ATR 42-600 factsheet, 'WING AREA: 54.5 m2' — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: straight-tapered high wing; quarter-chord sweep ≈3° placeholder, ±2°",
+      "tailplane_span_m": "ESTIMATE: scaled from the 72-600 factsheet front-view render (span 27.05 m and prop axes 8.10 m as scale): 7.0–7.2 m; the image is a perspective render, so ±0.3 m",
+      "engine_offsets_m": "ATR 42-600 factsheet, front view distance between propeller axes 8.10 m, halved — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "propeller_diameter_m": "ATR 42-600 factsheet, front view Ø 3.93 m — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_42-600.pdf",
+      "nose_to_inlet_m": "ESTIMATE: propeller plane scaled from the 72-600 factsheet side view (length 27.166 m as scale): ≈9.2 m; ATR 42 = 72 value minus the 1.99 m wheelbase difference (10.77 vs 8.78 m, factsheets) ≈7.2 m; ±0.4 m"
+    }
+  },
+  {
+    "icao": "AT72",
+    "name": "ATR 72-200/-210",
+    "configuration": "ATR 72-200/-210 (4-blade Hamilton Standard 14SF propellers)",
+    "length_m": 27.166,
+    "span_m": 27.05,
+    "height_m": 7.65,
+    "fuselage_width_m": 2.87,
+    "fuselage_height_m": 2.6,
+    "wing_area_m2": 61.0,
+    "wing_sweep_qc_deg": 3.0,
+    "tailplane_span_m": 7.1,
+    "engine_count": 2,
+    "engine_type": "PW124B/PW127 turboprop",
+    "engine_offsets_m": [
+      4.05
+    ],
+    "propeller_diameter_m": 3.93,
+    "nose_to_inlet_m": [
+      9.2
+    ],
+    "nose_to_inlet_note": "distance to propeller plane",
+    "wingtip_device": "plain",
+    "notes": "Older variants share the -600 airframe dimensions (Wikipedia ATR 42/72 spec tables list one length/span/height for all variants); -600 factsheet values used.",
+    "sources": {
+      "length_m": "ATR 72-600 factsheet, side view overall length (72-600 sheet) — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf; same for all variants per SECONDARY: Wikipedia 'ATR 72' Specifications table (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/ATR_72",
+      "span_m": "ATR 72-600 factsheet, front view wing span — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "height_m": "ATR 72-600 factsheet, side view overall height — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "fuselage_width_m": "ESTIMATE: max external width ≈ ATR max cabin width 2.57 m (72-600 factsheet cross-section; Wikipedia '2.57 m cabin, maximum') + ~0.15 m wall each side = ~2.87 m",
+      "fuselage_height_m": "ESTIMATE: no published external height found; ~2.6 m placeholder (cabin height 1.91 m per 72-600 factsheet plus floor/crown structure), ±0.2 m",
+      "wing_area_m2": "ATR 72-600 factsheet, 'WING AREA: 61.0 m2' — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: straight-tapered high wing; quarter-chord sweep ≈3° placeholder, ±2°",
+      "tailplane_span_m": "ESTIMATE: scaled from the 72-600 factsheet front-view render (span 27.05 m and prop axes 8.10 m as scale): 7.0–7.2 m; the image is a perspective render, so ±0.3 m",
+      "engine_offsets_m": "ATR 72-600 factsheet, front view distance between propeller axes 8.10 m, halved — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "propeller_diameter_m": "ESTIMATE: Hamilton Standard 14SF 4-blade, ~3.93 m — from memory of type data, not re-verified this session",
+      "nose_to_inlet_m": "ESTIMATE: propeller plane scaled from the 72-600 factsheet side view (length 27.166 m as scale): ≈9.2 m; ATR 42 = 72 value minus the 1.99 m wheelbase difference (10.77 vs 8.78 m, factsheets) ≈7.2 m; ±0.4 m"
+    }
+  },
+  {
+    "icao": "AT75",
+    "name": "ATR 72-500",
+    "configuration": "ATR 72-500 (72-212A, 6-blade 568F propellers)",
+    "length_m": 27.166,
+    "span_m": 27.05,
+    "height_m": 7.65,
+    "fuselage_width_m": 2.87,
+    "fuselage_height_m": 2.6,
+    "wing_area_m2": 61.0,
+    "wing_sweep_qc_deg": 3.0,
+    "tailplane_span_m": 7.1,
+    "engine_count": 2,
+    "engine_type": "PW127F/M turboprop",
+    "engine_offsets_m": [
+      4.05
+    ],
+    "propeller_diameter_m": 3.93,
+    "nose_to_inlet_m": [
+      9.2
+    ],
+    "nose_to_inlet_note": "distance to propeller plane",
+    "wingtip_device": "plain",
+    "notes": "Older variants share the -600 airframe dimensions (Wikipedia ATR 42/72 spec tables list one length/span/height for all variants); -600 factsheet values used.",
+    "sources": {
+      "length_m": "ATR 72-600 factsheet, side view overall length (72-600 sheet) — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf; same for all variants per SECONDARY: Wikipedia 'ATR 72' Specifications table (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/ATR_72",
+      "span_m": "ATR 72-600 factsheet, front view wing span — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "height_m": "ATR 72-600 factsheet, side view overall height — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "fuselage_width_m": "ESTIMATE: max external width ≈ ATR max cabin width 2.57 m (72-600 factsheet cross-section; Wikipedia '2.57 m cabin, maximum') + ~0.15 m wall each side = ~2.87 m",
+      "fuselage_height_m": "ESTIMATE: no published external height found; ~2.6 m placeholder (cabin height 1.91 m per 72-600 factsheet plus floor/crown structure), ±0.2 m",
+      "wing_area_m2": "ATR 72-600 factsheet, 'WING AREA: 61.0 m2' — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: straight-tapered high wing; quarter-chord sweep ≈3° placeholder, ±2°",
+      "tailplane_span_m": "ESTIMATE: scaled from the 72-600 factsheet front-view render (span 27.05 m and prop axes 8.10 m as scale): 7.0–7.2 m; the image is a perspective render, so ±0.3 m",
+      "engine_offsets_m": "ATR 72-600 factsheet, front view distance between propeller axes 8.10 m, halved — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "propeller_diameter_m": "ATR 72-600 factsheet, propeller 568F, 6 blades, 3.93 m (72-600 sheet; -500 uses the same 568F propeller) — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "nose_to_inlet_m": "ESTIMATE: propeller plane scaled from the 72-600 factsheet side view (length 27.166 m as scale): ≈9.2 m; ATR 42 = 72 value minus the 1.99 m wheelbase difference (10.77 vs 8.78 m, factsheets) ≈7.2 m; ±0.4 m"
+    }
+  },
+  {
+    "icao": "AT76",
+    "name": "ATR 72-600",
+    "configuration": "ATR 72-600",
+    "length_m": 27.166,
+    "span_m": 27.05,
+    "height_m": 7.65,
+    "fuselage_width_m": 2.87,
+    "fuselage_height_m": 2.6,
+    "wing_area_m2": 61.0,
+    "wing_sweep_qc_deg": 3.0,
+    "tailplane_span_m": 7.1,
+    "engine_count": 2,
+    "engine_type": "PW127M/N/XT turboprop",
+    "engine_offsets_m": [
+      4.05
+    ],
+    "propeller_diameter_m": 3.93,
+    "nose_to_inlet_m": [
+      9.2
+    ],
+    "nose_to_inlet_note": "distance to propeller plane",
+    "wingtip_device": "plain",
+    "sources": {
+      "length_m": "ATR 72-600 factsheet, side view overall length (72-600 sheet) — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "span_m": "ATR 72-600 factsheet, front view wing span — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "height_m": "ATR 72-600 factsheet, side view overall height — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "fuselage_width_m": "ESTIMATE: max external width ≈ ATR max cabin width 2.57 m (72-600 factsheet cross-section; Wikipedia '2.57 m cabin, maximum') + ~0.15 m wall each side = ~2.87 m",
+      "fuselage_height_m": "ESTIMATE: no published external height found; ~2.6 m placeholder (cabin height 1.91 m per 72-600 factsheet plus floor/crown structure), ±0.2 m",
+      "wing_area_m2": "ATR 72-600 factsheet, 'WING AREA: 61.0 m2' — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "wing_sweep_qc_deg": "ESTIMATE: straight-tapered high wing; quarter-chord sweep ≈3° placeholder, ±2°",
+      "tailplane_span_m": "ESTIMATE: scaled from the 72-600 factsheet front-view render (span 27.05 m and prop axes 8.10 m as scale): 7.0–7.2 m; the image is a perspective render, so ±0.3 m",
+      "engine_offsets_m": "ATR 72-600 factsheet, front view distance between propeller axes 8.10 m, halved — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "propeller_diameter_m": "ATR 72-600 factsheet, front view Ø 3.93 m; 'Blades - diameter 6 - 3.93 m' — https://www.atr-aircraft.com/wp-content/uploads/2020/07/Factsheets_-_ATR_72-600.pdf",
+      "nose_to_inlet_m": "ESTIMATE: propeller plane scaled from the 72-600 factsheet side view (length 27.166 m as scale): ≈9.2 m; ATR 42 = 72 value minus the 1.99 m wheelbase difference (10.77 vs 8.78 m, factsheets) ≈7.2 m; ±0.4 m"
+    }
+  },
+  {
+    "icao": "DH8A",
+    "name": "De Havilland Canada Dash 8-100",
+    "configuration": "Dash 8-100 (Q100)",
+    "length_m": 22.25,
+    "span_m": 25.89,
+    "height_m": 7.49,
+    "fuselage_width_m": 2.69,
+    "fuselage_height_m": 2.69,
+    "wing_area_m2": 54.4,
+    "wing_sweep_qc_deg": 2.0,
+    "engine_count": 2,
+    "engine_type": "PW120-series turboprop",
+    "engine_offsets_m": [
+      3.95
+    ],
+    "propeller_diameter_m": 3.96,
+    "wingtip_device": "plain",
+    "notes": "No public airport planning manual or dimensioned drawing was found for the Dash 8-100/200/300; tailplane span and nose-to-propeller distance are left null.",
+    "sources": {
+      "length_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table length (Q200(-100): 73 ft = 22.25 m; Q300: 84 ft 3 in = 25.7 m) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "span_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table wingspan (85 ft = 25.89 m; Q300 90 ft = 27.4 m) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "height_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table height 24 ft 7 in (7.49 m) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "fuselage_width_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table 'Fuselage 8 ft 10 in (2.69 m)' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "fuselage_height_m": "ESTIMATE: assumed ≈ equal to the 2.69 m width (near-circular section); no published external height found",
+      "wing_area_m2": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table wing area (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "wing_sweep_qc_deg": "ESTIMATE: straight high wing; quarter-chord sweep ≈0–3°, 2° placeholder",
+      "tailplane_span_m": "NOT SOURCED: no dimensioned drawing found",
+      "engine_offsets_m": "ESTIMATE: ≈ half the main-gear track because Dash 8 main gears retract into the engine nacelles; track ~7.9 m for -100/-200/-300 (recalled type data, not re-verified) → ~3.95 m. Same rule gives 4.4 m on the Q400 vs 4.3–4.4 m scaled from its plan view",
+      "propeller_diameter_m": "ESTIMATE: Hamilton Standard 14SF 4-blade, ~3.96 m (13 ft) — recalled type data, not re-verified",
+      "nose_to_inlet_m": "NOT SOURCED"
+    },
+    "tailplane_span_m": null,
+    "nose_to_inlet_m": null
+  },
+  {
+    "icao": "DH8B",
+    "name": "De Havilland Canada Dash 8-200",
+    "configuration": "Dash 8-200 (Q200) — same airframe as -100 with PW123 engines",
+    "length_m": 22.25,
+    "span_m": 25.89,
+    "height_m": 7.49,
+    "fuselage_width_m": 2.69,
+    "fuselage_height_m": 2.69,
+    "wing_area_m2": 54.4,
+    "wing_sweep_qc_deg": 2.0,
+    "engine_count": 2,
+    "engine_type": "PW120-series turboprop",
+    "engine_offsets_m": [
+      3.95
+    ],
+    "propeller_diameter_m": 3.96,
+    "wingtip_device": "plain",
+    "notes": "No public airport planning manual or dimensioned drawing was found for the Dash 8-100/200/300; tailplane span and nose-to-propeller distance are left null.",
+    "sources": {
+      "length_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table length (Q200(-100): 73 ft = 22.25 m; Q300: 84 ft 3 in = 25.7 m) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "span_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table wingspan (85 ft = 25.89 m; Q300 90 ft = 27.4 m) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "height_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table height 24 ft 7 in (7.49 m) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "fuselage_width_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table 'Fuselage 8 ft 10 in (2.69 m)' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "fuselage_height_m": "ESTIMATE: assumed ≈ equal to the 2.69 m width (near-circular section); no published external height found",
+      "wing_area_m2": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table wing area (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "wing_sweep_qc_deg": "ESTIMATE: straight high wing; quarter-chord sweep ≈0–3°, 2° placeholder",
+      "tailplane_span_m": "NOT SOURCED: no dimensioned drawing found",
+      "engine_offsets_m": "ESTIMATE: ≈ half the main-gear track because Dash 8 main gears retract into the engine nacelles; track ~7.9 m for -100/-200/-300 (recalled type data, not re-verified) → ~3.95 m. Same rule gives 4.4 m on the Q400 vs 4.3–4.4 m scaled from its plan view",
+      "propeller_diameter_m": "ESTIMATE: Hamilton Standard 14SF 4-blade, ~3.96 m (13 ft) — recalled type data, not re-verified",
+      "nose_to_inlet_m": "NOT SOURCED"
+    },
+    "tailplane_span_m": null,
+    "nose_to_inlet_m": null
+  },
+  {
+    "icao": "DH8C",
+    "name": "De Havilland Canada Dash 8-300",
+    "configuration": "Dash 8-300 (Q300), stretched with wingtip extensions",
+    "length_m": 25.68,
+    "span_m": 27.43,
+    "height_m": 7.49,
+    "fuselage_width_m": 2.69,
+    "fuselage_height_m": 2.69,
+    "wing_area_m2": 56.2,
+    "wing_sweep_qc_deg": 2.0,
+    "engine_count": 2,
+    "engine_type": "PW120-series turboprop",
+    "engine_offsets_m": [
+      3.95
+    ],
+    "propeller_diameter_m": 3.96,
+    "wingtip_device": "plain",
+    "notes": "No public airport planning manual or dimensioned drawing was found for the Dash 8-100/200/300; tailplane span and nose-to-propeller distance are left null.",
+    "sources": {
+      "length_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table length (Q200(-100): 73 ft = 22.25 m; Q300: 84 ft 3 in = 25.7 m) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "span_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table wingspan (85 ft = 25.89 m; Q300 90 ft = 27.4 m) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "height_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table height 24 ft 7 in (7.49 m) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "fuselage_width_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table 'Fuselage 8 ft 10 in (2.69 m)' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "fuselage_height_m": "ESTIMATE: assumed ≈ equal to the 2.69 m width (near-circular section); no published external height found",
+      "wing_area_m2": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table wing area (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "wing_sweep_qc_deg": "ESTIMATE: straight high wing; quarter-chord sweep ≈0–3°, 2° placeholder",
+      "tailplane_span_m": "NOT SOURCED: no dimensioned drawing found",
+      "engine_offsets_m": "ESTIMATE: ≈ half the main-gear track because Dash 8 main gears retract into the engine nacelles; track ~7.9 m for -100/-200/-300 (recalled type data, not re-verified) → ~3.95 m. Same rule gives 4.4 m on the Q400 vs 4.3–4.4 m scaled from its plan view",
+      "propeller_diameter_m": "ESTIMATE: Hamilton Standard 14SF 4-blade, ~3.96 m (13 ft) — recalled type data, not re-verified",
+      "nose_to_inlet_m": "NOT SOURCED"
+    },
+    "tailplane_span_m": null,
+    "nose_to_inlet_m": null
+  },
+  {
+    "icao": "DH8D",
+    "name": "De Havilland Canada Dash 8-400",
+    "configuration": "Dash 8-400 (Q400)",
+    "length_m": 32.83,
+    "span_m": 28.42,
+    "height_m": 8.34,
+    "fuselage_width_m": 2.69,
+    "fuselage_height_m": 2.69,
+    "wing_area_m2": 64.0,
+    "wing_sweep_qc_deg": 2.0,
+    "tailplane_span_m": 9.2,
+    "engine_count": 2,
+    "engine_type": "PW150A turboprop",
+    "engine_offsets_m": [
+      4.35
+    ],
+    "propeller_diameter_m": 4.11,
+    "nose_to_inlet_m": [
+      11.3
+    ],
+    "nose_to_inlet_note": "distance to propeller plane",
+    "wingtip_device": "plain",
+    "notes": "Wikipedia rounds length to 32.8 m and height to 8.4 m.",
+    "sources": {
+      "length_m": "De Havilland Canada Dash 8-400 spec sheet (2022), external dimensions 32.83 m / 107 ft 9 in — https://dehavillandfield.com/wp-content/uploads/2022/08/Dash8_Spec_Sheet_web.pdf",
+      "span_m": "De Havilland Canada Dash 8-400 spec sheet (2022), external dimensions 28.42 m / 93 ft 3 in — https://dehavillandfield.com/wp-content/uploads/2022/08/Dash8_Spec_Sheet_web.pdf",
+      "height_m": "De Havilland Canada Dash 8-400 spec sheet (2022), external dimensions 8.34 m / 27 ft 4 in — https://dehavillandfield.com/wp-content/uploads/2022/08/Dash8_Spec_Sheet_web.pdf",
+      "fuselage_width_m": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table 'Fuselage 8 ft 10 in (2.69 m)' (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "fuselage_height_m": "ESTIMATE: assumed ≈ equal to the 2.69 m width (near-circular section); no published external height found",
+      "wing_area_m2": "SECONDARY: Wikipedia 'De Havilland Canada Dash 8' spec table Q400 wing area 689 ft² (64 m²) (wikitext fetched 2026-11-12) https://en.wikipedia.org/wiki/De_Havilland_Canada_Dash_8",
+      "wing_sweep_qc_deg": "ESTIMATE: straight high wing; quarter-chord sweep ≈0–3°, 2° placeholder",
+      "tailplane_span_m": "ESTIMATE: scaled from the spec-sheet plan view (300 dpi): 176 px vs wing 534 px / span bar 551 px → 9.1–9.4 m",
+      "engine_offsets_m": "ESTIMATE: scaled from the spec-sheet plan view: nacelle centrelines 166.5 px apart → 4.29–4.43 m depending on scale reference",
+      "propeller_diameter_m": "ESTIMATE: Dowty R408 6-blade, ~4.11 m (13.5 ft) — recalled type data, not re-verified (spec sheet names the propeller but not its diameter)",
+      "nose_to_inlet_m": "ESTIMATE: propeller plane scaled from the spec-sheet plan view (length 32.83 m as scale): ≈11.3 m, ±0.5 m"
+    }
+  }
+]

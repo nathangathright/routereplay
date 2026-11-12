@@ -1,0 +1,135 @@
+Route Replay acknowledgments
+
+Route Replay is built on other people's generous work. Thank you.
+
+
+EARTH IMAGERY
+
+Blue Marble: Next Generation, monthly base map (2004)
+  Reto Stöckli and Robert Simmon, NASA Earth Observatory
+  https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/
+
+Black Marble 2016 (city lights at night)
+  NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS
+  data from Miguel Román, NASA's Goddard Space Flight Center
+  https://commons.wikimedia.org/wiki/File:BlackMarble20161km.jpg
+
+Both images are in the public domain. Route Replay is not affiliated with
+or endorsed by NASA.
+
+
+TYPEFACE
+
+Dosis, by The Dosis Project Authors
+  SIL Open Font License 1.1: {{ORIGIN}}/assets/{{ASSET_VERSION}}/OFL.txt
+  https://github.com/google/fonts/tree/main/ofl/dosis
+
+
+AIRCRAFT
+
+The aircraft are original models built in code from published dimensions
+in the manufacturers' airport planning documents (Airbus, ATR, Boeing,
+De Havilland Canada, Embraer, and Mitsubishi Heavy Industries for the CRJ).
+Route Replay is not affiliated with or endorsed by any of them.
+
+
+AIRPORT DATA
+
+OurAirports (public domain): airport codes, names and coordinates
+  https://ourairports.com/data/
+
+mwgg/Airports (MIT License): airport time zones
+  Copyright (c) 2014 mwgg
+  https://github.com/mwgg/Airports
+
+@photostructure/tz-lookup (CC0 1.0): time zones for the few airports
+that lack one, filled in when the airport table is built
+  https://github.com/photostructure/tz-lookup
+
+
+WEATHER
+
+NOAA Global Forecast System (GFS): cloud water and 700 hPa wind, from the
+NOAA Open Data Dissemination Program on AWS. Public domain.
+  https://registry.opendata.aws/noaa-gfs-bdp-pds/
+
+
+COASTLINES
+
+Natural Earth (public domain): land and lake outlines that mark open water
+for sun glint. Made with Natural Earth.
+  https://www.naturalearthdata.com/
+
+
+SUN AND MOON
+
+Sun and Moon positions use the low-precision formulas from The
+Astronomical Almanac, published by the U.S. Naval Observatory and
+HM Nautical Almanac Office.
+
+
+SOFTWARE
+
+three.js (MIT License)
+  Copyright © 2010-2026 three.js authors
+  https://github.com/mrdoob/three.js
+
+React, React DOM, Scheduler and use-sync-external-store (MIT License)
+  Copyright (c) Meta Platforms, Inc. and affiliates.
+  https://github.com/facebook/react
+
+React Three Fiber (MIT License)
+  Copyright (c) 2019-2025 Poimandres
+  https://github.com/pmndrs/react-three-fiber
+
+its-fine (MIT License)
+  Copyright (c) 2022-2025 Poimandres
+  https://github.com/pmndrs/its-fine
+
+react-use-measure (MIT License)
+  Copyright (c) 2019-2025 Poimandres
+  https://github.com/pmndrs/react-use-measure
+
+zustand (MIT License)
+  Copyright (c) 2019 Paul Henschel
+  https://github.com/pmndrs/zustand
+
+suspend-react (MIT License)
+  Copyright (c) 2021 Paul Henschel
+  https://github.com/pmndrs/suspend-react
+
+Remotion, @remotion/player and @remotion/web-renderer (Remotion License,
+used under the Free License)
+  Copyright © 2026 Remotion
+  https://www.remotion.dev/license
+
+@remotion/three (MIT License), by Björn Zeutzheim
+  https://github.com/remotion-dev/remotion/tree/main/packages/three
+
+Mediabunny (Mozilla Public License 2.0)
+  Copyright (c) 2026-present, Vanilagy and contributors
+  Source code: https://github.com/Vanilagy/mediabunny
+  License: https://mozilla.org/MPL/2.0/
+
+
+MIT LICENSE
+(applies to each item above marked MIT License)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+

@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "scene": {
+    "schemaVersion": 1,
+    "title": "Chicago to Auckland (synthetic example)",
+    "airports": {
+      "AKL": {
+        "code": "AKL",
+        "name": "Auckland International Airport",
+        "city": "Auckland",
+        "country": "NZ",
+        "lat": -37.01199,
+        "lon": 174.78633,
+        "timeZone": "Pacific/Auckland"
+      },
+      "ORD": {
+        "code": "ORD",
+        "name": "Chicago O'Hare International Airport",
+        "city": "Chicago",
+        "country": "US",
+        "lat": 41.9786,
+        "lon": -87.9048,
+        "timeZone": "America/Chicago"
+      },
+      "SFO": {
+        "code": "SFO",
+        "name": "San Francisco International Airport",
+        "city": "San Francisco",
+        "country": "US",
+        "lat": 37.61981,
+        "lon": -122.37482,
+        "timeZone": "America/Los_Angeles"
+      }
+    },
+    "legs": [
+      {
+        "id": "ord-sfo",
+        "from": "ORD",
+        "to": "SFO",
+        "departureUtc": "2031-01-05T16:00:00Z",
+        "arrivalUtc": "2031-01-05T20:45:00Z",
+        "departureLocal": "2031-01-05T10:00:00-06:00",
+        "arrivalLocal": "2031-01-05T12:45:00-08:00",
+        "aircraft": "B739",
+        "distanceKm": 2963.9,
+        "weight": 0.69371,
+        "flightSeconds": 4.751911,
+        "holdAfterSeconds": 2
+      },
+      {
+        "id": "sfo-akl",
+        "from": "SFO",
+        "to": "AKL",
+        "departureUtc": "2031-01-06T05:30:00Z",
+        "arrivalUtc": "2031-01-06T18:15:00Z",
+        "departureLocal": "2031-01-05T21:30:00-08:00",
+        "arrivalLocal": "2031-01-07T07:15:00+13:00",
+        "aircraft": "B789",
+        "distanceKm": 10509.7,
+        "weight": 1.30629,
+        "flightSeconds": 8.948089,
+        "holdAfterSeconds": 0
+      }
+    ],
+    "presentation": {
+      "durationSeconds": 20,
+      "startHoldSeconds": 1.6,
+      "endHoldSeconds": 2.7,
+      "fps": 30
+    },
+    "environment": {
+      "weather": "clouds"
+    },
+    "assets": {
+      "style": "standard"
+    },
+    "seed": 1,
+    "compatibility": {
+      "schemaVersion": 1,
+      "rendererVersion": "2.0.0",
+      "assetManifestVersion": "2026-11-11",
+      "airportDataVersion": "2026-11-11.711391a0ea58"
+    }
+  }
+}
