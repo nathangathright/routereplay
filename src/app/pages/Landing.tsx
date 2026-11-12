@@ -3,7 +3,7 @@ import { IdleEarth } from '../render/IdleEarth';
 import { initialQuality, webglAvailable } from '../device';
 
 export function getStartedPrompt(origin: string): string {
-  return `Help me create a journey in Route Replay. Read ${origin}/agent-docs and follow it.`;
+  return `Help me create a journey in Route Replay. Read ${origin}/agent-docs and follow it. If your browser or web reader can't open it, fetch it with a direct HTTP request.`;
 }
 
 /** Copy text with the Clipboard API, falling back to a selection copy where it isn't allowed. */

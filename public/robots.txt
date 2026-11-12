@@ -1,0 +1,6 @@
+# Everything may be fetched. Agents' fetchers obey this file, and they need the API and watch pages.
+# Draft previews carry a noindex meta tag instead.
+User-agent: *
+Allow: /
+
+Sitemap: https://routereplay.video/sitemap.xml

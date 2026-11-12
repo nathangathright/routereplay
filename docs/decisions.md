@@ -47,7 +47,7 @@ A closed socket reconnects after 3 seconds and refetches. There is deliberately 
 - Only some agents can install skills, so it was a second path, and installed copies went stale within an hour.
 - Its one real benefit, recognizing a Route Replay request in a later session without the address, matters little for an occasional-use tool. A returning creator copies the prompt again.
 
-The prompt is now "Help me create a journey in Route Replay. Read {origin}/agent-docs and follow it." Since every agent reads the hosted docs at the start of a session, plan 2's proposed version headers and "docs updated" notice were dropped too. Copies installed during plan 1 testing still work: they defer to `/agent-docs`.
+The prompt is now "Help me create a journey in Route Replay. Read {origin}/agent-docs and follow it. If your browser or web reader can't open it, fetch it with a direct HTTP request." The last sentence was added November 12, 2026, after ChatGPT's Mac app gave up when its web reader and cloud browser refused the new domain. Both only load links already in OpenAI's public web index. The same agent's direct HTTP request worked. Since every agent reads the hosted docs at the start of a session, plan 2's proposed version headers and "docs updated" notice were dropped too. Copies installed during plan 1 testing still work: they defer to `/agent-docs`.
 
 ## Notes pinned to a moment (plan 2, A6): not adopted
 
@@ -75,14 +75,11 @@ Viewer context already tells the agent *where*. The creator tells their agent *w
 - Creators want to mark several moments at once ("here, and also here"), which a single paused position can't express.
 - Creators review a draft without their agent present.
 
-## Hosting address: `workers.dev` for now
+## Hosting address: `routereplay.video`
 
-*Decided November 11, 2026 (plan 2, question 4); confirmed by the owner the same day.* The service stays at `routereplay-web.resonantconcepts.workers.dev`.
+*Decided November 12, 2026.* The owner bought `routereplay.video` as a memorable address for sharing, and the Worker serves it as a custom domain. `PUBLIC_ORIGIN` makes every generated link (watch, preview, docs, schema) use it. The `workers.dev` address keeps serving, so earlier watch links and the old `pages.dev` redirect still work. The zone's Browser Integrity Check is turned off so HTTP libraries with default User-Agents reach the API; `workers.dev` can't do that, which was one reason to move ([runbook](runbook.md)).
 
-- `workers.dev` rejects Python's default `Python-urllib` User-Agent with error 1010, and that can't be changed there. The agent docs tell agents to send a descriptive User-Agent. All ten agent sessions in plan 2's verification did, and none hit the error.
-- A custom domain costs money and adds DNS, certificate, and WAF setup. Current use doesn't need it.
-
-**Revisit if** the site is shared widely, a creator's agent reports `error code: 1010`, or a memorable address matters for sharing. Moving means adding the domain to the Worker, a WAF skip rule for `/api/*`, `/agent-docs*`, `/schemas/*`, and `/llms.txt` (see the runbook), and setting `PUBLIC_ORIGIN`. Existing `workers.dev` links keep working.
+*Before that (November 11, 2026, plan 2, question 4):* the service stayed at `routereplay-web.resonantconcepts.workers.dev`. A custom domain cost money and added DNS, certificate, and WAF setup, and the 1010 error was handled by telling agents to send a descriptive User-Agent; all ten agent sessions in plan 2's verification did, and none hit it.
 
 ## Real clouds from NOAA's GFS model
 

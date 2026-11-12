@@ -19,7 +19,7 @@
     "assets:airports": "node scripts/build-airports.mjs",
     "assets:textures": "python3 -I scripts/build-textures.py",
     "usage": "node scripts/usage-report.mjs",
-    "dev:worker": "npm run build && npm run db:migrate:local && wrangler dev --port 8788",
+    "dev:worker": "npm run build && npm run db:migrate:local && wrangler dev --port 8788 --var PUBLIC_ORIGIN:http://127.0.0.1:8788",
     "deploy": "npm run build && npm test && wrangler deploy"
   },
   "dependencies": {

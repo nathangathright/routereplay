@@ -4,13 +4,13 @@ Short operational notes for one maintainer.
 
 ## Production
 
-- Worker `routereplay-web`: https://routereplay-web.resonantconcepts.workers.dev (static assets, API, `SceneLive` Durable Object)
-- Old Pages project `routereplay-web` (https://routereplay-web.pages.dev): redirect only. Its deployment is a single `_redirects` file sending every path with a 308 to the Worker; keep it so earlier links work.
+- Worker `routereplay-web` (static assets, API, `SceneLive` Durable Object) at https://routereplay.video, a custom domain on the `routereplay.video` zone in the same account. It also still serves https://routereplay-web.resonantconcepts.workers.dev. Keep `workers_dev = true` in `wrangler.toml`: with a route configured, a deploy otherwise switches the `workers.dev` address off and breaks earlier links.
+- Old Pages project `routereplay-web` (https://routereplay-web.pages.dev): redirect only. Its deployment is a single `_redirects` file sending every path with a 308 to the Worker's `workers.dev` address; keep it so earlier links work.
 - D1 database `routereplay` (`786bdf85-d8da-41c8-9efb-f2c4fd42bc1e`, region ENAM), migrations through `0001_init.sql`
-- Worker secret: `RATE_LIMIT_SALT` (`npx wrangler secret put RATE_LIMIT_SALT`). `PUBLIC_ORIGIN` is unset, so links use the request origin; set it when adding a custom domain.
-- Deploy: `npm run deploy` (build, tests, `wrangler deploy`), then `BASE_URL=https://routereplay-web.resonantconcepts.workers.dev npm run smoke`. The smoke test includes the live-update WebSocket.
+- Worker secret: `RATE_LIMIT_SALT` (`npx wrangler secret put RATE_LIMIT_SALT`). `PUBLIC_ORIGIN` in `wrangler.toml` is `https://routereplay.video`, so generated links use the custom domain whichever address a request arrives on. `npm run dev:worker` overrides it with the local address.
+- Deploy: `npm run deploy` (build, tests, `wrangler deploy`), then `BASE_URL=https://routereplay.video npm run smoke`. The smoke test includes the live-update WebSocket.
 - Logs: `npx wrangler tail routereplay-web --format json`.
-- Agent access: on `*.workers.dev` (and `*.pages.dev`), Cloudflare's Browser Integrity Check rejects some HTTP-library User-Agents (`Python-urllib/*` gets `403 error code: 1010`), and the zone setting cannot be changed there. The agent docs tell agents to send a descriptive User-Agent. With a custom domain, add a WAF skip rule (or disable Browser Integrity Check) for `/api/*`, `/agent-docs*`, `/schemas/*`, and `/llms.txt`.
+- Agent access: Cloudflare's Browser Integrity Check rejects some HTTP-library User-Agents (`Python-urllib/*` gets `403 error code: 1010`). On `*.workers.dev` and `*.pages.dev` the setting can't be changed, so the agent docs tell agents to send a descriptive User-Agent. On the `routereplay.video` zone, turn it off in the zone's Security settings (or add a WAF skip rule for `/api/*`, `/agent-docs*`, `/schemas/*`, and `/llms.txt`). Check with `curl -A Python-urllib/3.12 https://routereplay.video/agent-docs`, which should return 200.
 - Usage: `npm run usage` prints the last 24 hours of Worker requests (this Worker and account-wide), Durable Object requests, and D1 rows and storage against the free limits. It exits with status 1 at 70% (`--threshold` to change), so it can run from cron or CI as an alert. It uses the wrangler login or `CLOUDFLARE_API_TOKEN` (Account Analytics Read, D1 Read).
 
 ## Local development
@@ -34,7 +34,7 @@ The preview at `/s/{id}?debug` shows request counts and renders at export pixel 
 2. `npx wrangler d1 create routereplay` and put the returned `database_id` in `wrangler.toml` (already recorded for the current database).
 3. `npx wrangler d1 migrations apply routereplay --remote`
 4. `npm run deploy` (creates or updates the Worker, its Durable Object class, and its assets).
-5. Set the secret salt used to hash client addresses: `npx wrangler secret put RATE_LIMIT_SALT`. Optionally set `PUBLIC_ORIGIN` to the canonical https origin.
+5. Set the secret salt used to hash client addresses: `npx wrangler secret put RATE_LIMIT_SALT`. The custom domain route and `PUBLIC_ORIGIN` are in `wrangler.toml`; the domain's zone must be in the same Cloudflare account, and its Browser Integrity Check off (see Production).
 6. Run `BASE_URL=https://<deployment> npm run smoke` and the browser checks in [verification.md](verification.md) against the deployed URL. Then run one real agent walkthrough using the Get Started prompt.
 7. Turn on Cloudflare usage notifications for Workers requests and D1 at about 70% of the free limits, in the dashboard under Notifications. **Still to do:** the wrangler token gets "Authentication error" from the alerting API. Until then, `npm run usage` provides the same thresholds on demand.
 

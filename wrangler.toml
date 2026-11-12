@@ -3,6 +3,9 @@
 name = "routereplay-web"
 main = "src/server/worker.ts"
 compatibility_date = "2026-11-01"
+# The workers.dev address keeps serving too, so earlier links (and the old pages.dev redirect) still work.
+routes = [{ pattern = "routereplay.video", custom_domain = true }]
+workers_dev = true
 
 [assets]
 directory = "./dist"
@@ -35,5 +38,5 @@ tag = "v1"
 new_sqlite_classes = ["SceneLive"]
 
 [vars]
-# Optional canonical origin for generated links. Leave unset to use the request origin.
-# PUBLIC_ORIGIN = "https://routereplay.example"
+# Canonical origin for generated links, whichever address a request arrives on. `npm run dev:worker` overrides it locally.
+PUBLIC_ORIGIN = "https://routereplay.video"

@@ -2,7 +2,7 @@
 
 A free web app where people use their own agent to create a journey, watch it play across a 3D Earth, and share a public playback link. Capable browsers can export a video locally.
 
-**Status:** live at **https://routereplay-web.resonantconcepts.workers.dev** (the old `pages.dev` address redirects). All six milestones of [the plan](PLAN.md) and all four of [plan 2](PLAN-2.md), the agent feedback loop, are implemented and verified, including laptop and real-iPhone budgets; see the [verification record](docs/verification.md).
+**Status:** live at **https://routereplay.video** (the earlier `workers.dev` address still serves, and the old `pages.dev` address redirects to it). All six milestones of [the plan](PLAN.md) and all four of [plan 2](PLAN-2.md), the agent feedback loop, are implemented and verified, including laptop and real-iPhone budgets; see the [verification record](docs/verification.md).
 
 ## How it works
 
@@ -18,7 +18,7 @@ A free web app where people use their own agent to create a journey, watch it pl
 npm install
 npm test                 # unit, warning-corpus, storyboard, API (local D1), compatibility, and header tests
 npm run dev:worker       # build + local D1 migrations + Worker (assets, API, live updates) on http://127.0.0.1:8788
-npm run smoke            # end-to-end HTTP checks (BASE_URL=https://routereplay-web.resonantconcepts.workers.dev for production)
+npm run smoke            # end-to-end HTTP checks (BASE_URL=https://routereplay.video for production)
 npm run dev              # Vite hot reload on :5173, proxying the API and WebSocket to :8788
 npm run deploy           # build, test, and deploy the Worker
 npm run typecheck
@@ -40,6 +40,6 @@ Asset rebuilds, which download sources into `.cache/`, are `npm run assets:airpo
 | `migrations/` | D1 schema |
 | `docs/` | [Decisions](docs/decisions.md), [verification](docs/verification.md), [budgets](docs/budgets.md), [compatibility](docs/compatibility.md), [assets and licenses](docs/assets.md), [runbook](docs/runbook.md) |
 
-This project is separate from the offline [`routereplay`](../routereplay) renderer. Its conventions informed the design, but the web app shares no code, data, or history with it.
+This project is separate from the offline renderer, [`routereplay-offline`](https://github.com/nathangathright/routereplay-offline). Its conventions informed the design, but the web app shares no code, data, or history with it.
 
 Earth imagery: NASA Blue Marble and Black Marble (public domain). Airport data: OurAirports (public domain) and mwgg/Airports (MIT). Label font: Dosis (SIL OFL 1.1).
