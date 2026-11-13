@@ -2,25 +2,30 @@
 """Build the versioned Earth texture set and asset manifest.
 
 Sources are public-domain NASA images (the monthly Blue Marble: Next Generation base map
-from NASA's own host, Black Marble 2016 through Wikimedia Commons) and public-domain
-Natural Earth outlines of land, islands, ice shelves, and lakes for the water mask (see
-docs/assets.md). Downloads are
-cached under .cache/textures; outputs go to public/assets/<ASSET_MANIFEST_VERSION>/, read
-from src/shared/scene/constants.ts. Older version directories are left untouched. Requires
-Pillow with WebP support.
+from NASA's own host, Black Marble 2016 through Wikimedia Commons), public-domain Natural Earth
+outlines of land, islands, ice shelves, and lakes for the water mask, and NOAA's public-domain ETOPO 2022
+elevation for the relief map (see docs/assets.md). Downloads are cached under .cache/textures; outputs go
+to public/assets/<ASSET_MANIFEST_VERSION>/, read from src/shared/scene/constants.ts. Older version
+directories are left untouched. Requires Pillow with WebP support, NumPy, and SciPy.
 
 Usage: python3 -I scripts/build-textures.py
 """
 import calendar
 import hashlib
 import json
+import math
 import pathlib
 import re
 import shutil
 import sys
+import time
+import urllib.error
 import urllib.request
 
-from PIL import Image, ImageDraw
+import numpy as np
+from PIL import Image, ImageDraw, ImageFilter
+from scipy.io import netcdf_file
+from scipy.ndimage import uniform_filter1d
 
 Image.MAX_IMAGE_PIXELS = None  # the Blue Marble sources are 21600x10800
 
@@ -66,6 +71,22 @@ WATER_LAYERS = ('lakes',)
 NATURAL_EARTH_PAGE = 'https://www.naturalearthdata.com/downloads/10m-physical-vectors/'
 # One mask per day texture width, texel for texel.
 WATER_WIDTHS = DAY_WIDTHS
+
+# NOAA ETOPO 2022 15 arc-second global relief (public domain), read through NOAA's ERDDAP server every 10th
+# cell (2.5 arc minutes) in 18 bands of latitude. The offline renderer reads every 20th cell of the same grid.
+ETOPO_PAGE = 'https://www.ncei.noaa.gov/products/etopo-global-relief-model'
+ETOPO_DATASET = 'https://coastwatch.pfeg.noaa.gov/erddap/griddap/ETOPO_2022_v1_15s.html'
+ETOPO_URL = 'https://coastwatch.pfeg.noaa.gov/erddap/griddap/ETOPO_2022_v1_15s.nc?z%5B{first}:10:{last}%5D%5B5:10:86399%5D'
+ETOPO_CREDIT = 'NOAA National Centers for Environmental Information (ETOPO 2022 15 Arc-Second Global Relief Model)'
+# Relief maps by quality. Each texel averages 2×2 or 4×4 samples: standard is the offline renderer's
+# 5-arc-minute grid (9.3 km at the equator), low is half that.
+RELIEF_SIZES = {'standard': (4320, 2160), 'low': (2160, 1080)}
+# Heights exaggerated 12×, the offline renderer's relief_exaggeration. The map stores the tilted normal's east
+# and north components as 128 + 127 × component (red, green), rounded to steps of 3: in low-Sun tests that
+# looked the same as unrounded normals, and the file is a third smaller than with steps of 1.
+RELIEF_EXAGGERATION = 12
+RELIEF_STEP = 3
+EARTH_RADIUS_M = 6371000.0
 
 # Copied unchanged from the previous version directory.
 CARRIED = ('Dosis-Variable.ttf', 'OFL.txt')
@@ -124,6 +145,69 @@ def build_water_masks(files):
         ))
 
 
+def etopo():
+    """ETOPO 2022 every 10th cell, clamped at sea level: 4320 rows from the north, 8640 columns from -180°."""
+    bands = []
+    for band in range(18):
+        first = 2400 * band + 5
+        url = ETOPO_URL.format(first=first, last=first + 2390)
+        for attempt in range(3):
+            try:
+                path = fetch(url, f'etopo2022-15s-step10-{band:02d}.nc')
+                break
+            except urllib.error.HTTPError as e:
+                if e.code != 503 or attempt == 2:  # ERDDAP turns requests away now and then under load
+                    raise
+                time.sleep(30)
+        with netcdf_file(path, mmap=False) as nc:
+            bands.append(np.array(nc.variables['z'][:], np.float32))
+    return np.maximum(np.concatenate(bands)[::-1], 0)  # ERDDAP's rows run south to north
+
+
+def lake_mask(width, height):
+    """Natural Earth 1:10m lakes, the water mask's, widened by a texel. ETOPO 2022 has the floors of some lakes
+    (Baikal, the Great Lakes) rather than their surface, which would draw cliffs along their shores."""
+    image = Image.new('L', (width, height), 0)
+    draw = ImageDraw.Draw(image)
+    for feature in json.loads(fetch(NATURAL_EARTH_URL.format('lakes'), 'ne_10m_lakes.geojson').read_text())['features']:
+        for ring, is_hole in rings(feature['geometry']):
+            draw.polygon([((lon + 180) / 360 * width, (90 - lat) / 180 * height) for lon, lat in ring], fill=0 if is_hole else 255)
+    return np.asarray(image.filter(ImageFilter.MaxFilter(3))) > 0
+
+
+def relief_map(heights, lakes):
+    """The ground's normal, with heights exaggerated, as RGB: east component in red, north in green."""
+    rows = heights.shape[0]
+    step = math.pi / rows  # radians per texel, along a meridian and along the equator
+    lat = (0.5 - (np.arange(rows) + 0.5) / rows) * math.pi
+    # Toward the poles a texel spans less ground east to west. Average each row over about one texel's
+    # north-south length first, so slopes there aren't differences between nearly coincident points.
+    width = 2 * np.floor(0.5 / np.cos(lat)).astype(int) + 1
+    z = np.stack([uniform_filter1d(row, k, mode='wrap') for row, k in zip(heights, width)])
+    north = np.gradient(z, axis=0) / (-EARTH_RADIUS_M * step)  # rows run north to south
+    east = (np.roll(z, -1, axis=1) - np.roll(z, 1, axis=1)) / (2 * EARTH_RADIUS_M * step * np.cos(lat)[:, None])
+    east, north = RELIEF_EXAGGERATION * east, RELIEF_EXAGGERATION * north
+    length = np.sqrt(1 + east * east + north * north)
+
+    def encode(component):
+        return (128 + RELIEF_STEP * np.round(127 / RELIEF_STEP * np.where(lakes, 0, component))).astype(np.uint8)
+
+    return np.dstack([encode(-east / length), encode(-north / length), np.zeros(heights.shape, np.uint8)])
+
+
+def build_relief(files):
+    samples = etopo()
+    for quality, (w, h) in RELIEF_SIZES.items():
+        n = samples.shape[1] // w
+        heights = samples.reshape(h, n, w, n).mean(axis=(1, 3))
+        out = OUT / f'earth-relief-{quality}.webp'
+        Image.fromarray(relief_map(heights, lake_mask(w, h))).save(out, 'WEBP', lossless=True, quality=100, method=6)
+        files.append(record(
+            out, kind='earth-relief', quality=quality, width=w, height=h, exaggeration=RELIEF_EXAGGERATION,
+            source=ETOPO_PAGE, url=ETOPO_DATASET, credit=ETOPO_CREDIT, license='Public domain (NOAA)',
+        ))
+
+
 def sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -176,6 +260,7 @@ def main():
     build_day(files)
     build_night(files)
     build_water_masks(files)
+    build_relief(files)
     files.append(record(
         OUT / 'Dosis-Variable.ttf', kind='font',
         source='https://github.com/google/fonts/tree/main/ofl/dosis',

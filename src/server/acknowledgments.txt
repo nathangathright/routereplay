@@ -17,6 +17,11 @@ Black Marble 2016 (city lights at night)
 Both images are in the public domain. Route Replay is not affiliated with
 or endorsed by NASA.
 
+ETOPO 2022 15 Arc-Second Global Relief Model (mountains and valleys,
+shaded by the Sun and Moon)
+  NOAA National Centers for Environmental Information, 2022. Public domain.
+  https://doi.org/10.25921/fd45-gt74
+
 
 TYPEFACE
 

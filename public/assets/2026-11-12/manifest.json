@@ -363,6 +363,34 @@
       "sha256": "47edfb682f1b22cff2ee3a27e85d36f4b792a773c965add211ef28317d2f61e5"
     },
     {
+      "path": "earth-relief-standard.webp",
+      "kind": "earth-relief",
+      "quality": "standard",
+      "width": 4320,
+      "height": 2160,
+      "exaggeration": 12,
+      "source": "https://www.ncei.noaa.gov/products/etopo-global-relief-model",
+      "url": "https://coastwatch.pfeg.noaa.gov/erddap/griddap/ETOPO_2022_v1_15s.html",
+      "credit": "NOAA National Centers for Environmental Information (ETOPO 2022 15 Arc-Second Global Relief Model)",
+      "license": "Public domain (NOAA)",
+      "bytes": 1931744,
+      "sha256": "500fba5500062c709bfc57cf0b071713dbac6343913ea2a81d6275a27466d34b"
+    },
+    {
+      "path": "earth-relief-low.webp",
+      "kind": "earth-relief",
+      "quality": "low",
+      "width": 2160,
+      "height": 1080,
+      "exaggeration": 12,
+      "source": "https://www.ncei.noaa.gov/products/etopo-global-relief-model",
+      "url": "https://coastwatch.pfeg.noaa.gov/erddap/griddap/ETOPO_2022_v1_15s.html",
+      "credit": "NOAA National Centers for Environmental Information (ETOPO 2022 15 Arc-Second Global Relief Model)",
+      "license": "Public domain (NOAA)",
+      "bytes": 406896,
+      "sha256": "27c5b93b5e7694e888bcf4bda448fa5147d9d855db15e27c425da2bb449cdc72"
+    },
+    {
       "path": "Dosis-Variable.ttf",
       "kind": "font",
       "source": "https://github.com/google/fonts/tree/main/ofl/dosis",

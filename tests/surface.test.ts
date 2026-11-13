@@ -64,7 +64,7 @@ describe('asset directory', () => {
       const water = manifest.files.find((f) => f.path === `earth-water-${width}.webp`);
       expect(water, `earth-water-${width}.webp`).toMatchObject({ kind: 'earth-water', width });
     }
-    for (const name of ['earth-night-low.jpg', 'earth-night-standard.jpg', 'Dosis-Variable.ttf', 'OFL.txt']) {
+    for (const name of ['earth-night-low.jpg', 'earth-night-standard.jpg', 'earth-relief-low.webp', 'earth-relief-standard.webp', 'Dosis-Variable.ttf', 'OFL.txt']) {
       expect(existsSync(`${dir}${name}`), name).toBe(true);
     }
   });
