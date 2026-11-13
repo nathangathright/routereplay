@@ -147,7 +147,7 @@ export const sceneSchemaV1 = {
         },
         mode: {
           enum: [...SURFACE_MODES],
-          description: `Train, bus, car, and ferry legs, in place of aircraft. Every mode is drawn the same way: the aircraft gives way to a marker that moves along the ground. When the journey is saved, the leg is traced along OpenStreetMap's railways (train), roads (bus, car), or ferry lines (ferry) between the two airports; where no route is found it is drawn as a straight line, with a warning. The mode names the leg in the route summary and storyboards. Travel time may be up to ${LIMITS.maxSurfaceMinutes / (24 * 60)} days, so a multi-day trip can be one leg; split it at an overnight stop to show the night there and to bend the route through that place.`,
+          description: `Train, bus, car, and ferry legs, in place of aircraft. Each mode is drawn as its own vehicle moving along the ground (a train, a coach, a car, or a ferry), which the aircraft dissolves into at the connection. When the journey is saved, the leg is traced along OpenStreetMap's railways (train), roads (bus, car), or ferry lines (ferry) between the two airports; where no route is found it is drawn as a straight line, with a warning. The mode names the leg in the route summary and storyboards. Travel time may be up to ${LIMITS.maxSurfaceMinutes / (24 * 60)} days, so a multi-day trip can be one leg; split it at an overnight stop to show the night there and to bend the route through that place.`,
         },
       },
     },

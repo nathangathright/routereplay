@@ -84,8 +84,8 @@ export const WARNING_THRESHOLDS = {
 } as const;
 
 /**
- * Ways to travel a leg on the ground or water. Every mode is drawn the same way (a marker moving along the
- * ground); the word is for the route summary and storyboards, and leaves room to draw modes apart later.
+ * Ways to travel a leg on the ground or water. Each mode draws its own vehicle moving along the ground
+ * (src/app/render/vehicles.ts), and names the leg in the route summary and storyboards.
  */
 export const SURFACE_MODES = ['train', 'bus', 'car', 'ferry'] as const;
 

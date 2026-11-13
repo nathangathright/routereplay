@@ -52,7 +52,7 @@ export interface NormalizedLeg {
   arrivalLocal: string;
   /** Flights only: the aircraft type drawn. */
   aircraft?: AircraftType;
-  /** Surface legs only, in place of `aircraft`: drawn as a marker moving along the ground. */
+  /** Surface legs only, in place of `aircraft`: drawn as that mode's vehicle moving along the ground. */
   mode?: SurfaceMode;
   /**
    * Surface legs only: the route followed (railway, road, or ferry line from OpenStreetMap), looked up when the
