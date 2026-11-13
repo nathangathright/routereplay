@@ -4,7 +4,7 @@ import { useCurrentFrame } from 'remotion';
 import * as THREE from 'three';
 import { moonPosition } from '../../shared/geo/solar';
 import { length, scale } from '../../shared/geo/vec';
-import { AIRCRAFT_SHORT_SIDE_FRACTION, type Timeline, evaluate, exposureAt, isSurfaceMode } from '../../shared/timeline/evaluate';
+import { AIRCRAFT_SHORT_SIDE_FRACTION, CRUISE_DISPLAY, type Timeline, evaluate, exposureAt, isSurfaceMode } from '../../shared/timeline/evaluate';
 import { Aircraft } from './Aircraft';
 import type { EarthTextures } from './assets';
 import { type CloudSet, Clouds, cloudFrameAt } from './Clouds';
@@ -14,6 +14,7 @@ import { Labels } from './Labels';
 import { skyLights } from './lighting';
 import { Routes } from './Routes';
 import { Stars } from './Stars';
+import type { ShadowCaster } from './planeShadow';
 import { Moon, Sun, sunVisibleFraction } from './SunAndMoon';
 import { Vehicle } from './Vehicle';
 
@@ -81,6 +82,14 @@ export function JourneyScene({
   const toAircraft = camDist - 1 - state.aircraft.altitude;
   const shortSide = toAircraft * 2 * Math.tan((35 * Math.PI) / 180);
   const aircraftSize = AIRCRAFT_SHORT_SIDE_FRACTION * shortSide;
+  // Each aircraft drawn casts its shadow, in proportion while one type dissolves into the next. Vehicles on
+  // surface legs draw their own.
+  const { ground, heading, altitude } = state.aircraft;
+  const shadows: ShadowCaster[] = state.aircraft.mix.flatMap((m) =>
+    isSurfaceMode(m.type)
+      ? []
+      : [{ type: m.type, ground, heading, altitude, size: aircraftSize, aloft: altitude / CRUISE_DISPLAY, weight: m.weight }],
+  );
 
   return (
     <>
@@ -93,9 +102,9 @@ export function JourneyScene({
       <Moon position={moonPosition(state.physicalUtcMs)} sun={sun} />
       <ambientLight intensity={0.5} />
       <directionalLight position={scale(sun, 10) as [number, number, number]} intensity={2.4} />
-      <Earth textures={textures} lights={lights} segments={segments} clouds={cloudFrame} detail={detail} />
-      {cloudFrame && <Clouds frame={cloudFrame} lights={lights} night={textures.night} segments={segments} />}
-      <Atmosphere sun={sun} segments={Math.max(48, segments / 2)} />
+      <Earth textures={textures} lights={lights} segments={segments} clouds={cloudFrame} detail={detail} shadows={shadows} />
+      {cloudFrame && <Clouds frame={cloudFrame} lights={lights} night={textures.night} segments={segments} shadows={shadows} />}
+      <Atmosphere sun={sun} segments={Math.max(48, segments / 2)} shadows={shadows} />
       <Routes timeline={timeline} trail={state.trail} />
       {state.aircraft.mix.map((m) =>
         isSurfaceMode(m.type) ? (

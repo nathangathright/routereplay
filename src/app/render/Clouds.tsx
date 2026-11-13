@@ -5,6 +5,7 @@ import { CLOUD_GRID, type CloudField, cloudBlendAt, cloudFieldsFor } from '../..
 import { decodeGrib2 } from '../../shared/weather/grib2';
 import { HOLD_MINUTES } from '../../shared/scene/constants';
 import { AIR_GLSL, CITY_GLSL, LIGHT_GLSL, type SkyLights, lightUniforms, setLightUniforms } from './lighting';
+import { PLANE_SHADOW_GLSL, type ShadowCaster, planeShadowUniforms, setPlaneShadowUniforms } from './planeShadow';
 import { mulberry32 } from './Stars';
 
 /** Cloud tops sit this far out (Earth radii): exaggerated about 10× so they read above the ground at globe scale. */
@@ -293,6 +294,7 @@ ${LIGHT_GLSL}
 ${AIR_GLSL}
 ${CITY_GLSL}
 ${CLOUD_GLSL}
+${PLANE_SHADOW_GLSL}
 
 // The noise texture's gradient, per unit of texture coordinate.
 vec3 noiseSlope(vec4 texel) {
@@ -351,10 +353,10 @@ void main() {
   vec3 N = normalize(n - rise * min(1.0, ${MAX_CLOUD_SLOPE.toFixed(2)} / max(length(rise), 1e-6)));
 
   // Sunlight reaching the cloud tops, reddened by the air and cut off by the planet: tops stay lit, in sunset
-  // colours, a little past the ground's terminator. Thicker cloud reflects more.
+  // colours, a little past the ground's terminator. Thicker cloud reflects more. Aircraft shade the tops below.
   float reflectance = CLOUD_BRIGHTNESS * (0.55 + 0.45 * density);
   vec3 sun = normalize(sunDir);
-  vec3 color = deckSunlight(n, sun) * deckLight(N, n, sun) * reflectance;
+  vec3 color = deckSunlight(n, sun) * deckLight(N, n, sun) * reflectance * planeShadow(n);
   if (moonlight > 0.0) color += moonlight * deckSunlight(n, moonDir) * deckLight(N, n, moonDir) * reflectance;
 
   // City light scattered up through the cloud from below (routereplay cityglow.py): spread a little, and
@@ -426,14 +428,28 @@ export interface CloudFrame {
 /**
  * Real clouds from NOAA's GFS model on a shell just above the ground (Earth frame), carried by the model's
  * wind between time steps. Drawn after the ground and before planes, routes, and labels, which stay on top.
+ * `shadows`: the aircraft that shade the cloud tops (see planeShadow.ts).
  */
-export function Clouds({ frame, lights, night, segments }: { frame: CloudFrame; lights: SkyLights; night: THREE.Texture; segments: number }) {
+export function Clouds({
+  frame,
+  lights,
+  night,
+  segments,
+  shadows = [],
+}: {
+  frame: CloudFrame;
+  lights: SkyLights;
+  night: THREE.Texture;
+  segments: number;
+  shadows?: readonly ShadowCaster[];
+}) {
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
         uniforms: {
           ...cloudUniforms(),
           ...lightUniforms(),
+          ...planeShadowUniforms(),
           noise: { value: noiseTexture() },
           nightMap: { value: night },
           detail: { value: new THREE.Vector4() },
@@ -452,6 +468,7 @@ export function Clouds({ frame, lights, night, segments }: { frame: CloudFrame; 
   const u = material.uniforms;
   setCloudUniforms(u, frame);
   setLightUniforms(u, lights);
+  setPlaneShadowUniforms(u, shadows, lights.sun);
   const cycles = frame.seconds / DETAIL_PERIOD_S;
   (u.detail!.value as THREE.Vector4).set(cycles - Math.floor(cycles), Math.floor(cycles), Math.floor(cycles + 0.5), 0);
   return (

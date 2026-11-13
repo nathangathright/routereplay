@@ -63,6 +63,16 @@ These were measured before the November 12 lighting work (tone mapping, moonligh
 
 Airport labels add little per frame: each split-flap panel is a canvas texture redrawn and uploaded only while its cards turn (0.74 s after it appears), about 0.1–0.4 ms a frame at 720p–1080p and 1 ms at a 2,160-pixel short side in headless Chrome on an M1 Max. Laying the labels out costs 1–4 ms once per journey and frame shape (18–120 s journeys, warm, Node); a resized window lays them out again.
 
+**Cloud-top relief and the aircraft's shadow** (November 13, 2026; [decisions.md](decisions.md#cloud-tops-lit-as-shapes)) didn't measurably change GPU time. These figures come from the GPU's own timer (`EXT_disjoint_timer_query_webgl2`), per rendered frame, in headless Chrome on an M1 Max. Each is the median of two 7-second plays of three test journeys with real clouds, before and after, on the same build of everything else:
+
+| Journey (frames 2–9 s) | 1280×720 at DPR 2: before | after | 390×844 at DPR 3: before | after |
+| --- | --- | --- | --- | --- |
+| London–Frankfurt, low Sun over broken cloud | 8.5–9.1 ms | 8.5–9.9 ms | 4.0–4.3 ms | 4.0 ms |
+| Singapore–Hong Kong, midday over cloud | 6.5–6.7 ms | 6.2 ms | 2.4–2.5 ms | 2.4–2.5 ms |
+| Dubai–Cairo, clear desert | 7.9–8.3 ms | 6.6–7.6 ms | 2.7–3.6 ms | 3.2–3.3 ms |
+
+Run-to-run spread is about ±10 %. The cloud shader dropped an extra cubic read of the cloud field per light (10 texture reads, 20 under moonlight) and gained about 30 arithmetic operations. The shadow adds a few uniform tests per ground, cloud, and air pixel, plus one texture read near the aircraft.
+
 CPU throttling does not slow the GPU, so the emulated-phone frame times are optimistic. The player steps down from standard to low automatically if playback stays below 20 fps for 3 seconds. Timing is unaffected.
 
 ## GPU memory (estimated, not measured)

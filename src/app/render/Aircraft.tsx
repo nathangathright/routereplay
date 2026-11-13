@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { type Vec3, cross, dot, normalize, smoothstep } from '../../shared/geo/vec';
 import type { AircraftType } from '../../shared/scene/aircraft';
-import { airframeModel } from './airframe';
+import { aircraftRadius, airframeModel } from './airframe';
 
 const DEG = Math.PI / 180;
 
@@ -49,7 +49,6 @@ interface Plane {
   colors: THREE.Color[];
   prop: THREE.MeshBasicMaterial;
   lamps: THREE.ShaderMaterial;
-  bottom: number;
 }
 
 const PROP_OPACITY = 0.28;
@@ -83,7 +82,7 @@ function buildPlane(type: AircraftType): Plane {
   group.add(points);
   // Drawn after the cloud layer, so a plane always shows above the clouds.
   group.renderOrder = 1;
-  return { group, materials, colors: materials.map((m) => m.color.clone()), prop, lamps, bottom: model.bottom };
+  return { group, materials, colors: materials.map((m) => m.color.clone()), prop, lamps };
 }
 
 /**
@@ -142,8 +141,7 @@ export function Aircraft({
   const up = ground;
   const forward = normalize(heading);
   const right = normalize(cross(up, forward));
-  // Lifted so the lowest point (a nacelle or the belly) clears the surface it stands on.
-  const r = 1 + altitude + 0.0015 + size * plane.bottom;
+  const r = aircraftRadius(type, altitude, size);
   matrix.makeBasis(
     new THREE.Vector3(right[0], right[1], right[2]),
     new THREE.Vector3(up[0], up[1], up[2]),

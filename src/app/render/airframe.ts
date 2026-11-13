@@ -493,3 +493,11 @@ export function airframeModel(type: AircraftType): AirframeModel {
   }
   return m;
 }
+
+/**
+ * Distance from the Earth's centre to the model's origin (Earth radii) for a plane `altitude` above the ground and
+ * `size` long: lifted so its lowest point (a nacelle or the belly) clears the surface it stands on.
+ */
+export function aircraftRadius(type: AircraftType, altitude: number, size: number): number {
+  return 1 + altitude + 0.0015 + size * airframeModel(type).bottom;
+}

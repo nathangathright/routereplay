@@ -5,6 +5,7 @@ import type { EarthTextures } from './assets';
 import { CLOUD_GLSL, CLOUD_RADIUS, type CloudFrame, cloudUniforms, setCloudUniforms } from './Clouds';
 import { AIR_GLSL, ATMOSPHERE_TOP, CITY_GLSL, LIGHT_GLSL, type SkyLights, lightUniforms, setLightUniforms } from './lighting';
 import { NIGHT_DETAIL_GLSL, type NightDetailTextures, nightDetailUniforms, setNightDetailUniforms } from './nightDetail';
+import { PLANE_SHADOW_GLSL, type ShadowCaster, planeShadowUniforms, setPlaneShadowUniforms } from './planeShadow';
 
 export { ATMOSPHERE_TOP };
 
@@ -44,6 +45,7 @@ ${AIR_GLSL}
 ${CITY_GLSL}
 ${CLOUD_GLSL}
 ${NIGHT_DETAIL_GLSL}
+${PLANE_SHADOW_GLSL}
 
 // Sun glint on open water: a rough-water GGX lobe with Schlick Fresnel and Smith masking, as in the
 // offline renderer (routereplay surfacelighting.py). Roughness and gain are cinematic, not measured.
@@ -118,9 +120,9 @@ void main() {
   float water = texture2D(waterMap, vUv).r;
   vec3 n = normalize(mix(reliefNormal(g, vUv), g, water));
 
-  // Day: Lambert ground with a little skylight, reddened as the Sun gets low, shadowed by cloud.
+  // Day: Lambert ground with a little skylight, reddened as the Sun gets low, shadowed by cloud and aircraft.
   vec3 sun = groundLight(g, s);
-  float shadow = cloudShadow(g, s);
+  float shadow = cloudShadow(g, s) * planeShadow(g);
   float viewDepth = max(dot(N, V), 0.0);
   vec3 day = albedo * (0.035 + 0.965 * max(dot(n, s), 0.0) * shadow) * sun;
   // Water also mirrors the sky, more of it toward the limb: what it reflects replaces light from below the
@@ -176,6 +178,7 @@ uniform vec3 sunDir;
 varying vec3 vPos;
 varying vec3 vCamera;
 ${AIR_GLSL}
+${PLANE_SHADOW_GLSL}
 
 void main() {
   vec3 ro = vCamera;
@@ -222,6 +225,9 @@ void main() {
     tau += segment;
   }
   light *= SOLAR_RADIANCE;
+  // The air over an aircraft's shadow is shaded with it (a stylized shadow volume), so the shadow shows through
+  // the haze instead of being washed out by it.
+  if (ground.y > ground.x && ground.x > 0.0) light *= planeShadow(normalize(ro + rd * ground.x));
   // What lies behind (ground, clouds, stars) shows through the air's transmittance.
   vec3 through = exp(-tau);
   float cover = 1.0 - dot(through, vec3(0.2126, 0.7152, 0.0722));
@@ -235,6 +241,7 @@ void main() {
  * `lights`: the Sun, Moon, and clock in the Earth's own frame (see vec.ts), whatever the Earth's parent rotation.
  * `clouds`: the cloud layer's current frame, for cloud shadows on the ground.
  * `detail`: a journey's full-resolution city lights near its airports (nightDetail.ts), or none.
+ * `shadows`: the aircraft that shade the ground (see planeShadow.ts).
  */
 export function Earth({
   textures,
@@ -242,12 +249,14 @@ export function Earth({
   segments,
   clouds = null,
   detail = null,
+  shadows = [],
 }: {
   textures: EarthTextures;
   lights: SkyLights;
   segments: number;
   clouds?: CloudFrame | null;
   detail?: NightDetailTextures | null;
+  shadows?: readonly ShadowCaster[];
 }) {
   const material = useMemo(
     () =>
@@ -260,6 +269,7 @@ export function Earth({
           ...cloudUniforms(),
           ...lightUniforms(),
           ...nightDetailUniforms(),
+          ...planeShadowUniforms(),
         },
         vertexShader: earthVertex,
         fragmentShader: earthFragment,
@@ -269,6 +279,7 @@ export function Earth({
   setLightUniforms(material.uniforms, lights);
   setCloudUniforms(material.uniforms, clouds);
   setNightDetailUniforms(material.uniforms, detail, (textures.night.image as HTMLImageElement).width);
+  setPlaneShadowUniforms(material.uniforms, shadows, lights.sun);
   return (
     <mesh material={material} renderOrder={0}>
       <sphereGeometry args={[1, segments, Math.round(segments / 2)]} />
@@ -279,13 +290,13 @@ export function Earth({
 /**
  * The air around the Earth, drawn over the ground, clouds, and sky behind it (and under planes, routes, and
  * labels): blue by day, white toward the limb, red where sunlight grazes through the terminator, with the
- * Earth's shadow cast on it. `sun` is in the Earth's own frame.
+ * Earth's shadow cast on it, and the aircraft's (`shadows`, see planeShadow.ts). `sun` is in the Earth's own frame.
  */
-export function Atmosphere({ sun, segments }: { sun: Vec3; segments: number }) {
+export function Atmosphere({ sun, segments, shadows = [] }: { sun: Vec3; segments: number; shadows?: readonly ShadowCaster[] }) {
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
-        uniforms: { sunDir: { value: new THREE.Vector3() } },
+        uniforms: { sunDir: { value: new THREE.Vector3() }, ...planeShadowUniforms() },
         vertexShader: atmosphereVertex,
         fragmentShader: atmosphereFragment,
         side: THREE.BackSide,
@@ -300,6 +311,7 @@ export function Atmosphere({ sun, segments }: { sun: Vec3; segments: number }) {
     [],
   );
   (material.uniforms.sunDir!.value as THREE.Vector3).set(sun[0], sun[1], sun[2]);
+  setPlaneShadowUniforms(material.uniforms, shadows, sun);
   return (
     <mesh material={material} renderOrder={0.75}>
       <sphereGeometry args={[ATMOSPHERE_TOP, segments, Math.round(segments / 2)]} />

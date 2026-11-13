@@ -15,6 +15,7 @@ import { skyLights } from './lighting';
 import { Stars } from './Stars';
 import { SunlitButton } from './SunlitButton';
 import { Moon, Sun, sunVisibleFraction } from './SunAndMoon';
+import type { ShadowCaster } from './planeShadow';
 
 const DEG = Math.PI / 180;
 const CAMERA_DISTANCE = 3.4;
@@ -264,6 +265,17 @@ function LiveEarth({
   const cloudSet: CloudSet = { stepHours: CLOUD_STEP_HOURS, steps: cloudSteps.current, originMs: startUtc };
   const cloudFrame = cloudFrameAt(cloudSet, utc);
   const clouds = cloudFrame && { ...cloudFrame, presence: cloudFrame.presence * cloudFade.current };
+  const planeSize = 0.024 * reach;
+  // The planes here are always at cruise, and cast their shadows so.
+  const shadows: ShadowCaster[] = flights.current.map((fl) => ({
+    type: fl.type,
+    ground: fl.circle.at(fl.f),
+    heading: fl.circle.tangent(fl.f),
+    altitude: FLIGHT_ALTITUDE,
+    size: planeSize,
+    aloft: 1,
+    weight: 1,
+  }));
   // Everything lives in the Earth's frame, so the Sun, Moon, stars, sunlight, and planes stay true
   // to the clock while the globe is turned to put the camera's place in front.
   return (
@@ -277,9 +289,9 @@ function LiveEarth({
         <ambientLight intensity={0.5} />
         <primitive object={lightTarget} />
         <directionalLight position={scale(sun, 10) as [number, number, number]} target={lightTarget} intensity={2.4} />
-        <Earth textures={textures} lights={lights} segments={128} clouds={clouds} />
-        {clouds && <Clouds frame={clouds} lights={lights} night={textures.night} segments={128} />}
-        <Atmosphere sun={sun} segments={96} />
+        <Earth textures={textures} lights={lights} segments={128} clouds={clouds} shadows={shadows} />
+        {clouds && <Clouds frame={clouds} lights={lights} night={textures.night} segments={128} shadows={shadows} />}
+        <Atmosphere sun={sun} segments={96} shadows={shadows} />
         {flights.current.map((fl) => (
           <Aircraft
             key={fl.id}
@@ -287,7 +299,7 @@ function LiveEarth({
             ground={fl.circle.at(fl.f)}
             heading={fl.circle.tangent(fl.f)}
             altitude={FLIGHT_ALTITUDE}
-            size={0.024 * reach}
+            size={planeSize}
             sun={sun}
             clock={performance.now() / 1000}
           />

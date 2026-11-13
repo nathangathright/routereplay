@@ -147,7 +147,7 @@ export const FOCAL_PX = SHORT_SIDE_PX / (2 * Math.tan(SHORT_SIDE_FOV / 2));
 const GROUND_RADIUS_PX = 1300;
 const SUMMIT_RADIUS_PX = 440;
 /** Illustrative cruise: 11 km at mid-flight following sin(πp), drawn 12× taller, as the offline renderer does. */
-const CRUISE_DISPLAY = (11_000 * 12) / 6_371_000;
+export const CRUISE_DISPLAY = (11_000 * 12) / 6_371_000;
 /**
  * The aircraft is an icon of constant size: the offline renderer draws its 12.01-unit fuselage in a 224-pixel
  * crop 16.4 units wide, on a 1080-pixel short side.
