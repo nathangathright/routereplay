@@ -1205,7 +1205,7 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
               if (e.kind === 'publish') {
                 return (
                   <Message key={e.id} from="assistant">
-                    <MessageContent>
+                    <MessageContent className="w-full">
                       <PublishReply reply={e} title={view ? journeyTitle(view.normalized) : 'Route Replay'} />
                     </MessageContent>
                   </Message>

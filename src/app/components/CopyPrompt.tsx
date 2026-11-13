@@ -30,7 +30,8 @@ export async function copyText(text: string): Promise<boolean> {
 
 /**
  * A button that copies text it builds when pressed, then says so for two seconds: "Copied" with a check, and a
- * status line for screen readers. The label swaps in place, so the button keeps its width.
+ * status line for screen readers. The label swaps in place, so the button keeps its width. Without children it's an
+ * icon button (give it an aria-label), and only the icon swaps.
  */
 export function CopyButton({
   getText,
@@ -74,7 +75,7 @@ export function CopyButton({
             aria-hidden="true"
           >
             <CheckIcon />
-            Copied
+            {children != null && 'Copied'}
           </span>
         </span>
       </Button>

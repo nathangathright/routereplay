@@ -2,11 +2,12 @@
  * The draft's actions as chat replies: publishing (and sharing what's published), and exporting a video on this
  * device. The suggestion row above the message box starts them (ChatPanel.tsx).
  */
-import { ShareIcon } from 'lucide-react';
+import { DownloadIcon, FilePlayIcon, LinkIcon, ShareIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { Item, ItemActions, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@/components/ui/item';
 import { Progress, ProgressLabel, ProgressValue } from '@/components/ui/progress';
 import {
   Questionnaire,
@@ -48,20 +49,31 @@ export function PublishReply({ reply, title }: { reply: PublishState; title: str
   return (
     <>
       <p>{reply.state === 'published' ? 'Published. Anyone with this link can watch it:' : 'Anyone with this link can watch this version:'}</p>
-      <a className="break-all text-foreground underline underline-offset-4" href={reply.url} target="_blank" rel="noopener">
-        {reply.url}
-      </a>
-      <div className="flex flex-wrap gap-2">
-        <CopyButton variant="outline" getText={() => reply.url} copiedMessage="Watch link copied.">
-          Copy link
-        </CopyButton>
-        {nav.share && (
-          <Button variant="outline" onClick={() => void nav.share!({ title, url: reply.url }).catch(() => undefined)}>
-            <ShareIcon aria-hidden="true" />
-            Share
-          </Button>
-        )}
-      </div>
+      <Item variant="outline" size="sm">
+        <ItemMedia variant="icon">
+          <LinkIcon aria-hidden="true" />
+        </ItemMedia>
+        <ItemContent className="min-w-0">
+          <ItemTitle className="w-full">
+            <a className="truncate hover:underline" href={reply.url} target="_blank" rel="noopener">
+              {reply.url.replace(/^https?:\/\//, '')}
+            </a>
+          </ItemTitle>
+        </ItemContent>
+        <ItemActions>
+          <CopyButton variant="outline" size="icon-sm" aria-label="Copy link" getText={() => reply.url} copiedMessage="Watch link copied." />
+          {nav.share && (
+            <Button
+              variant="outline"
+              size="icon-sm"
+              aria-label="Share"
+              onClick={() => void nav.share!({ title, url: reply.url }).catch(() => undefined)}
+            >
+              <ShareIcon aria-hidden="true" />
+            </Button>
+          )}
+        </ItemActions>
+      </Item>
       {reply.earlier && <p className="text-muted-foreground">Earlier links keep showing the versions they were made from.</p>}
     </>
   );
@@ -182,6 +194,32 @@ export function ExportProgress({ phase, onCancel }: { phase: ExportPhase; onCanc
   );
 }
 
+/** The exported video as a file to save: the whole row is the download link, so it's easy to hit on a phone. */
+function VideoFile({ url, name, size }: { url: string; name: string; size: number }) {
+  const mb = `${(size / 1_048_576).toFixed(1)} MB`;
+  return (
+    <>
+      <p>Your video is ready, made on this device. Nothing was uploaded.</p>
+      <Item variant="outline" size="sm" render={<a href={url} download={name} aria-label={`Save video: ${name}, ${mb}`} />}>
+        <ItemMedia variant="icon">
+          <FilePlayIcon aria-hidden="true" />
+        </ItemMedia>
+        <ItemContent className="min-w-0">
+          <ItemTitle className="w-full">
+            <span className="truncate">{name}</span>
+          </ItemTitle>
+          <ItemDescription>{mb}</ItemDescription>
+        </ItemContent>
+        <ItemActions>
+          <span className={buttonVariants({ variant: 'outline', size: 'icon-sm' })} aria-hidden="true">
+            <DownloadIcon />
+          </span>
+        </ItemActions>
+      </Item>
+    </>
+  );
+}
+
 /** How an export went, as the reply in the chat: the file to save, or what stopped it. */
 export function ExportResult({ phase, onTryAgain, onAgain }: { phase: ExportPhase; onTryAgain: () => void; onAgain: () => void }) {
   if (exportRunning(phase)) return <Shimmer className="text-sm">Making the video on this device…</Shimmer>;
@@ -200,7 +238,7 @@ export function ExportResult({ phase, onTryAgain, onAgain }: { phase: ExportPhas
           </AlertDescription>
         </Alert>
       )}
-      {phase.kind === 'done' && <p>Your video is ready: {(phase.size / 1_048_576).toFixed(1)} MB, made on this device. Nothing was uploaded.</p>}
+      {phase.kind === 'done' && <VideoFile url={phase.url} name={phase.name} size={phase.size} />}
       {phase.kind === 'cancelled' && <p className="text-muted-foreground">Export cancelled.</p>}
       {phase.kind === 'failed' && (
         <Alert variant="destructive">
@@ -210,11 +248,6 @@ export function ExportResult({ phase, onTryAgain, onAgain }: { phase: ExportPhas
       )}
       {phase.kind !== 'unsupported' && (
         <div className="flex flex-wrap gap-2">
-          {phase.kind === 'done' && (
-            <a className={buttonVariants()} href={phase.url} download={phase.name}>
-              Save video
-            </a>
-          )}
           {(phase.kind === 'cancelled' || phase.kind === 'failed') && (
             <Button variant="outline" onClick={onTryAgain}>
               Try again
