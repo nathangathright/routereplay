@@ -1,10 +1,12 @@
-import { PanelLeftOpenIcon } from 'lucide-react';
 import { Suspense, lazy, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Button } from '@/components/ui/button';
-import { ChatPanel } from './components/ChatPanel';
 import { useDraft } from './draft';
 import { LandingStage } from './pages/Landing';
 
+// The chat and the UI kit it's built from load when someone reaches for Get started, not with the homepage.
+const loadChat = () => import('./components/ChatPanel');
+const ChatPanel = lazy(() => loadChat().then((m) => ({ default: m.ChatPanel })));
+// Shown only once the chat has been open, so its code is already here.
+const ShowChatButton = lazy(() => loadChat().then((m) => ({ default: m.ShowChatButton })));
 // The draft's stage carries Remotion; the homepage loads it only once the chat opens.
 const loadDraftStage = () => import('./pages/Preview').then((m) => ({ default: m.DraftStage }));
 const DraftStage = lazy(loadDraftStage);
@@ -36,6 +38,9 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
   const desktop = useMedia(DESKTOP);
   const [sceneId, setSceneId] = useState(initialSceneId);
   const [chatOpen, setChatOpen] = useState(initialSceneId !== null);
+  // The chat mounts the first time it opens, then stays, so hiding it keeps the conversation.
+  const [chatMounted, setChatMounted] = useState(chatOpen);
+  if (chatOpen && !chatMounted) setChatMounted(true);
   // Phones: a draft opens with the drawer collapsed so the journey has the screen; the homepage's opens expanded.
   const [expanded, setExpanded] = useState(initialSceneId === null);
   // A new conversation (back on the homepage, or another draft) starts a fresh chat.
@@ -140,21 +145,27 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
       data-page={sceneId ? 'draft' : 'home'}
     >
       <aside ref={rail} id="chat-panel" className="studio-chat" aria-label="Chat" inert={!chatOpen || undefined}>
-        <ChatPanel
-          key={chatKey}
-          draft={draft}
-          open={chatOpen}
-          layout={layout}
-          expanded={desktop || expanded}
-          onExpandedChange={setExpanded}
-          onHide={hide}
-          onDraftCreated={onDraftCreated}
-          onNewTrip={onNewTrip}
-          onDeleted={onDeleted}
-        />
+        {chatMounted && (
+          <Suspense fallback={null}>
+            <ChatPanel
+              key={chatKey}
+              draft={draft}
+              open={chatOpen}
+              layout={layout}
+              expanded={desktop || expanded}
+              onExpandedChange={setExpanded}
+              onHide={hide}
+              onDraftCreated={onDraftCreated}
+              onNewTrip={onNewTrip}
+              onDeleted={onDeleted}
+            />
+          </Suspense>
+        )}
       </aside>
       <div className="studio-stage">
-        {!landingGone && <LandingStage chatOpen={chatOpen} onGetStarted={() => setChatOpen(true)} getStarted={getStarted} />}
+        {!landingGone && (
+          <LandingStage chatOpen={chatOpen} onGetStarted={() => setChatOpen(true)} onApproach={loadChat} getStarted={getStarted} />
+        )}
         {sceneId && (
           <div className="studio-draft" data-shown={draftShown || landingGone}>
             <Suspense fallback={null}>
@@ -163,18 +174,9 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
           </div>
         )}
         {sceneId && desktop && !chatOpen && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="studio-show-chat"
-            onClick={() => setChatOpen(true)}
-            aria-label="Show chat"
-            title="Show chat"
-            aria-controls="chat-panel"
-            aria-expanded={false}
-          >
-            <PanelLeftOpenIcon aria-hidden="true" />
-          </Button>
+          <Suspense fallback={null}>
+            <ShowChatButton onClick={() => setChatOpen(true)} />
+          </Suspense>
         )}
       </div>
     </div>

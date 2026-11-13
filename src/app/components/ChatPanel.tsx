@@ -12,6 +12,7 @@ import {
   Share2Icon,
   Trash2Icon,
   PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
   PlaneIcon,
   PlusIcon,
   ShipIcon,
@@ -499,6 +500,24 @@ export interface ChatPanelProps {
   onDeleted: () => void;
 }
 
+/** On desktop, brings back a draft's hidden rail from the corner of the stage. It lives here to load with the chat. */
+export function ShowChatButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      className="studio-show-chat"
+      onClick={onClick}
+      aria-label="Show chat"
+      title="Show chat"
+      aria-controls="chat-panel"
+      aria-expanded={false}
+    >
+      <PanelLeftOpenIcon aria-hidden="true" />
+    </Button>
+  );
+}
+
 /**
  * The chat beside the globe: a left rail on desktop, a drawer from the bottom on phones. Each message goes to
  * POST /api/v1/compose with the conversation so far. When the journey is complete, the chat saves it: the first
@@ -522,8 +541,10 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
   }, [draft.sceneId, entries]);
 
   // Focus goes to the message box where typing is easy; on touch screens, to the heading, so the keyboard doesn't
-  // cover the introduction straight away.
-  const wasOpen = useRef(open);
+  // cover the introduction straight away. A homepage chat can mount already open (its code loads on first open, and
+  // a new trip starts a fresh one), and that was the person's doing too; a draft's chat open with the page leaves
+  // focus where it is.
+  const wasOpen = useRef(open && inDraft);
   useEffect(() => {
     if (open && !wasOpen.current) {
       if (matchMedia('(pointer: fine)').matches) input.current?.focus({ preventScroll: true });

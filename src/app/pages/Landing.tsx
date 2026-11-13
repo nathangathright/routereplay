@@ -9,10 +9,13 @@ import { initialQuality, webglAvailable } from '../device';
 export function LandingStage({
   chatOpen,
   onGetStarted,
+  onApproach,
   getStarted,
 }: {
   chatOpen: boolean;
   onGetStarted: () => void;
+  /** A pointer or focus reached Get started: a click is likely, so the chat's code can start loading. */
+  onApproach: () => void;
   getStarted: RefObject<HTMLButtonElement | null>;
 }) {
   const [webgl] = useState(webglAvailable);
@@ -53,7 +56,15 @@ export function LandingStage({
           </p>
           <div className="hero-actions">
             {/* The globe paints this button as an object lit by its Sun (SunlitButton). */}
-            <button ref={getStarted} className="hero-cta" onClick={onGetStarted} aria-controls="chat-panel" aria-expanded={chatOpen}>
+            <button
+              ref={getStarted}
+              className="hero-cta"
+              onPointerEnter={onApproach}
+              onFocus={onApproach}
+              onClick={onGetStarted}
+              aria-controls="chat-panel"
+              aria-expanded={chatOpen}
+            >
               Get started
             </button>
           </div>
