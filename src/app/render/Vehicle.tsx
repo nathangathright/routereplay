@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { cross, dot, normalize, smoothstep, sub } from '../../shared/geo/vec';
 import type { SurfaceMode } from '../../shared/scene/constants';
 import type { SceneState, Timeline } from '../../shared/timeline/evaluate';
-import { bodyOnPath, journeyPath } from '../../shared/timeline/journeyPath';
+import { bodyOnPath, vehiclePlace } from '../../shared/timeline/journeyPath';
 import { vehicleModel } from './vehicles';
 
 const DEG = Math.PI / 180;
@@ -144,8 +144,9 @@ function buildKit(mode: SurfaceMode): Kit {
 /**
  * The traveller on a train, bus, car, or ferry leg: that mode's model at a constant size on screen. `shortSide`
  * is the frame's short side in world units at the ground, the unit the models are built in. Each body stands
- * with its front and rear on the journey's route, so it points along the road, rail, or ferry line, and a
- * train's cars follow its locomotive. Lit by the Sun (`state.sun`) like the aircraft, with lamps after dusk.
+ * with its front and rear on its own leg's route, so it points along the road, rail, or ferry line, and a
+ * train's cars follow its locomotive; at a connection it carries straight on past the station rather than onto
+ * the next leg's line. Lit by the Sun (`state.sun`) like the aircraft, with lamps after dusk.
  * `opacity` below 1 dissolves it into or out of the next craft at a connection.
  */
 export function Vehicle({
@@ -189,8 +190,7 @@ export function Vehicle({
   for (const p of kit.lampPoints) p.visible = night > 0.002;
 
   // The lead body is centred on the traveller's position; the rest follow it along the route.
-  const path = journeyPath(timeline);
-  const at = path.distance(state.legIndex, state.legProgress);
+  const { path, at } = vehiclePlace(timeline, state, mode);
   let front = at + (model.bodies[0]!.length * shortSide) / 2;
   model.bodies.forEach((b, k) => {
     const length = b.length * shortSide;
@@ -210,12 +210,13 @@ export function Vehicle({
 
   if (kit.wake) {
     // Foam trails behind the ferry while it is under way, fading as it slows into port. It stays on this leg's
-    // water: on the way out it grows from the terminal rather than reaching back over the land.
+    // water: on the way out it grows from the terminal rather than reaching back over the land (its line starts
+    // there, at distance 0).
     const p = state.legProgress;
     const strength = state.phase === 'surface' ? smoothstep(0, 0.1, p) * smoothstep(0, 0.1, 1 - p) : 0;
     const hull = model.bodies[0]!.length * shortSide;
     const stern = at - 0.42 * hull;
-    const reach = Math.min(WAKE_LENGTH * hull, stern - path.distance(state.legIndex, 0));
+    const reach = Math.min(WAKE_LENGTH * hull, stern);
     kit.wake.visible = strength * opacity > 0.002 && reach > 0;
     if (kit.wake.visible) {
       const beam = model.width * shortSide;

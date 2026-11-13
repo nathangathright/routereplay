@@ -248,9 +248,10 @@ Other choices:
   - Ground legs are short. Wellington to Picton is 99 km, so a plane-sized ferry (15 %, about 220 km) would cover Cook Strait and both shores.
   - Much smaller and the shapes stop reading. At 720p the car is 29 by 13 pixels, about the least that still shows its cabin, and the ferry's 39 pixels show its bow, deckhouse, and funnel.
   - The old marker was 4.2 % across, so a vehicle hides about as much of the route as it did. On a crossing as short as Cook Strait the ferry still covers much of the route at the airports' zoom. That is accepted.
-- **On the route:** each body stands with its front and rear on the journey's path: every leg's track, end to end (`src/shared/timeline/journeyPath.ts`).
+- **On the route:** each body stands with its front and rear on its own line: its leg's track, joined with any legs either side travelled the same way (`src/shared/timeline/journeyPath.ts`).
   - So it points along the chord of its own length of road, railway, or ferry line. The tangent of one 0.5 km segment of the traced route would make it jitter.
-  - Through a connection, the path runs on into the next leg. A waiting vehicle is half turned toward its next departure, and a train's cars trail back the way it came, even along an arriving flight's ground track.
+  - Beyond the line's ends the bodies carry straight on, in the direction of the line's first or last 30 km. Traced routes start and end at airports, often with a short connector to the station at an angle to the line. While a flight dissolves into a train, the cars wait straight back from the station along the railway's direction rather than along the flight's ground track. Arriving, the locomotive's nose carries on past the station rather than turning onto the next leg's route. (November 13, 2026; the first version let them run onto neighbouring legs.)
+  - Legs of the same mode in a row (train after train) share one line, so the cars wait on the railway they arrived on and follow it out again.
 - **Light:** the aircraft's lighting.
   - They are lit by the Sun, and dim to the aircraft's night tint once the Sun sets where they are.
   - By day they are 20 % brighter than their paint. The aircraft gets sky light from the atmosphere drawn over it; the vehicles are drawn after the atmosphere.
