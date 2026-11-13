@@ -40,7 +40,7 @@ The landing page does not download Remotion: the player pages are code-split. Mu
 | Watch page playback, emulated phone | low (chosen automatically), DPR 1 | 16.7 ms | 18.5 ms |
 | **Watch page playback, real iPhone (iOS 27.3)** | low (chosen automatically) | 17 ms | 17 ms; 29.8 of 30 composition frames rendered per second |
 
-These were measured before the November 12 lighting work (tone mapping, moonlight, city lights, cloud lighting), which adds per-pixel work: a few Chapman-function evaluations for sunlight through the air, a cloud shadow per light, and, only where the night map has lights, two hashed noise fields. Re-measure on the iPhone before relying on these numbers. Metering a journey's exposure costs about 80 ms of main-thread time for 2 minutes of frames, once, when it first plays.
+These were measured before the November 12 lighting work (tone mapping, moonlight, city lights, cloud lighting), which adds per-pixel work: a few Chapman-function evaluations for sunlight through the air, a cloud shadow per light, two hashed noise fields only where the night map has lights, and the sky's reflection on water by day (about 150 arithmetic operations, two dozen of them exponentials or square roots, and no texture reads; see [decisions.md](decisions.md#water-that-reflects-the-sky)). Re-measure on the iPhone before relying on these numbers. Metering a journey's exposure costs about 80 ms of main-thread time for 2 minutes of frames, once, when it first plays.
 
 CPU throttling does not slow the GPU, so the emulated-phone frame times are optimistic. The player steps down from standard to low automatically if playback stays below 20 fps for 3 seconds. Timing is unaffected.
 

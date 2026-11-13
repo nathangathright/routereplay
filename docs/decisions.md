@@ -102,6 +102,17 @@ Viewer context already tells the agent *where*. The creator tells their agent *w
 - **One deliberate difference:** sunlight uses an irradiance of π, the same units the ground is shaded in (a white surface facing the Sun reads 1). The offline renderer's 11.4 suits its own exposure and tone mapping; here it buried the ground under a bright blue veil.
 - **Limits:** transmittance through the air is applied as one grey value (WebGL can't multiply the frame by a colour and add light in one pass).
 
+## Water that reflects the sky
+
+*Decided November 12, 2026.* Open water reflects the sky as well as the Sun, so the ocean brightens and turns pale blue toward the limb instead of staying one flat navy. The glint now stops at real coastlines too, from a water mask as sharp as the day texture ([assets.md](assets.md#static-assets-publicassets2026-11-12)).
+
+- **How much it reflects:** the glint's own rough water (GGX with α = 0.09, Schlick Fresnel with 2 % at normal incidence, Smith masking), integrated over an even sky. A fitted curve, 0.02 + 0.539 k / (1 + k) with k = 2.29 (1 − cos θ)^5.41, stays within 0.01 of that integral: 2 % looking straight down, 5 % at 60°, 19 % at 75°, and 38 % at grazing. Smooth-water Fresnel would reach 100 % at the limb and turn it into a mirror of the white horizon.
+- **What it reflects:** the sky in the mirror direction, from single scattering by air and haze with the atmosphere's constants and phase functions, in closed form for a flat, evenly mixed atmosphere: E · Σ βᵢ · columnᵢ · phaseᵢ · (e^−a − e^−b) / (b − a). Here a is the optical depth of the Sun's path to the water, b that of the reflected ray (both from the same Chapman columns as the atmosphere), and E the solar irradiance, π. The sky comes out deep blue overhead, paler toward the horizon, and orange toward a Sun near the horizon: a grazing reflection toward a Sun 1° up is five times redder than bluer. The views this camera takes rarely show that last case, so near sunset the visible change is mostly a smooth fade.
+- **How it combines:** the day map's water colour is mixed toward the reflected sky by mask × reflectance, because light the surface reflects replaces light from below it. The Sun's disc isn't part of the sky; the glint carries it and is added on top unchanged, so the two never overlap. Haze's forward peak brightens the water around the glint slightly. There is no cloud shadow, because the sky still lights water in a cloud's shadow. The reflection belongs to the day term, so it fades across the terminator band with the rest of the sunlit ground and is gone 6° past sunset.
+- **No moonlit sky.** The atmosphere doesn't draw moonlit air either, so a moonlit sky in the water would have nothing matching it above.
+- **Cost:** only on water by day: two more air columns (the reflected ray's and the sunlight's), about 150 arithmetic operations, and no texture reads.
+- **Limits:** no secondary scattering, so the twilight sky in the water is a little dark; one sky direction per pixel, not an average over the rough lobe; and because the atmosphere's heights are spread 7.2×, a grazing ray crosses about 13 air masses rather than about 35, so horizon skies come out a little bluer than real ones.
+
 ## Exposure, moonlight, and lights at night
 
 *Decided November 12, 2026.* The globe is lit and exposed like the offline renderer's (`routereplay` `radiometry.py`, `scene_overlays.py`, `moonlighting.py`, `nightlighting.py`, `citypopulations.py`, `cityglow.py`).

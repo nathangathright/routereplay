@@ -104,6 +104,19 @@ const vec3 BETA_R = vec3(0.0058, 0.0135, 0.0331) * ${f(6371.0 / 7.2, 4)};
 const float BETA_M = 0.0030 * ${f(6371.0 / 7.2, 4)};
 const float BETA_ME = BETA_M / 0.9;
 const float SUN_RADIUS = ${f(((0.533 / 2) * Math.PI) / 180)};
+// Sunlight in the same units as the ground's shading, where a white surface facing the Sun reads 1: that is
+// an irradiance of pi. (The offline renderer uses 11.4 to suit its own exposure and tone mapping.)
+const float SOLAR_RADIANCE = PI;
+
+// Scattering phase functions per steradian, for the cosine c of the angle between the light and the view ray:
+// air (Rayleigh) and haze (Henyey–Greenstein, g = 0.76).
+float airPhase(float c) {
+  return 3.0 / (16.0 * PI) * (1.0 + c * c);
+}
+float hazePhase(float c) {
+  const float g = 0.76;
+  return (1.0 - g * g) / (4.0 * PI * pow(max(1.0 + g * g - 2.0 * g * c, 1e-4), 1.5));
+}
 
 // Near and far distances along a ray to a sphere at the origin; y < x when it misses.
 vec2 sphere(vec3 o, vec3 d, float r) {

@@ -60,6 +60,27 @@ float glint(vec3 N, vec3 V, vec3 L) {
   return fresnel * distribution * gl * gv / (4.0 * nl * nv + 1e-6) * nl * (450.0 / 255.0);
 }
 
+// How much of an even sky the same rough water reflects toward a viewer at cosine nv from the vertical: the
+// glint's lobe integrated over the sky, fitted to within 0.01. 2 % looking straight down, 5 % at 60°, 19 % at
+// 75°, 38 % at grazing.
+float skyReflectance(float nv) {
+  float k = 2.29 * pow(1.0 - nv, 5.41);
+  return 0.02 + 0.539 * k / (1.0 + k);
+}
+
+// Skylight arriving at the ground point n from direction r: single scattering by air and haze along r, lit by
+// sunlight whose own path to the ground has optical depth sunTau. Closed form for a flat, evenly mixed
+// atmosphere: light scattered at a fraction t of the way down reaches the ground dimmed by
+// e^-(t sunTau + (1 - t) viewTau). Blue overhead, paler toward the horizon, and orange toward a low Sun. Night
+// is left to the terminator fade, as for the rest of the ground.
+vec3 skyRadiance(vec3 n, vec3 r, vec3 s, vec3 sunTau) {
+  vec2 col = columnUp(n, r);
+  vec3 x = extinction(col) - sunTau;
+  vec3 along = mix((1.0 - exp(-x)) / x, 1.0 - 0.5 * x, lessThan(abs(x), vec3(1e-3)));
+  float c = dot(r, s);
+  return SOLAR_RADIANCE * (BETA_R * col.x * airPhase(c) + BETA_M * col.y * hazePhase(c)) * exp(-sunTau) * along;
+}
+
 // Cloud between this ground point g and a light in direction s: where the beam crosses the cloud layer.
 // Direct light keeps at least 46 % under thick cloud, as in routereplay's cloud_shadow.
 float cloudShadow(vec3 g, vec3 s) {
@@ -86,9 +107,15 @@ void main() {
   // Day: Lambert ground with a little skylight, reddened as the Sun gets low, shadowed by cloud.
   vec3 sun = groundLight(g, s);
   float shadow = cloudShadow(g, s);
-  vec3 day = albedo * (0.035 + 0.965 * max(mu, 0.0) * shadow) * sun;
-  day += vec3(1.0, 0.96, 0.86) * glint(N, V, normalize(vSunW)) * water * shadow * sun;
   float viewDepth = max(dot(N, V), 0.0);
+  vec3 day = albedo * (0.035 + 0.965 * max(mu, 0.0) * shadow) * sun;
+  // Water also mirrors the sky, more of it toward the limb: what it reflects replaces light from below the
+  // surface. The sky's light needs no cloud shadow; past the terminator band the day side isn't drawn.
+  if (water > 0.0 && mu > -0.105) {
+    vec3 sky = skyRadiance(N, reflect(-V, N), normalize(vSunW), extinction(columnToLight(g, s)));
+    day = mix(day, sky, water * skyReflectance(viewDepth));
+  }
+  day += vec3(1.0, 0.96, 0.86) * glint(N, V, normalize(vSunW)) * water * shadow * sun;
   vec3 night = (albedo * 0.0036 + NIGHT_FLOOR) * (0.72 + 0.28 * viewDepth);
   vec3 color = mix(night, day, smoothstep(0.0, 1.0, (mu + 0.105) / 0.21));
 
@@ -134,10 +161,6 @@ varying vec3 vPos;
 varying vec3 vCamera;
 ${AIR_GLSL}
 
-// Sunlight in the same units as the ground's shading, where a white surface facing the Sun reads 1: that is
-// an irradiance of pi. (The offline renderer uses 11.4 to suit its own exposure and tone mapping.)
-const float SOLAR_RADIANCE = PI;
-
 void main() {
   vec3 ro = vCamera;
   vec3 rd = normalize(vPos - vCamera);
@@ -152,9 +175,8 @@ void main() {
   float tLow = clamp(-dot(ro, rd), t0, t1);
 
   float mu = dot(rd, s);
-  float phaseR = 3.0 / (16.0 * PI) * (1.0 + mu * mu);
-  const float g = 0.76;
-  float phaseM = (1.0 - g * g) / (4.0 * PI * pow(max(1.0 + g * g - 2.0 * g * mu, 1e-4), 1.5));
+  float phaseR = airPhase(mu);
+  float phaseM = hazePhase(mu);
   const float SECONDARY = 0.38 / (1.0 - 0.38);
 
   vec3 light = vec3(0.0);
