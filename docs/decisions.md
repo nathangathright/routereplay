@@ -81,6 +81,10 @@ Viewer context already tells the agent *where*. The creator tells their agent *w
 
 *Before that (November 11, 2026, plan 2, question 4):* the service stayed at `routereplay-web.resonantconcepts.workers.dev`. A custom domain cost money and added DNS, certificate, and WAF setup, and the 1010 error was handled by telling agents to send a descriptive User-Agent; all ten agent sessions in plan 2's verification did, and none hit it.
 
+## Cloudflare Web Analytics
+
+*Decided November 13, 2026.* The zone's Web Analytics injects Cloudflare's beacon into every HTML page, and the CSP blocked it, so it had recorded nothing. The owner chose to keep it: `script-src` allows `https://static.cloudflareinsights.com` (in `src/server/security.ts` and `public/_headers`). The beacon (checked in its 2026.10.1 build) needs nothing else: it posts to `/cdn-cgi/rum` on the same origin, because the injected config sets `version` (without it, it would post to `cloudflareinsights.com`). It uses no `eval`, workers or images. It removes the query and fragment from the page address and referrer it reports, which matters because draft links carry the owner credential in `#k=`, and the chat moves the page to such a link with `pushState`, which the beacon's single-page mode follows. The privacy notes in `agent/reference.md` say so. Turning it off instead is a dashboard setting (Web Analytics → the site → automatic setup), with no code change.
+
 ## Real clouds from NOAA's GFS model
 
 *Decided November 12, 2026.* Journeys and the homepage draw real clouds: NOAA's GFS model analysis for past times and its forecast for upcoming ones, at the journey's own times.
