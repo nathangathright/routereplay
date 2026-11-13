@@ -26,3 +26,30 @@ export function lookupAirport(code: string): Airport | undefined {
   }
   return undefined;
 }
+
+let lowerLines: string | undefined;
+const isWordChar = (c: number) => (c >= 97 && c <= 122) || (c >= 48 && c <= 57);
+
+/**
+ * Airports whose name or city contains `word` (lowercase letters and digits) as a whole word. Searches a lower-cased
+ * copy of the table text, made once per isolate, with indexOf: a regular expression over the table took 1–2 ms per
+ * search.
+ */
+export function searchAirports(word: string): Airport[] {
+  const text = (lowerLines ??= AIRPORT_LINES.toLowerCase());
+  const out: Airport[] = [];
+  let lastLine = -1;
+  for (let i = text.indexOf(word); i >= 0; i = text.indexOf(word, i + word.length)) {
+    if (isWordChar(text.charCodeAt(i - 1)) || isWordChar(text.charCodeAt(i + word.length))) continue;
+    const start = text.lastIndexOf('\n', i) + 1;
+    if (start === lastLine) continue;
+    // Only the name (after the first tab) and city (after the second) count, not the country or time zone.
+    const firstTab = text.indexOf('\t', start);
+    const thirdTab = text.indexOf('\t', text.indexOf('\t', firstTab + 1) + 1);
+    if (i < firstTab || i > thirdTab) continue;
+    lastLine = start;
+    const airport = lookupAirport(text.slice(start, start + 3).toUpperCase());
+    if (airport) out.push(airport);
+  }
+  return out;
+}

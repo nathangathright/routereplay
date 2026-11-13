@@ -337,3 +337,60 @@ See [assets.md](assets.md).
 - `_headers` still applies the security headers to static files.
 
 The site launched on Cloudflare Pages with one Pages Function. It moved because Pages can't define Durable Objects: keeping Pages would have meant a second Worker just for live updates. The public API didn't change. The old `routereplay-web.pages.dev` project now only redirects every path with a 308 to the Worker, so earlier watch links, preview links, and saved docs URLs keep working.
+
+## Proposal: a journey from plain text (`POST /api/v1/compose`)
+
+*Proposed November 13, 2026; not decided.* PLAN.md has Route Replay pay for no model inference: the visitor's own agent researches the trip and posts a spec. That leaves out people whose chat app can only fetch URLs, and people with no agent. This proposal lets them paste an itinerary instead. A prototype is on branch `t3/compose-itinerary-llm-eval` (`src/server/compose/`, eval in `scripts/compose-eval/`).
+
+**How it works.** The model's job stays small and everything checkable stays in the Worker:
+
+1. **Extract:** a Workers AI model copies the text into a small JSON "intent", with schema-constrained output (`src/server/compose/intent.ts`). Each leg has its mode, places as written with the model's IATA code beside them, local dates and times as written, flight number, and aircraft as written. It never computes offsets or arrival dates.
+2. **Resolve, without the model** (`resolve.ts`):
+   - Airports come from the airport table. A code the person wrote wins. Cities with several airports (a short table: London, New York, Tokyo, Paris and others) get a question for flights. For train, bus, car and ferry legs they stand in at the city-centre airport.
+   - When the model's code doesn't match the written name, a search of the table by name decides.
+   - UTC offsets come from each airport's zone.
+   - A flight's arrival date is the only date that gives a positive flight time under 24 hours. That gets date-line crossings right; models got them wrong.
+   - The aircraft as written maps to a supported designator.
+   - An aircraft or year the text never mentions is discarded and asked about.
+3. **Validate** with `validateScene`, and return `{complete, spec, questions, issues, warnings, airports}`. Missing times, dates, years and aircraft, and unnamed airports in multi-airport cities, become specific questions. Nothing is saved.
+
+**Measured** (39 synthetic itineraries: 27 used to tune the resolver, then 12 written afterwards as a held-out check; local `wrangler dev` calling the remote models, November 13, 2026):
+
+| Model (Workers AI) | Tuning | Held out | Leg accuracy | Invented values | Median / p90 latency | Neurons per request |
+| --- | --- | --- | --- | --- | --- | --- |
+| `@cf/google/gemma-4-26b-a4b-it` (thinking off) | 27/27 | 11/12 | 60/63 | 0 | 3.9 / 6.8 s | 8.8 (6.6–13.7) |
+| `@cf/openai/gpt-oss-20b` | 27/27 | 10/12 | 59/63 | 0 | 4.1 / 7.7 s | 23 |
+| `@cf/zai-org/glm-4.7-flash` | 26/27 | 7/12 | 54/63 | 0 | 3.2 / 5.7 s | 9.3 |
+| `@cf/ibm-granite/granite-4.0-h-micro` | 22/27 | 7/12 | 51/63 | 0 | 6.3 / 9.4 s | 2.6 |
+| `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | 26/27 | — | 41/45 | 0 | 5.0 / 7.3 s | 45 |
+| `@cf/openai/gpt-oss-120b` | 24/27 | — | 42/45 | 0 | 5.4 / 17.9 s | 49 |
+| `@cf/meta/llama-4-scout-17b-16e-instruct` | 22/27 | — | 36/45 | 0 | 21.9 / 36.4 s | 25 |
+
+- **The resolver matters more than the model.** With a first, simpler resolver the same model output scored 22/27 for gemma and 13/27 for granite. Models put city codes, made-up codes or nothing for stations, and "helpfully" moved date-line arrivals to the wrong day. Granite also invented an aircraft and a year.
+- **A second run of gemma** over all 39 cases gave the same 38/39.
+- **One repair round** (feeding validation problems back to the model) never triggered for gemma, and changed nothing for granite, so it was dropped.
+- **Claude** wasn't run: no Anthropic credentials were available. `scripts/compose-eval/run.mjs --models claude-haiku-5-5` runs it with a key, capped at US$0.50 a run. Estimated from the measured prompt sizes, Claude Haiku 5.5 at low effort costs about US$0.0002–0.0003 a request. The Anthropic SDK would add 880 KiB to the Worker bundle, about 6.5 ms of parsing in every fresh isolate for every endpoint, so it stays out of the Worker.
+- **Worker CPU** (V8 profiles in local workerd): compose takes a median of 2.8 ms warm, at most 5.4 ms over 18 requests. `/api/v1/validate` takes 0.65 ms on the same specs, and a flights-only create 1.3–2.6 ms.
+  - The first request in a fresh isolate took 17 ms. 10 ms of that is the first `Intl.DateTimeFormat` per time zone, which every save path pays and which production processes mostly have loaded already (see [budgets](budgets.md#worker-cpu-cloudflare-free-plan-10-ms-a-request)).
+  - Searching the airport table by name first cost 1–2 ms a search with a regular expression. It is now an `indexOf` over a lower-cased copy made once per isolate.
+  - The prototype adds 25 KiB to the bundle (635 KiB), about 0.5 ms of parsing per fresh isolate.
+
+**Cost.** Gemma averages 8.8 neurons a request. Workers AI includes 10,000 neurons a day on every plan, account-wide, so even 1,000 requests a day (8,800 neurons) fit. Beyond the free allowance a request costs about US$0.0001, so 1,000 extra a day would cost about US$3 a month. Each request also writes two D1 rate-limit rows.
+
+**Trade-offs against PLAN.md:**
+- Route Replay pays for inference, though within the free allowance at expected volume.
+- It handles itinerary text, which is personal data.
+- It owns extraction quality instead of the visitor's agent. An agent that can post specs still does better research: it can look up aircraft types and fill gaps. Compose only asks.
+
+**If adopted:**
+- **Where:** a text box on the homepage for people without an agent. It shows the questions inline, adds the answers to the text and sends it again; when complete, it creates the draft from the browser and opens the preview. Agents keep the existing flow; the endpoint isn't needed in `/agent-docs`. The homepage flow has to give the owner credential to a person directly, which needs its own design.
+- **Abuse:** the existing D1 counters: 20 requests per client an hour and 800 a day overall (`COMPOSE_LIMIT_PER_HOUR`, `COMPOSE_LIMIT_PER_DAY`), which keeps a typical day inside the free neurons. Text is capped at 4,000 characters. Clients can't choose the model in production (`COMPOSE_MODELS` defaults to gemma). AI Gateway adds nothing needed: its rate limits are per gateway, not per client; caching doesn't help unique texts; and its logging would store itineraries. Add Turnstile to the form only if abuse appears.
+- **Secrets:** none. Workers AI is a binding (`[ai]` in `wrangler.toml`). A Claude model would need `wrangler secret put ANTHROPIC_API_KEY`, with `.dev.vars` locally.
+- **Privacy wording:** "To read your itinerary, Route Replay sends the text to Cloudflare Workers AI, on the same network that hosts this site. Neither Cloudflare nor Route Replay keeps the text or uses it to train models. Nothing is saved until you create the journey, and the journey keeps only airports, times and aircraft." This rests on Cloudflare's Workers AI data-usage page (no retention after the request, no training) and on the Worker never logging request bodies. A Claude model would change the wording: Anthropic keeps API inputs for up to 30 days and doesn't train on them.
+
+**Unproven:**
+- Real itineraries. The test set is synthetic and English, and the resolver was tuned on most of it.
+- Production latency and CPU.
+- The question-and-answer loop as people use it.
+- Claude's accuracy.
+- How long gemma-4 stays on Workers AI: several models there retire on November 20, 2026. Rerun the eval before switching models.

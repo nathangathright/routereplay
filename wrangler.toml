@@ -42,3 +42,7 @@ new_sqlite_classes = ["SceneLive"]
 [vars]
 # Canonical origin for generated links, whichever address a request arrives on. `npm run dev:worker` overrides it locally.
 PUBLIC_ORIGIN = "https://routereplay.video"
+
+# Workers AI, for POST /api/v1/compose (prototype). Local `wrangler dev` calls the remote models.
+[ai]
+binding = "AI"

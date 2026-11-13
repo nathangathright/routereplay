@@ -12,6 +12,7 @@ import { ACTIVITY_MESSAGE_MAX, type LiveState, cleanActivityMessage } from './li
 import { storyboardSvg } from './storyboardSvg';
 import { AIRPORT_DATA_VERSION, lookupAirport } from './airports';
 import { weatherFieldsOp } from './weather';
+import { type ComposeEnv, composeOp } from './compose';
 import { type RoutingDeps, routeSurfaceLegs } from './surfaceRoutes';
 import { formatLocalTimestamp, formatOffset, formatUtc, resolveWallTime } from '../shared/scene/time';
 import { TOKEN_RE, constantTimeEqual, newToken, randomId, sha256Hex } from './crypto';
@@ -28,7 +29,7 @@ import {
 import { ApiError, bearerToken, clientAddress, etagMatches, json, parseCookies, readJsonBody } from './http';
 import * as store from './store';
 
-export interface Env {
+export interface Env extends ComposeEnv {
   DB: D1Database;
   ASSETS?: { fetch(input: Request | string): Promise<Response> };
   /** Optional canonical origin for links, e.g. https://routereplay.example. Defaults to the request origin. */
@@ -926,6 +927,10 @@ export async function routeApi(request: Request, env: Env, ctx: Ctx, now = Date.
   if (resource === 'validate' && id === undefined) {
     if (m !== 'POST') throw methodNotAllowed(['POST']);
     return validateOp(request, now);
+  }
+  if (resource === 'compose' && id === undefined) {
+    if (m !== 'POST') throw methodNotAllowed(['POST']);
+    return composeOp(request, env, await clientSubject(request, env), now);
   }
   if (resource === 'airports' && id && sub === undefined) {
     if (m !== 'GET' && m !== 'HEAD') throw methodNotAllowed(['GET']);
