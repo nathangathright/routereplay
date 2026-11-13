@@ -1,66 +1,8 @@
-import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ComposeChat } from '../components/ComposeChat';
+import { CopyPromptButton } from '../components/CopyPrompt';
 import { IdleEarth } from '../render/IdleEarth';
 import { initialQuality, webglAvailable } from '../device';
-
-export function getStartedPrompt(origin: string): string {
-  return `Help me create a journey in Route Replay. Read ${origin}/agent-docs and follow it. If your browser or web reader can't open it, fetch it with a direct HTTP request.`;
-}
-
-/** Copy text with the Clipboard API, falling back to a selection copy where it isn't allowed. */
-async function copyText(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    const area = document.createElement('textarea');
-    area.value = text;
-    area.setAttribute('readonly', '');
-    area.style.position = 'fixed';
-    area.style.opacity = '0';
-    document.body.append(area);
-    area.select();
-    const ok = document.execCommand('copy');
-    area.remove();
-    return ok;
-  }
-}
-
-/** One button that copies the agent prompt; the label swaps in place without changing width. */
-function CopyPromptButton({ buttonRef }: { buttonRef?: RefObject<HTMLButtonElement | null> }) {
-  const [copied, setCopied] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
-
-  async function copy() {
-    // A build can pin the public address (for example when the page is shown outside the site).
-    const origin = (import.meta.env.VITE_PUBLIC_ORIGIN as string | undefined) ?? location.origin;
-    if (!(await copyText(getStartedPrompt(origin)))) return;
-    setCopied(true);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setCopied(false), 2000);
-  }
-
-  return (
-    <>
-      <button ref={buttonRef} className="copy-prompt" data-copied={copied} onClick={copy}>
-        <span className="copy-prompt-states">
-          <span className="copy-prompt-state">Copy agent prompt</span>
-          <span className="copy-prompt-state" aria-hidden="true">
-            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-              <path d="M3 8.5 6.5 12 13 4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Copied
-          </span>
-        </span>
-      </button>
-      <span className="visually-hidden" role="status">
-        {copied ? 'Prompt copied. Paste it into your agent and describe your trip.' : ''}
-      </span>
-    </>
-  );
-}
 
 export function Landing() {
   const [webgl] = useState(webglAvailable);
@@ -69,11 +11,21 @@ export function Landing() {
   const hero = useRef<HTMLElement>(null);
   // The globe paints this button as an object lit by its Sun (SunlitButton).
   const promptButton = useRef<HTMLButtonElement>(null);
+  const getStarted = useRef<HTMLButtonElement>(null);
   const [horizon, setHorizon] = useState(0.5);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     document.title = 'Route Replay: your journeys on a 3D Earth';
   }, []);
+
+  // Back to Get started when the chat closes. This runs after the drawer's own effect has closed the dialog, which
+  // otherwise returns focus to whatever had it before.
+  const chatWasOpen = useRef(false);
+  useEffect(() => {
+    if (chatOpen) chatWasOpen.current = true;
+    else if (chatWasOpen.current) getStarted.current?.focus();
+  }, [chatOpen]);
 
   // Place Earth's top edge so the space between the hero and Earth equals the space above the hero.
   useLayoutEffect(() => {
@@ -104,6 +56,9 @@ export function Landing() {
             link.
           </p>
           <div className="hero-actions">
+            <button ref={getStarted} className="get-started" onClick={() => setChatOpen(true)} aria-haspopup="dialog">
+              Get started
+            </button>
             <CopyPromptButton buttonRef={promptButton} />
           </div>
         </section>
@@ -122,6 +77,7 @@ export function Landing() {
           <circle cx="8" cy="4.75" r="0.95" fill="currentColor" />
         </svg>
       </a>
+      <ComposeChat open={chatOpen} onClose={() => setChatOpen(false)} />
     </main>
   );
 }

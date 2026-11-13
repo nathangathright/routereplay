@@ -113,3 +113,57 @@ export function getPublication(id: string) {
 export function signOut(sceneId: string) {
   return request<{ signedOut: boolean }>(`/api/v1/scenes/${sceneId}/session`, { method: 'DELETE' });
 }
+
+/** How many homepage chat messages this browser has left (POST /api/v1/compose). */
+export interface ComposeLimits {
+  remaining: number;
+  perHour: number;
+  resetsAt: string;
+  /** Set once a limit stops messages: this browser's hourly limit, or today's limit for everyone. */
+  reached?: 'client' | 'everyone';
+}
+
+export interface ComposeQuestion {
+  path: string;
+  field: string;
+  question: string;
+  options?: string[];
+}
+
+export interface ComposeLeg {
+  route: string;
+  when: string;
+  by: string;
+}
+
+export interface ComposeReply {
+  status: 'ready' | 'needs_info';
+  questions: ComposeQuestion[];
+  /** Present when ready. */
+  legs?: ComposeLeg[];
+  spec: SceneSpecV1;
+  limits: ComposeLimits;
+}
+
+export interface ComposeMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export function getComposeLimits() {
+  return request<{ limits: ComposeLimits; maxCharacters: number }>('/api/v1/compose');
+}
+
+/** Send the whole conversation; the server keeps none of it. */
+export function compose(messages: ComposeMessage[]) {
+  return request<ComposeReply>('/api/v1/compose', { method: 'POST', body: JSON.stringify({ messages }) });
+}
+
+/** Create a draft as an agent would (POST /api/v1/scenes). The response's credentials are shown only once. */
+export function createScene(spec: SceneSpecV1) {
+  return request<{ id: string; previewUrl: string; credentials: { edit: string; owner: string } }>('/api/v1/scenes', {
+    method: 'POST',
+    headers: { 'idempotency-key': crypto.randomUUID() },
+    body: JSON.stringify(spec),
+  });
+}

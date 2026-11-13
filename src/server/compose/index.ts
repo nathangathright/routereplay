@@ -1,68 +1,155 @@
 /**
- * POST /api/v1/compose: plain-language itinerary in, scene spec (or the questions that block one) out. Saves nothing.
+ * /api/v1/compose: a conversation about a trip in, a scene spec (or the questions that block one) out. Saves nothing.
  * The text goes to the extraction model and is then discarded; only rate-limit counters are written.
+ *
+ *   GET  → { limits }                       how many messages this client has left, without using one
+ *   POST { messages: [{ role, content }] }  → { status: 'ready' | 'needs_info', questions, legs, spec, limits, … }
+ *
+ * The client keeps the conversation and sends all of it each time; the last message is the person's. Every response,
+ * errors included, carries `limits` (as `error.limits` on errors), so the page can show how many messages are left.
  */
 import { AIRPORT_DATA_VERSION, lookupAirport, searchAirports } from '../airports';
-import { type LimitRule, enforceLimits } from '../guards';
+import { type LimitChecks, type LimitCount, countLimits, peekLimits, retryAfterSeconds } from '../guards';
 import { ApiError, json, readJsonBody } from '../http';
-import { type ModelEnv, MODELS, extract } from './models';
-import { resolveIntent } from './resolve';
+import { type ChatMessage, modelInput, travellerText } from './intent';
+import { type ModelEnv, extract } from './models';
+import { type Question, resolveIntent } from './resolve';
+import { summarize } from './summary';
 
 export interface ComposeEnv extends ModelEnv {
   DB: D1Database;
-  /** Models a request may name, comma-separated; the first is the default. */
-  COMPOSE_MODELS?: string;
   COMPOSE_LIMIT_PER_HOUR?: string;
   COMPOSE_LIMIT_PER_DAY?: string;
 }
 
-const DEFAULT_MODEL = 'gemma-4-26b';
-const MAX_TEXT = 4000;
+export const MAX_CHARACTERS = 4000;
+const MAX_MESSAGES = 30;
 
-export async function composeOp(request: Request, env: ComposeEnv, clientSubject: string, now: number): Promise<Response> {
-  const body = await readJsonBody(request);
-  if (typeof body !== 'object' || body === null || typeof (body as { text?: unknown }).text !== 'string') {
-    throw new ApiError(400, 'invalid_request', 'Send {"text": "<your itinerary>"}.');
+/**
+ * 20 messages per client an hour, and 800 a day for everyone: at about 9 neurons a message (up to ~20 for a long
+ * confirmation email), 800 keeps a typical day inside Workers AI's 10,000 free neurons.
+ */
+function checks(env: ComposeEnv, client: string): LimitChecks {
+  const n = (v: string | undefined, d: number) => (v && Number.isFinite(Number(v)) ? Number(v) : d);
+  return [
+    [{ name: 'compose', windowMs: 3_600_000, limit: n(env.COMPOSE_LIMIT_PER_HOUR, 20) }, client],
+    [{ name: 'global_compose', windowMs: 86_400_000, limit: n(env.COMPOSE_LIMIT_PER_DAY, 800) }, 'all'],
+  ];
+}
+
+export interface Limits {
+  /** Messages this client can still send now: the smaller of its own allowance and what's left for everyone today. */
+  remaining: number;
+  /** Messages per client per hour. */
+  perHour: number;
+  /** When `remaining` next goes up. */
+  resetsAt: string;
+  /** Set once a limit stops messages: this client's hourly limit, or today's limit for everyone. */
+  reached?: 'client' | 'everyone';
+}
+
+function limitsOf([client, everyone]: LimitCount[]): Limits {
+  const left = (c: LimitCount) => Math.max(0, c.rule.limit - c.count);
+  const binding = left(everyone!) < left(client!) ? everyone! : client!;
+  const reached = client!.count > client!.rule.limit ? 'client' : everyone!.count > everyone!.rule.limit ? 'everyone' : undefined;
+  const resetFrom = reached === 'everyone' ? everyone! : reached === 'client' ? client! : binding;
+  return {
+    remaining: Math.min(left(client!), left(everyone!)),
+    perHour: client!.rule.limit,
+    resetsAt: new Date(resetFrom.resetsAt).toISOString(),
+    ...(reached ? { reached } : {}),
+  };
+}
+
+/** Errors carry the limits too. */
+const withLimits = (e: ApiError, limits: Limits) => new ApiError(e.status, e.code, e.message, { ...e.extra, limits }, e.headers);
+
+export async function composeLimitsOp(env: ComposeEnv, client: string, now: number): Promise<Response> {
+  return json({ limits: limitsOf(await peekLimits(env.DB, checks(env, client), now)), maxCharacters: MAX_CHARACTERS });
+}
+
+function readMessages(body: unknown): ChatMessage[] {
+  const messages = (body as { messages?: unknown } | null)?.messages;
+  const bad = (message: string, hint?: string) => new ApiError(400, 'invalid_request', message, hint ? { hint } : {});
+  if (!Array.isArray(messages) || messages.length === 0) {
+    throw bad('Send {"messages": [{"role": "user", "content": "<your trip>"}]}.');
   }
-  const { text, model: requested, debug } = body as { text: string; model?: unknown; debug?: unknown };
-  if (!text.trim()) throw new ApiError(400, 'invalid_request', 'The itinerary text is empty.');
-  if (text.length > MAX_TEXT) {
-    throw new ApiError(413, 'text_too_long', `The itinerary is ${text.length} characters; the limit is ${MAX_TEXT}.`, {
-      hint: 'Paste only the flights, trains, buses, drives and ferries.',
+  if (messages.length > MAX_MESSAGES) throw bad(`At most ${MAX_MESSAGES} messages.`, 'Start a new conversation.');
+  const out: ChatMessage[] = [];
+  for (const m of messages) {
+    const { role, content } = (m ?? {}) as { role?: unknown; content?: unknown };
+    if ((role !== 'user' && role !== 'assistant') || typeof content !== 'string') {
+      throw bad('Each message needs a role ("user" or "assistant") and content (a string).');
+    }
+    out.push({ role, content });
+  }
+  const last = out[out.length - 1]!;
+  if (last.role !== 'user' || !last.content.trim()) throw bad('The last message must be the traveller’s, and not empty.');
+  const total = out.reduce((n, m) => n + m.content.length, 0);
+  if (total > MAX_CHARACTERS) {
+    throw new ApiError(413, 'text_too_long', `The conversation is ${total} characters; the limit is ${MAX_CHARACTERS}.`, {
+      hint: 'Start a new conversation with just the flights, trains, buses, drives and ferries.',
     });
   }
-  const allowed = (env.COMPOSE_MODELS ?? DEFAULT_MODEL).split(',').map((s) => s.trim()).filter((s) => s in MODELS);
-  const model = requested ?? allowed[0];
-  if (typeof model !== 'string' || !allowed.includes(model)) {
-    throw new ApiError(400, 'unsupported_model', `Model ${JSON.stringify(model)} is not available.`, { hint: `Available: ${allowed.join(', ')}.` });
+  return out;
+}
+
+export async function composeOp(request: Request, env: ComposeEnv, client: string, now: number): Promise<Response> {
+  const limitChecks = checks(env, client);
+  let messages: ChatMessage[];
+  let debug = false;
+  try {
+    const body = await readJsonBody(request);
+    messages = readMessages(body);
+    debug = (body as { debug?: unknown }).debug === true;
+  } catch (e) {
+    // A request that never reached the model doesn't use a message.
+    if (e instanceof ApiError) throw withLimits(e, limitsOf(await peekLimits(env.DB, limitChecks, now)));
+    throw e;
   }
 
-  // 800 a day keeps the default model inside Workers AI's 10,000 free neurons (about 9 per request, up to ~20 for a
-  // long confirmation email).
-  const n = (v: string | undefined, d: number) => (v && Number.isFinite(Number(v)) ? Number(v) : d);
-  const perClient: LimitRule = { name: 'compose', windowMs: 3_600_000, limit: n(env.COMPOSE_LIMIT_PER_HOUR, 20) };
-  const global: LimitRule = { name: 'global_compose', windowMs: 86_400_000, limit: n(env.COMPOSE_LIMIT_PER_DAY, 800) };
-  await enforceLimits(env.DB, [[perClient, clientSubject], [global, 'all']], now);
+  const counts = await countLimits(env.DB, limitChecks, now);
+  const limits = limitsOf(counts);
+  if (limits.reached) {
+    const over = counts.find((c) => c.count > c.rule.limit)!;
+    const retryAfter = retryAfterSeconds(over, now);
+    throw new ApiError(
+      429,
+      'rate_limited',
+      limits.reached === 'client'
+        ? `You've used the ${limits.perHour} messages an hour this page allows.`
+        : 'Route Replay has used up today’s messages for everyone.',
+      { retryAfterSeconds: retryAfter, limits, hint: 'Your own AI agent can make the journey instead: copy the agent prompt into it.' },
+      { 'retry-after': String(retryAfter) },
+    );
+  }
 
   let extraction;
   try {
-    extraction = await extract(env, model, text);
+    extraction = await extract(env, modelInput(messages));
   } catch (e) {
     // Never echo the itinerary; the provider's message is enough to diagnose.
     const detail = e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200);
-    throw new ApiError(502, 'model_unavailable', 'The extraction model is unavailable. Try again shortly.', { hint: detail });
+    throw new ApiError(502, 'model_unavailable', 'The itinerary reader is unavailable. Try again shortly.', { hint: detail, limits });
   }
   const { intent, usage } = extraction;
-  if (!intent) throw new ApiError(502, 'extraction_failed', 'The model returned no usable itinerary. Try again, or rephrase.');
-  const result = resolveIntent(intent, text, { lookupAirport, searchAirports, airportDataVersion: AIRPORT_DATA_VERSION, now });
+  if (!intent) throw new ApiError(502, 'extraction_failed', 'I couldn’t read that. Try again, or put it another way.', { limits });
 
+  const result = resolveIntent(intent, travellerText(messages), { lookupAirport, searchAirports, airportDataVersion: AIRPORT_DATA_VERSION, now });
+  // A spec with no open questions that still fails validation (usually a misread time or date) asks the person to check.
+  const questions: Question[] = result.questions.length
+    ? result.questions
+    : result.issues.map((i) => ({ path: i.path, field: 'legs', question: `${i.message} Can you check the dates and times?` }));
   return json({
-    ...result,
-    usage,
-    // The model's reading, for debugging and evaluation.
-    ...(debug === true ? { intent } : {}),
-    note: result.complete
-      ? 'Nothing was saved. POST spec to /api/v1/scenes to create the journey.'
-      : 'Nothing was saved. Answer the questions, add the answers to the text, and send it again.',
+    status: result.complete ? 'ready' : 'needs_info',
+    questions,
+    ...(result.complete ? { legs: summarize(result.spec.legs as Parameters<typeof summarize>[0], result.places, result.airports) } : {}),
+    spec: result.spec,
+    airports: result.airports,
+    issues: result.issues,
+    warnings: result.warnings,
+    limits,
+    // The model's reading and its cost, for debugging and evaluation.
+    ...(debug ? { intent, usage } : {}),
   });
 }

@@ -12,27 +12,58 @@ const COUNT_SQL = `INSERT INTO rate_limits (bucket, window_start, count) VALUES 
   ON CONFLICT(bucket, window_start) DO UPDATE SET count = count + 1
   RETURNING count`;
 
+const PEEK_SQL = 'SELECT count FROM rate_limits WHERE bucket = ? AND window_start = ?';
+
+export type LimitChecks = [rule: LimitRule, subject: string][];
+
+/** A rule's count in its current window, including the request just counted (if it was). */
+export interface LimitCount {
+  rule: LimitRule;
+  count: number;
+  /** When the window ends, in ms since the epoch. */
+  resetsAt: number;
+}
+
+const windowStart = (rule: LimitRule, now: number) => Math.floor(now / rule.windowMs) * rule.windowMs;
+
 /**
- * Fixed-window counters, counted in one D1 round trip. Each costs one D1 write, so they are applied
- * only to operations that write anyway (create, replace, publish, session exchange).
+ * Count one request against each rule, in one D1 round trip, and return the counts. Each costs one D1 write,
+ * so counters are applied only to operations that write anyway (create, replace, publish, session exchange)
+ * or that cost money (compose).
  */
-export async function enforceLimits(db: D1Database, checks: [rule: LimitRule, subject: string][], now: number): Promise<void> {
-  const windows = checks.map(([rule]) => Math.floor(now / rule.windowMs) * rule.windowMs);
+export async function countLimits(db: D1Database, checks: LimitChecks, now: number): Promise<LimitCount[]> {
+  const windows = checks.map(([rule]) => windowStart(rule, now));
   const results = await db.batch<{ count: number }>(
     checks.map(([rule, subject], i) => db.prepare(COUNT_SQL).bind(`${rule.name}:${subject}`, windows[i])),
   );
-  checks.forEach(([rule], i) => {
-    const count = results[i]?.results[0]?.count ?? 1;
-    if (count <= rule.limit) return;
-    const retryAfterSeconds = Math.max(1, Math.ceil((windows[i]! + rule.windowMs - now) / 1000));
+  return checks.map(([rule], i) => ({ rule, count: results[i]?.results[0]?.count ?? 1, resetsAt: windows[i]! + rule.windowMs }));
+}
+
+/** The counts so far, without counting a request (D1 reads only). */
+export async function peekLimits(db: D1Database, checks: LimitChecks, now: number): Promise<LimitCount[]> {
+  const windows = checks.map(([rule]) => windowStart(rule, now));
+  const results = await db.batch<{ count: number }>(
+    checks.map(([rule, subject], i) => db.prepare(PEEK_SQL).bind(`${rule.name}:${subject}`, windows[i])),
+  );
+  return checks.map(([rule], i) => ({ rule, count: results[i]?.results[0]?.count ?? 0, resetsAt: windows[i]! + rule.windowMs }));
+}
+
+/** Seconds until the window resets, at least 1. */
+export const retryAfterSeconds = (c: LimitCount, now: number) => Math.max(1, Math.ceil((c.resetsAt - now) / 1000));
+
+/** Fixed-window counters: count the request, and fail it with 429 once any rule is over its limit. */
+export async function enforceLimits(db: D1Database, checks: LimitChecks, now: number): Promise<void> {
+  for (const c of await countLimits(db, checks, now)) {
+    if (c.count <= c.rule.limit) continue;
+    const retryAfter = retryAfterSeconds(c, now);
     throw new ApiError(
       429,
       'rate_limited',
-      `Too many ${rule.name.replace(/_/g, ' ')} requests. Limit: ${rule.limit} per ${Math.round(rule.windowMs / 60_000)} minutes.`,
-      { retryAfterSeconds, hint: `Wait ${retryAfterSeconds} seconds before retrying. Do not retry in a tight loop.` },
-      { 'retry-after': String(retryAfterSeconds) },
+      `Too many ${c.rule.name.replace(/_/g, ' ')} requests. Limit: ${c.rule.limit} per ${Math.round(c.rule.windowMs / 60_000)} minutes.`,
+      { retryAfterSeconds: retryAfter, hint: `Wait ${retryAfter} seconds before retrying. Do not retry in a tight loop.` },
+      { 'retry-after': String(retryAfter) },
     );
-  });
+  }
 }
 
 export function enforceLimit(db: D1Database, rule: LimitRule, subject: string, now: number): Promise<void> {

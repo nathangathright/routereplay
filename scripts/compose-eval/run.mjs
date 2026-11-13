@@ -2,16 +2,17 @@
 /**
  * Compare extraction models on the compose test set.
  *
- *   node --use-system-ca scripts/compose-eval/run.mjs --url https://routereplay.localhost --models gemma-4-26b,glm-4.7-flash [--cases a,b] [--out run.json]
+ *   node --use-system-ca scripts/compose-eval/run.mjs --url https://routereplay.localhost [--models gemma-4-26b,claude-haiku-5-5] [--cases a,b] [--out run.json]
  *   node --use-system-ca scripts/compose-eval/run.mjs --retry run.json --out run.json      # rerun failed requests only
  *   node scripts/compose-eval/run.mjs --rescore run.json [--out run2.json]   # re-resolve saved model output with the current resolver; no model calls
  *   node scripts/compose-eval/run.mjs --cpu run.json                         # Worker-side CPU of the resolver on saved model output (Node)
  *
  * Models named claude-* run from Node (see callClaude); the rest go through the local Worker.
  * --set holdout runs the held-out cases (default: the tuning cases; all: both).
- * --url is the local `npm run dev:worker` address (npx portless get routereplay). The server must allow the models
- * in COMPOSE_MODELS and high COMPOSE_LIMIT_* values (.dev.vars). Every request asks for the model's intent (debug), so
- * a saved run can be re-scored after resolver changes without spending tokens again.
+ * --url is the local `npm run dev:worker` address (npx portless get routereplay), which needs high COMPOSE_LIMIT_*
+ * values (.dev.vars). The Worker always uses its one model (gemma-4-26b); the other Workers AI models compared in
+ * docs/decisions.md were run before the endpoint fixed its model. Every request asks for the model's intent (debug),
+ * so a saved run can be re-scored after resolver changes without spending tokens again.
  */
 import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -40,7 +41,8 @@ function km(a, b) {
 
 /** Score one result against its case. */
 function score(c, body) {
-  const out = { pass: false, complete: !!body?.complete, legsRight: 0, legsTotal: c.legs.length, asked: [], missedAsks: [], extraAsks: [], invented: [], legNotes: [] };
+  // The endpoint answers status 'ready'; the resolver (rescore, Claude runs) answers complete.
+  const out = { pass: false, complete: body?.status === 'ready' || !!body?.complete, legsRight: 0, legsTotal: c.legs.length, asked: [], missedAsks: [], extraAsks: [], invented: [], legNotes: [] };
   if (!body || body.error) {
     out.legsTotal = c.legs.length;
     out.legNotes.push(body?.error?.code ?? 'no response');
@@ -131,7 +133,8 @@ function summarize(model, runs) {
     inTokensAvg: Math.round(sum((u) => u.inputTokens) / n),
     outTokensAvg: Math.round(sum((u) => u.outputTokens) / n),
     neuronsAvg: usage.some((u) => u.neurons !== undefined) ? +(sum((u) => u.neurons) / n).toFixed(1) : undefined,
-    usdPerRequest: +(sum((u) => u.usd) / n).toFixed(6),
+    // Workers AI usage reports neurons: $0.011 per 1,000 beyond the free allowance.
+    usdPerRequest: +(sum((u) => u.usd ?? (u.neurons ?? 0) * 0.011e-3) / n).toFixed(6),
     details: scored.map((r) => ({ case: r.case, pass: r.s.pass, ms: r.ms, asked: r.s.asked, missed: r.s.missedAsks, extra: r.s.extraAsks, notes: r.s.legNotes, error: r.body?.error?.code })),
   };
 }
@@ -231,7 +234,7 @@ async function callClaude(model, c) {
     }
   }
   const ms = Math.round(performance.now() - t0);
-  process.stderr.write(`${model} ${c.id} ${ms} ms ${body.error ? body.error.code : body.complete ? 'complete' : `${body.questions.length} questions`} (spent US$${claudeSpent.toFixed(4)})\n`);
+  process.stderr.write(`${model} ${c.id} ${ms} ms ${body.error ? body.error.code : body.complete || body.status === 'ready' ? 'complete' : `${body.questions.length} questions`} (spent US$${claudeSpent.toFixed(4)})\n`);
   return { case: c.id, ms, body };
 }
 
@@ -243,14 +246,14 @@ async function callCompose(url, model, c) {
     const res = await fetch(`${url}/api/v1/compose`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'user-agent': 'routereplay-compose-eval/1.0' },
-      body: JSON.stringify({ text: c.text, model, debug: true }),
+      body: JSON.stringify({ messages: [{ role: 'user', content: c.text }], debug: true }),
     });
     body = await res.json();
   } catch (e) {
     body = { error: { code: 'fetch_failed', message: String(e) } };
   }
   const ms = Math.round(performance.now() - t0);
-  process.stderr.write(`${model} ${c.id} ${ms} ms ${body.error ? body.error.code : body.complete ? 'complete' : `${body.questions.length} questions`}\n`);
+  process.stderr.write(`${model} ${c.id} ${ms} ms ${body.error ? body.error.code : body.complete || body.status === 'ready' ? 'complete' : `${body.questions.length} questions`}\n`);
   return { case: c.id, ms, body };
 }
 

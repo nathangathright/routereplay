@@ -32,6 +32,8 @@ export interface ComposeResult {
   warnings: SceneWarning[];
   /** Names of the airports used, so a person can check them. */
   airports: Record<string, string>;
+  /** Each spec leg's places as the person wrote them. */
+  places: { from: string; to: string }[];
 }
 
 export interface ResolveOptions {
@@ -42,28 +44,28 @@ export interface ResolveOptions {
 }
 
 /**
- * Cities with several major airports. A flight from one, unnamed, is a question; a train, bus, car or ferry leg
- * uses the first airport (the closest to the centre) to mark the city.
+ * Cities with several major airports, busiest first. A flight from one, unnamed, is a question with these as options;
+ * a train, bus, car or ferry leg uses `centre`, the airport closest to the city centre, to mark the city.
  */
-const METROS: { code: string; names: string[]; airports: string[] }[] = [
-  { code: 'LON', names: ['london'], airports: ['LCY', 'LHR', 'LGW', 'STN', 'LTN', 'SEN'] },
-  { code: 'NYC', names: ['new york', 'nyc'], airports: ['LGA', 'JFK', 'EWR'] },
-  { code: 'PAR', names: ['paris'], airports: ['ORY', 'CDG', 'BVA'] },
-  { code: 'TYO', names: ['tokyo'], airports: ['HND', 'NRT'] },
-  { code: 'CHI', names: ['chicago'], airports: ['MDW', 'ORD'] },
-  { code: 'WAS', names: ['washington'], airports: ['DCA', 'IAD', 'BWI'] },
-  { code: 'MIL', names: ['milan', 'milano'], airports: ['LIN', 'MXP', 'BGY'] },
-  { code: 'ROM', names: ['rome', 'roma'], airports: ['CIA', 'FCO'] },
-  { code: 'OSA', names: ['osaka'], airports: ['ITM', 'KIX', 'UKB'] },
-  { code: 'SEL', names: ['seoul'], airports: ['GMP', 'ICN'] },
-  { code: 'BJS', names: ['beijing'], airports: ['PEK', 'PKX'] },
-  { code: 'MOW', names: ['moscow'], airports: ['VKO', 'SVO', 'DME'] },
-  { code: 'STO', names: ['stockholm'], airports: ['BMA', 'ARN'] },
-  { code: 'BUE', names: ['buenos aires'], airports: ['AEP', 'EZE'] },
-  { code: 'SAO', names: ['sao paulo'], airports: ['CGH', 'GRU', 'VCP'] },
-  { code: 'RIO', names: ['rio de janeiro', 'rio'], airports: ['SDU', 'GIG'] },
-  { code: 'YTO', names: ['toronto'], airports: ['YTZ', 'YYZ'] },
-  { code: 'JKT', names: ['jakarta'], airports: ['HLP', 'CGK'] },
+const METROS: { code: string; names: string[]; airports: string[]; centre: string }[] = [
+  { code: 'LON', names: ['london'], airports: ['LHR', 'LGW', 'STN', 'LTN', 'LCY', 'SEN'], centre: 'LCY' },
+  { code: 'NYC', names: ['new york', 'nyc'], airports: ['JFK', 'EWR', 'LGA'], centre: 'LGA' },
+  { code: 'PAR', names: ['paris'], airports: ['CDG', 'ORY', 'BVA'], centre: 'ORY' },
+  { code: 'TYO', names: ['tokyo'], airports: ['HND', 'NRT'], centre: 'HND' },
+  { code: 'CHI', names: ['chicago'], airports: ['ORD', 'MDW'], centre: 'MDW' },
+  { code: 'WAS', names: ['washington'], airports: ['IAD', 'DCA', 'BWI'], centre: 'DCA' },
+  { code: 'MIL', names: ['milan', 'milano'], airports: ['MXP', 'LIN', 'BGY'], centre: 'LIN' },
+  { code: 'ROM', names: ['rome', 'roma'], airports: ['FCO', 'CIA'], centre: 'CIA' },
+  { code: 'OSA', names: ['osaka'], airports: ['KIX', 'ITM', 'UKB'], centre: 'ITM' },
+  { code: 'SEL', names: ['seoul'], airports: ['ICN', 'GMP'], centre: 'GMP' },
+  { code: 'BJS', names: ['beijing'], airports: ['PEK', 'PKX'], centre: 'PEK' },
+  { code: 'MOW', names: ['moscow'], airports: ['SVO', 'DME', 'VKO'], centre: 'VKO' },
+  { code: 'STO', names: ['stockholm'], airports: ['ARN', 'BMA'], centre: 'BMA' },
+  { code: 'BUE', names: ['buenos aires'], airports: ['EZE', 'AEP'], centre: 'AEP' },
+  { code: 'SAO', names: ['sao paulo'], airports: ['GRU', 'CGH', 'VCP'], centre: 'CGH' },
+  { code: 'RIO', names: ['rio de janeiro', 'rio'], airports: ['GIG', 'SDU'], centre: 'SDU' },
+  { code: 'YTO', names: ['toronto'], airports: ['YYZ', 'YTZ'], centre: 'YTZ' },
+  { code: 'JKT', names: ['jakarta'], airports: ['CGK', 'HLP'], centre: 'HLP' },
 ];
 /** Words that don't single out an airport: "London, UK", "Tokyo city", "Paris airport". */
 const GENERIC = new Set(['the', 'city', 'centre', 'center', 'downtown', 'area', 'airport', 'airports', 'intl', 'international', 'uk', 'england', 'usa', 'us', 'ny', 'japan', 'france', 'italy', 'korea', 'china', 'russia', 'sweden', 'argentina', 'brazil', 'canada', 'indonesia', 'dc', 'il', 'on']);
@@ -111,7 +113,7 @@ export function resolveIntent(intent: Intent, text: string, opts: ResolveOptions
 
   if (legs.length === 0) {
     ask({ path: '/legs', field: 'legs', question: "I couldn't find any travel in that text. Which flights, trains, buses, drives or ferries did you take, between which places, and when?" });
-    return { complete: false, spec: { schemaVersion: 1, legs: [] }, questions, issues: [], warnings: [], airports: {} };
+    return { complete: false, spec: { schemaVersion: 1, legs: [] }, questions, issues: [], warnings: [], airports: {}, places: [] };
   }
   if (legs.length > LIMITS.maxLegs) {
     ask({ path: '/legs', field: 'legs', question: `That's ${legs.length} legs; a journey can have at most ${LIMITS.maxLegs}. Which part should this journey show?` });
@@ -222,15 +224,16 @@ export function resolveIntent(intent: Intent, text: string, opts: ResolveOptions
     specLegs.push(out);
   });
 
+  const places = ends.map(([f, t]) => ({ from: f.text.trim(), to: t.text.trim() }));
   const airports: Record<string, string> = {};
   for (const [f, t] of ends) for (const e of [f, t]) if (e.airport) airports[e.airport.code] = e.airport.name;
   const title = titleOf(legs);
   const spec = { schemaVersion: 1 as const, ...(title ? { title } : {}), legs: specLegs };
-  if (questions.length) return { complete: false, spec, questions, issues: [], warnings: [], airports };
+  if (questions.length) return { complete: false, spec, questions, issues: [], warnings: [], airports, places };
 
   const result = validateScene(spec, { lookupAirport: opts.lookupAirport, airportDataVersion: opts.airportDataVersion, now: opts.now });
-  if (!result.ok) return { complete: false, spec, questions, issues: result.issues, warnings: [], airports };
-  return { complete: true, spec: spec as SceneSpecV1, questions, issues: [], warnings: sceneWarnings(result.normalized, opts.now), airports };
+  if (!result.ok) return { complete: false, spec, questions, issues: result.issues, warnings: [], airports, places };
+  return { complete: true, spec: spec as SceneSpecV1, questions, issues: [], warnings: sceneWarnings(result.normalized, opts.now), airports, places };
 }
 
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -252,8 +255,8 @@ function placeOf(text: string, code: string | null, ground: boolean, itinerary: 
   const named = metroOf(text, ground);
   const metro = named ?? METROS.find((m) => m.code === code);
   if (metro && (named || !code || !opts.lookupAirport(code))) {
-    const airports = metro.airports.map((c) => opts.lookupAirport(c)).filter((a): a is Airport => !!a);
-    return ground ? { text, airport: airports[0] } : { text, options: airports };
+    if (ground) return { text, airport: opts.lookupAirport(metro.centre) };
+    return { text, options: metro.airports.map((c) => opts.lookupAirport(c)).filter((a): a is Airport => !!a) };
   }
 
   const modelAirport = code && /^[A-Z]{3}$/.test(code) ? opts.lookupAirport(code) : undefined;

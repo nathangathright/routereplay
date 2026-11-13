@@ -73,7 +73,28 @@ Return {"legs": [...]}, one entry per leg in travel order:
 - flight: the flight number, such as "QF93".
 - aircraft: the aircraft type exactly as written, such as "787-9", "A380", "Boeing 777-300ER" or "73H". Never infer it from the airline or flight number.
 
-A flight "via" a city, or with a stop, is two legs. Leave out hotels, car rental pickups, names, booking codes, seats and prices.`;
+A flight "via" a city, or with a stop, is two legs. Leave out hotels, car rental pickups, names, booking codes, seats and prices.
+
+The input may be a conversation: the traveller's messages, and questions Route Replay asked. Combine the traveller's messages into one itinerary; an answer fills in what its question asked about, and a later message corrects an earlier one.`;
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+/**
+ * What the model reads: one message as it is (as evaluated), or a conversation as a labelled transcript, so
+ * an answer like "Heathrow" resolves against the question it answers.
+ */
+export function modelInput(messages: ChatMessage[]): string {
+  if (messages.length === 1) return messages[0]!.content;
+  return messages.map((m) => `${m.role === 'user' ? 'Traveller' : 'Route Replay'}: ${m.content.trim()}`).join('\n\n');
+}
+
+/** Only what the traveller wrote: the resolver's guards check that a year, code or aircraft appears here. */
+export function travellerText(messages: ChatMessage[]): string {
+  return messages.filter((m) => m.role === 'user').map((m) => m.content).join('\n');
+}
 
 /** A year of 0000 means the text gives none; month or day 00 means no date at all. */
 const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;

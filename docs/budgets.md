@@ -114,6 +114,7 @@ Free-tier references, to recheck periodically:
 - D1: 5 million rows read and 100,000 rows written per day; 5 GB storage.
 - Static asset requests outside `run_worker_first` don't invoke the Worker.
 - Durable Object storage (SQLite-backed, used only for the current activity line): 100,000 rows written and 5 million read per day, 5 GB.
+- Workers AI (the homepage chat): 10,000 neurons per day, account-wide, on every plan; then $0.011 per 1,000 on Workers Paid.
 
 | Activity | Worker requests | Durable Object requests | D1 rows read / written |
 | --- | --- | --- | --- |
@@ -131,6 +132,9 @@ Free-tier references, to recheck periodically:
 | Creator pauses, seeks, or resumes | 0 | 1/20 per report (incoming WebSocket message; at most one per 2 s, none during playback) | 0 |
 | Agent shows a moment (`POST …/viewer`) | 1 | 1 | ~1 / 0 |
 | Agent sets activity (`POST …/activity`) | 1 | 1, plus one Durable Object storage write | ~1 / 0 |
+| Open the homepage chat (`GET /api/v1/compose`) | 1 | 0 | 2 / 0 |
+| Each homepage chat message (`POST /api/v1/compose`) | 1, plus a Workers AI call of about 9 neurons (up to ~20 for a long confirmation email) | 0 | ~2 / 2 (rate-limit counters) |
+| Create draft from the chat | as "Agent creates a draft", then "Open a preview" | | |
 
 A preview open for an hour with no changes went from 450–1,200 Worker requests (polling) to none. On November 11, 2026, a local browser check made 4 requests in 33 seconds including one pushed revision; polling would have made about 11. Agent activity, not open previews, now drives usage. Over-quota requests fail with Cloudflare errors, and the API never partially writes a scene: replacement is one atomic batch.
 
@@ -140,6 +144,7 @@ Abuse bounds currently enforced:
 - Writes: 240 per draft per hour.
 - Browser session exchanges: 60 per client per hour.
 - Body size: 64 KiB.
+- Homepage chat: 20 messages per client per hour and 800 per day for everyone (about 7,000 neurons on a typical day); 4,000 characters per conversation.
 - At most 12 legs and 120 s of presentation time.
 - Revisions: 50 kept per draft.
 

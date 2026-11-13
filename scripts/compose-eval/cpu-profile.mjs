@@ -4,7 +4,7 @@
  * Waiting on the model, D1 or fetch doesn't count (see busyMs).
  *
  *   node --use-system-ca scripts/compose-eval/cpu-profile.mjs --inspector ws://127.0.0.1:9230/ws \
- *     --url https://routereplay.localhost --model gemma-4-26b [--n 8] [--path /api/v1/compose]
+ *     --url https://routereplay.localhost [--n 8] [--path /api/v1/compose]
  *
  * Find the inspector with: curl -s http://127.0.0.1:<port>/json (the port workerd listens on besides the HTTP one).
  * Each request is a real model call. --path /api/v1/validate --from run.json profiles the existing dry-run endpoint
@@ -20,7 +20,6 @@ const arg = (name, d) => {
 };
 const inspector = arg('inspector');
 const url = arg('url').replace(/\/$/, '');
-const model = arg('model', 'gemma-4-26b');
 const n = Number(arg('n', '8'));
 const apiPath = arg('path', '/api/v1/compose');
 
@@ -77,7 +76,7 @@ const results = [];
 const saved = arg('from') ? Object.values(JSON.parse(readFileSync(arg('from'), 'utf8')).runs).flat() : [];
 const cases = CASES.filter((c) => c.ask.length === 0).slice(0, n);
 for (const c of cases) {
-  const body = apiPath === '/api/v1/validate' ? saved.find((r) => r.case === c.id && r.body?.complete)?.body.spec : { text: c.text, model };
+  const body = apiPath === '/api/v1/validate' ? saved.find((r) => r.case === c.id && r.body?.complete)?.body.spec : { messages: [{ role: 'user', content: c.text }] };
   if (!body) continue;
   fire('Profiler.start');
   await new Promise((ok) => setTimeout(ok, 50));
