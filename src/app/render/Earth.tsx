@@ -89,6 +89,17 @@ float cloudShadow(vec3 g, vec3 s) {
   return 1.0 - 0.54 * cloudOpacity(shell, false);
 }
 
+// The ground's normal tilted by its relief, from NOAA ETOPO 2022 heights exaggerated 12× as in the offline renderer
+// (scripts/build-textures.py stores the normal's east and north components). g is the sphere's normal in the Earth's
+// frame, +Y north. Only the ground's Lambert shading uses it: the terminator, air, cloud shadows, and water keep g.
+uniform sampler2D reliefMap;
+vec3 reliefNormal(vec3 g, vec2 uv) {
+  vec2 en = (texture2D(reliefMap, uv).rg * 255.0 - 128.0) / 127.0;
+  vec3 east = vec3(g.z, 0.0, -g.x) / max(length(g.xz), 1e-6);
+  vec3 north = cross(g, east);
+  return normalize(en.x * east + en.y * north + sqrt(max(1.0 - dot(en, en), 0.0)) * g);
+}
+
 // Night-side floor: a trace of the map so coasts still read (routereplay render.py, its lunar-mode level).
 const vec3 NIGHT_FLOOR = vec3(0.00061, 0.00182, 0.00368);
 // The orange band of civil twilight along the terminator.
@@ -103,12 +114,13 @@ void main() {
   float mu = dot(g, s);
   vec3 albedo = texture2D(dayMap, vUv).rgb;
   float water = texture2D(waterMap, vUv).r;
+  vec3 n = normalize(mix(reliefNormal(g, vUv), g, water));
 
   // Day: Lambert ground with a little skylight, reddened as the Sun gets low, shadowed by cloud.
   vec3 sun = groundLight(g, s);
   float shadow = cloudShadow(g, s);
   float viewDepth = max(dot(N, V), 0.0);
-  vec3 day = albedo * (0.035 + 0.965 * max(mu, 0.0) * shadow) * sun;
+  vec3 day = albedo * (0.035 + 0.965 * max(dot(n, s), 0.0) * shadow) * sun;
   // Water also mirrors the sky, more of it toward the limb: what it reflects replaces light from below the
   // surface. The sky's light needs no cloud shadow; past the terminator band the day side isn't drawn.
   if (water > 0.0 && mu > -0.105) {
@@ -123,7 +135,7 @@ void main() {
   float mm = dot(g, moonDir);
   if (moonlight > 0.0 && mm > -0.05) {
     vec3 moon = moonlight * groundLight(g, moonDir) * cloudShadow(g, moonDir);
-    color += (0.965 * albedo * max(mm, 0.0) + glint(N, V, normalize(vMoonW)) * water) * moon;
+    color += (0.965 * albedo * max(dot(n, moonDir), 0.0) + glint(N, V, normalize(vMoonW)) * water) * moon;
   }
 
   color += exp(-pow(mu / 0.065, 2.0)) * TWILIGHT;
@@ -237,6 +249,7 @@ export function Earth({
           dayMap: { value: textures.day },
           nightMap: { value: textures.night },
           waterMap: { value: textures.water },
+          reliefMap: { value: textures.relief },
           ...cloudUniforms(),
           ...lightUniforms(),
         },

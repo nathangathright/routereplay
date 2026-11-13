@@ -327,7 +327,7 @@ export function IdleEarth({
           // Once the sharper set is on screen, free the light set's GPU copies (the day textures are large).
           // three.js uploads them again if anything uses them later.
           release = setTimeout(() => {
-            for (const k of ['day', 'night', 'water'] as const) if (low[k] !== t[k]) low[k].dispose();
+            for (const k of ['day', 'night', 'water', 'relief'] as const) if (low[k] !== t[k]) low[k].dispose();
           }, 2000);
         });
       })

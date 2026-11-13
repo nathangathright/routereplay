@@ -134,6 +134,26 @@ Deliberate differences:
 - **Always-on lights** switch off by day with the building lights, so no specks of city light show on sunlit ground.
 - **Night map:** the source map has a faint bluish land base under the lights, so the shader keeps only light warmer than that base.
 
+## Terrain relief lit by the Sun and Moon
+
+*Decided November 12, 2026.* The ground is shaded with a normal tilted by real terrain, as in the offline renderer (`routereplay` `render.py`, `terrain()` and its shading). Mountains catch a low Sun on one side and fall into shade on the other, and the shading turns as the Sun moves. Before this, the globe was lit as a smooth sphere and mountains showed only through the day map's colours.
+
+- **Data:** NOAA ETOPO 2022, clamped at sea level, sampled every 2.5 arc minutes and averaged to 5′ (standard, the offline renderer's grid) and 10′ (low). Lakes are flat. [assets.md](assets.md) covers the encoding and sizes.
+- **Model:** the normal is (−12 ∂h/∂east, −12 ∂h/∂north, 1), normalized, with heights and distances in metres on a 6,371 km sphere. 12 is the offline renderer's default `relief_exaggeration`, and the scene's aircraft altitude uses the same factor. The build bakes it into the map, so changing it means rebuilding the asset.
+- **What uses it:** the sunlit Lambert term and the moonlit one. Everything else keeps the sphere's normal, so the terminator stays where it is and water stays flat:
+  - the day–night blend and the twilight band;
+  - sunlight reddened by the air (which also cuts it off past the terminator);
+  - cloud shadows;
+  - ocean glint and wherever the water mask says water;
+  - city-light switching.
+- **Exposure** still meters a smooth sphere, as the offline renderer's proxy does, so the timeline's golden states don't change.
+- **Cost:** per ground pixel, one more texture read and about 20 arithmetic operations. GPU memory: two-channel textures of 24 MiB (standard) and 6 MiB (low). Downloads: 1,886 KiB (standard) and 397 KiB (low).
+
+Not ported from the offline renderer:
+- **Night-side relief fill:** a fixed light from the south-east that scales the night floor by 0.77–1.12. At this scene's night levels it changed 99 % of pixels by 2/255 or less. It would also bring back a fixed light direction, the reason the shaded day map was dropped. Moonlight shows the relief at night instead.
+- **Cast shadows:** the offline renderer traces the terrain for moonlight. Here only slopes turned away from a light go dark.
+- **Raised terrain:** the offline renderer intersects the exaggerated terrain itself. Here the globe stays a sphere, so ridges don't stand out at the limb.
+
 ## One camera: the offline renderer's
 
 *Decided November 12, 2026.* Journeys use one camera, ported from the offline renderer (`routereplay` `motion.py` and `camera_geometry.py`). The three presets (`overview`, `follow`, `cinematic`) and `presentation.camera` are gone. Renderer 2.0.0.
@@ -191,6 +211,7 @@ Layover warnings now measure rate, not length: `compressed_connection` fires whe
 - **Day:** NASA Blue Marble Next Generation with topography and bathymetry, 3600×1800.
 - **Night:** NASA Black Marble 2016, 3840 px source.
 - **Water:** Natural Earth 1:10m land, islands, ice shelves, and lakes, rasterized to a mask the size of each day texture (4096×2048, 83 KiB; 8192×4096, 205 KiB) for ocean glint and sky reflection.
+- **Relief:** NOAA ETOPO 2022 elevation (public domain), stored as the ground's normal at 12× relief ([terrain relief](#terrain-relief-lit-by-the-sun-and-moon)).
 - Both are public domain and resampled into **low** (2048×1024, 415 KiB total) and **standard** (3600×1800, 1.3 MiB total) sets.
 - **Font:** the unmodified Dosis variable font (OFL) for airport codes.
 - **Aircraft:** a library of original procedural models generated in code from published dimensions, one per ICAO type designator ([aircraft.md](aircraft.md)), so they need no model files or licenses.

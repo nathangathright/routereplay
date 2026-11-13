@@ -19,6 +19,8 @@ export interface EarthTextures {
   night: THREE.Texture;
   /** Open water (1) versus land (0), for sun glint and sky reflection: one channel, texel for texel with `day`. */
   water: THREE.Texture;
+  /** The ground's normal at 12× relief, east and north components (scripts/build-textures.py). */
+  relief: THREE.Texture;
   quality: Quality;
   /** Month (1–12) of the Blue Marble surface in `day`. */
   month: number;
@@ -46,7 +48,7 @@ export function maxTextureSize(): number {
 const textureCache = new Map<string, Promise<THREE.Texture>>();
 const setCache = new Map<string, Promise<EarthTextures>>();
 
-/** `format`: what the GPU keeps; RedFormat stores one channel of the image, a quarter of RGBA's memory. */
+/** `format`: what the GPU keeps. RedFormat and RGFormat store one or two channels of the image, a quarter or half of RGBA's memory. */
 function loadTexture(
   url: string,
   colorSpace: THREE.ColorSpace = THREE.SRGBColorSpace,
@@ -88,7 +90,8 @@ export function loadEarthTextures(quality: Quality, month: number): Promise<Eart
       loadTexture(`${ASSET_BASE}/earth-day-${mm}-${width}.webp`),
       loadTexture(`${ASSET_BASE}/earth-night-${quality}.jpg`),
       loadTexture(`${ASSET_BASE}/earth-water-${width}.webp`, THREE.NoColorSpace, THREE.RedFormat),
-    ]).then(([day, night, water]) => ({ day, night, water, quality, month: Number(mm) }));
+      loadTexture(`${ASSET_BASE}/earth-relief-${quality}.webp`, THREE.NoColorSpace, THREE.RGFormat),
+    ]).then(([day, night, water, relief]) => ({ day, night, water, relief, quality, month: Number(mm) }));
     p.catch(() => setCache.delete(key));
     setCache.set(key, p);
   }
