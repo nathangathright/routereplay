@@ -46,7 +46,8 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
   const [expanded, setExpanded] = useState(initialSceneId === null);
   // A new conversation (back on the homepage, or another draft) starts a fresh chat.
   const [chatKey, setChatKey] = useState(0);
-  const draft = useDraft(sceneId);
+  // When an agent shows the creator a moment, a phone's drawer gets out of the way so the scene has the screen.
+  const draft = useDraft(sceneId, { onSeek: () => !desktop && setExpanded(false) });
   const getStarted = useRef<HTMLButtonElement>(null);
   const rail = useRef<HTMLElement>(null);
   const [landingGone, setLandingGone] = useState(initialSceneId !== null);
@@ -179,7 +180,8 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
         {sceneId && (
           <div className="studio-draft" data-shown={draftShown || landingGone}>
             <Suspense fallback={null}>
-              <DraftStage draft={draft} />
+              {/* Agent activity shows in the chat while it's on screen, and over the scene otherwise. */}
+              <DraftStage draft={draft} activityInChat={chatOpen && (desktop || expanded)} />
             </Suspense>
           </div>
         )}

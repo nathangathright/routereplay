@@ -6,11 +6,12 @@ import { journeyTitle } from '../../shared/scene/title';
 import { registerWebMcpTools, webMcpAvailable } from '../webmcp';
 
 /**
- * The draft's journey, filling the stage beside the chat, with the agent's activity at the bottom. The chat's title
+ * The draft's journey, filling the stage beside the chat, with the agent's activity at the bottom while the chat
+ * isn't showing it (`activityInChat`). The chat's title
  * bar names the trip, so the scene carries no heading of its own except for screen readers. Publishing and exporting
  * happen in the chat. Loads with the Remotion player, so it's its own chunk.
  */
-export function DraftStage({ draft }: { draft: Draft }) {
+export function DraftStage({ draft, activityInChat }: { draft: Draft; activityInChat: boolean }) {
   const { sceneId, load, view, viewRef, adopt, notice, activity, connected, player, lastError } = draft;
   const debug = new URLSearchParams(location.search).has('debug');
 
@@ -70,7 +71,7 @@ export function DraftStage({ draft }: { draft: Draft }) {
       corner={<h1 className="visually-hidden">{title}</h1>}
       exportable={false}
     >
-      {activity && (
+      {activity && !activityInChat && (
         <p className="stage-toast" role="status">
           <span className="spinner" aria-hidden="true" />
           <span>

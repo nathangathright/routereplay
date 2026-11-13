@@ -68,6 +68,7 @@ import {
   TraceTitle,
 } from '@/components/ui/trace';
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from '@/components/ui/item';
+import { Spinner } from '@/components/ui/spinner';
 import type { NormalizedSceneV1, SceneSpecV1 } from '../../shared/scene/types';
 import { journeyTitle } from '../../shared/scene/title';
 import { sceneSummary } from '../../shared/scene/summary';
@@ -77,6 +78,7 @@ import {
   type ComposeLimits,
   type ComposeMessage,
   type ComposeQuestion,
+  type SceneView,
   compose,
   createScene,
   deleteScene,
@@ -109,8 +111,13 @@ type Entry =
   /** `sent`: answered, so it's part of the conversation sent with later messages. */
   | { id: number; kind: 'user'; text: string; sent: boolean }
   | { id: number; kind: 'questions'; questions: ComposeQuestion[] }
-  /** `outcome`: whether the journey is being saved to the draft, or was. */
-  | { id: number; kind: 'ready'; legs: ComposeLeg[]; outcome: 'saving' | 'created' | 'updated' | 'unsaved' }
+  /**
+   * `outcome`: whether the journey is being saved to the draft, or was. `conflict`: someone else saved first, so it
+   * wasn't applied. `revision`: the draft revision the save made.
+   */
+  | { id: number; kind: 'ready'; legs: ComposeLeg[]; outcome: 'saving' | 'created' | 'updated' | 'unsaved' | 'conflict'; revision?: number }
+  /** The draft changed outside this chat (an agent, another window, the page's browser tools): the trip as it is now. */
+  | { id: number; kind: 'changed'; legs: ComposeLeg[]; revision: number }
   | { id: number; kind: 'notice'; text: string }
   | { id: number; kind: 'limit'; limits: ComposeLimits }
   /** What the person asked for with a button in the suggestion row, shown as their message. */
@@ -137,13 +144,20 @@ const aircraftLine = (l: ComposeLeg) => (l.typical ? `${l.by} (typical)` : l.by)
  * the conversation, as the traveller's own words (they are the traveller's trip, saved), followed by what's been
  * said since. That keeps a long conversation inside the character cap and includes any change an agent made.
  */
+/**
+ * Where a draft's conversation starts again: after the last journey the chat put on the draft (or tried to). A
+ * reading that someone else's save overtook isn't a fresh start: its request still stands, to apply to their version.
+ */
+const sinceLastJourney = (entries: Entry[]) => entries.findLastIndex((e) => e.kind === 'ready' && e.outcome !== 'conflict') + 1;
+
 function conversation(entries: Entry[], seed: string | null): ComposeMessage[] {
   const out: ComposeMessage[] = seed ? [{ role: 'user', content: seed }] : [];
-  const from = seed ? entries.findLastIndex((e) => e.kind === 'ready') + 1 : 0;
+  const from = seed ? sinceLastJourney(entries) : 0;
   for (const e of entries.slice(from)) {
     if (e.kind === 'user' && e.sent) out.push({ role: 'user', content: e.text });
     else if (e.kind === 'questions') out.push({ role: 'assistant', content: e.questions.map((q) => q.question).join('\n') });
-    else if (e.kind === 'ready') out.push({ role: 'assistant', content: `Ready to create:\n${e.legs.map((l) => `${l.route}, ${l.when}, ${aircraftLine(l)}`).join('\n')}` });
+    // The seed already has the trip as it is now; a reading of an older version would only pull back toward it.
+    else if (e.kind === 'ready' && e.outcome !== 'conflict') out.push({ role: 'assistant', content: `Ready to create:\n${e.legs.map((l) => `${l.route}, ${l.when}, ${aircraftLine(l)}`).join('\n')}` });
   }
   return out;
 }
@@ -201,7 +215,7 @@ export function aiRequest(trip: string[], questions: ComposeQuestion[], origin: 
 /** The person's answered messages since the draft (or all of them): their trip as they wrote it. */
 const sentTrip = (entries: Entry[], seed: string | null) => [
   ...(seed ? [seed] : []),
-  ...entries.slice(seed ? entries.findLastIndex((e) => e.kind === 'ready') + 1 : 0).flatMap((e) => (e.kind === 'user' && e.sent ? [e.text] : [])),
+  ...entries.slice(seed ? sinceLastJourney(entries) : 0).flatMap((e) => (e.kind === 'user' && e.sent ? [e.text] : [])),
 ];
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
@@ -212,7 +226,7 @@ const sentence = (s: string) => `${s[0]!.toUpperCase()}${s.slice(1)}${/^(which|w
 // A draft's conversation, kept in this browser so it's there when the draft is opened again. The private link
 // (a credential) is never stored, nor are notices.
 const STORE = 'routereplay:chat:';
-const stored = (e: Entry) => (e.kind === 'user' && e.sent) || e.kind === 'questions' || e.kind === 'ready';
+const stored = (e: Entry) => (e.kind === 'user' && e.sent) || e.kind === 'questions' || e.kind === 'ready' || e.kind === 'changed';
 function loadEntries(sceneId: string): Entry[] {
   try {
     const raw = localStorage.getItem(STORE + sceneId);
@@ -257,6 +271,24 @@ function LegList({ legs }: { legs: ComposeLeg[] }) {
   );
 }
 
+/**
+ * An agent working on the draft, as it reported over the draft's live socket (agent-docs: "Showing that you are
+ * working"). It sits above the message box while it lasts; the scene shows it instead when the chat is out of view.
+ */
+function AgentActivity({ message }: { message: string }) {
+  return (
+    <Item variant="muted" size="sm" role="status">
+      <ItemMedia>
+        <Spinner aria-hidden="true" />
+      </ItemMedia>
+      <ItemContent>
+        <ItemTitle>Your agent is working</ItemTitle>
+        {message && <ItemDescription>{message}</ItemDescription>}
+      </ItemContent>
+    </Item>
+  );
+}
+
 /** Placeholder for a leg's free-text answer, from what it still needs. */
 function hint(needs: string[]): string {
   const date = needs.includes('date');
@@ -298,6 +330,7 @@ function WorkTrace({ task, saving }: { task: Extract<Entry, { kind: 'task' }>; s
   const [open, setOpen] = useState<boolean>();
   const running = task.reading || saving === 'saving';
   const failed = task.failed || saving === 'unsaved';
+  const overtaken = saving === 'conflict';
   const status = running ? 'running' : failed ? 'error' : undefined;
   const title = task.reading
     ? 'Reading your itinerary'
@@ -307,7 +340,9 @@ function WorkTrace({ task, saving }: { task: Extract<Entry, { kind: 'task' }>; s
         ? 'Saving the journey'
         : saving === 'unsaved'
           ? 'Couldn’t save the journey'
-          : saving
+          : overtaken
+            ? 'Read your itinerary; the trip changed meanwhile'
+            : saving
             ? 'Read and saved your journey'
             : 'Read your itinerary';
   const kinds = task.found ? Object.entries(task.found.kinds).map(([k, n]) => `${n} ${KIND_NAMES[k]?.[n === 1 ? 0 : 1] ?? k}`) : [];
@@ -316,7 +351,7 @@ function WorkTrace({ task, saving }: { task: Extract<Entry, { kind: 'task' }>; s
       <TraceCollapsible open={open ?? running} onOpenChange={setOpen}>
         <TraceCollapsibleTrigger>
           <TraceLine status={status}>
-            <TraceIcon>{running ? <LoaderCircleIcon className="animate-spin" /> : failed ? <CircleAlertIcon /> : <CircleCheckIcon />}</TraceIcon>
+            <TraceIcon>{running ? <LoaderCircleIcon className="animate-spin" /> : failed || overtaken ? <CircleAlertIcon /> : <CircleCheckIcon />}</TraceIcon>
             <TraceTitle>{title}</TraceTitle>
           </TraceLine>
         </TraceCollapsibleTrigger>
@@ -355,7 +390,9 @@ function WorkTrace({ task, saving }: { task: Extract<Entry, { kind: 'task' }>; s
                       ? 'Made the draft'
                       : saving === 'updated'
                         ? 'Updated the draft'
-                        : 'Couldn’t save the draft'}
+                        : overtaken
+                          ? 'Didn’t update the draft: it changed while this was read'
+                          : 'Couldn’t save the draft'}
                 </TraceTitle>
               </TraceLine>
             )}
@@ -596,35 +633,58 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
   const left = MAX_CHARACTERS - used - text.length;
   const busy = pending || entries.some((e) => e.kind === 'ready' && e.outcome === 'saving');
   const canSend = text.trim().length > 0 && !busy && !exhausted && left >= 0 && ready;
-  const latestReady = entries.findLast((e) => e.kind === 'ready')?.id;
+  // A reply's notes ("Your draft is updated") hold only until the trip changes again, here or elsewhere.
+  const latestReady = entries.findLast((e) => e.kind === 'ready' || e.kind === 'changed')?.id;
   const origin = publicOrigin();
 
   const patch = (id: number, change: Partial<Entry>) => setEntries((list) => list.map((e) => (e.id === id ? ({ ...e, ...change } as Entry) : e)));
   const add = (...more: Entry[]) => setEntries((list) => [...list, ...more]);
 
-  /** Save a complete journey: a new draft from the homepage, or a new revision of this one. */
-  async function save(spec: SceneSpecV1, entryId: number) {
+  // Revisions saved outside this chat (an agent, another window, the page's browser tools) show in the thread, so the
+  // conversation matches the trip on screen. The next message starts from it either way (draftSeed). `known` is the
+  // latest revision the thread accounts for; the chat's own saves set it before they're adopted.
+  const known = useRef<number | null>(null);
+  const shownRevision = draft.view?.revision ?? null;
+  useEffect(() => {
+    const v = draft.viewRef.current;
+    if (!v || v.revision !== shownRevision) return;
+    if (known.current === null) {
+      // First sight of the draft: say if it changed since this browser's conversation last saw it.
+      const seen = Math.max(0, ...entries.map((e) => (e.kind === 'ready' || e.kind === 'changed' ? (e.revision ?? 0) : 0)));
+      known.current = seen > 0 && seen < v.revision ? seen : v.revision;
+    }
+    if (v.revision <= known.current) return;
+    known.current = v.revision;
+    add({ id: nextId++, kind: 'changed', legs: sceneSummary(v.normalized), revision: v.revision });
+  }, [shownRevision]);
+
+  /**
+   * Save a complete journey: a new draft from the homepage, or a new revision of this one. `from` is the draft as it
+   * was when the reading started (its trip was the seed), so a save made since then shows as a conflict.
+   */
+  async function save(spec: SceneSpecV1, entryId: number, from: SceneView | null) {
     try {
       if (!draft.sceneId) {
         const { body } = await createScene(spec);
-        patch(entryId, { outcome: 'created' });
+        patch(entryId, { outcome: 'created', revision: body!.revision });
         onDraftCreated(body!.id, body!.credentials.owner);
         return;
       }
-      let base = draft.viewRef.current!;
-      for (let attempt = 0; ; attempt++) {
-        try {
-          const { body, etag } = await putScene(draft.sceneId, base.revision, onto(base.spec, spec));
-          draft.adopt(body!, etag);
-          break;
-        } catch (e) {
-          // Someone (an agent, another tab) saved first: apply the change to theirs, once.
-          const info = e instanceof ApiFailure ? e.info : null;
-          if (attempt > 0 || info?.code !== 'revision_conflict') throw e;
-          base = { ...base, revision: info.currentRevision as number, spec: info.spec as SceneSpecV1 };
-        }
+      const base = from ?? draft.viewRef.current!;
+      try {
+        const { body, etag } = await putScene(draft.sceneId, base.revision, onto(base.spec, spec));
+        // The chat's own revision isn't a change from outside.
+        known.current = body!.revision;
+        draft.adopt(body!, etag);
+        patch(entryId, { outcome: 'updated', revision: body!.revision });
+      } catch (e) {
+        // Someone (an agent, another window) saved while this was being read. This reading came from the version
+        // before theirs, so saving it would quietly undo their change: leave it, show the trip as it is now, and
+        // offer to apply the same request to it ("Apply my change again").
+        if (!(e instanceof ApiFailure && e.info.code === 'revision_conflict')) throw e;
+        patch(entryId, { outcome: 'conflict' });
+        await draft.refresh();
       }
-      patch(entryId, { outcome: 'updated' });
     } catch (e) {
       patch(entryId, { outcome: 'unsaved' });
       const message = e instanceof ApiFailure ? e.info.message : 'Check your connection and try again.';
@@ -636,7 +696,18 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
     const content = message.trim();
     if (!content || busy || exhausted || !ready) return;
     const mine: Entry = { id: nextId++, kind: 'user', text: content, sent: false };
-    const messages = [...conversation(entries, draftSeed(draft)), { role: 'user' as const, content }];
+    await read([...conversation(entries, draftSeed(draft)), { role: 'user' as const, content }], mine);
+  }
+
+  /** The request a save was overtaken by, read again onto the trip as it is now. It uses a message. */
+  function retry() {
+    if (busy || exhausted || !ready) return;
+    void read(conversation(entries, draftSeed(draft)), { id: nextId++, kind: 'action', text: 'Apply my change again' });
+  }
+
+  /** Send the conversation to be read, shown as `mine` (the person's message, or the action that asked). */
+  async function read(messages: ComposeMessage[], mine: Entry) {
+    const from = draft.viewRef.current;
     const task: Entry = { id: nextId++, kind: 'task', characters: messages.reduce((n, m) => n + m.content.length, 0), reading: true };
     add(mine, task);
     setPending(true);
@@ -651,7 +722,7 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
       const found = foundIn(r.spec);
       setEntries((list) => [
         ...list.map((e) =>
-          e.id === mine.id
+          e.id === mine.id && mine.kind === 'user'
             ? { ...mine, sent: true }
             : e.id === task.id
               ? { ...task, reading: false, found, ...(reply.kind === 'ready' ? { ready: reply.id } : { questions: r.questions.length }) }
@@ -660,7 +731,7 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
         reply,
       ]);
       setPending(false);
-      if (reply.kind === 'ready') await save(r.spec, reply.id);
+      if (reply.kind === 'ready') await save(r.spec, reply.id, from);
     } catch (e) {
       const info = e instanceof ApiFailure ? e.info : null;
       const next = (info?.limits as ComposeLimits | undefined) ?? null;
@@ -759,7 +830,7 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
   // saved, while questions about a change are open, while a change is being typed, while an agent is working on the
   // draft, or after a change that didn't save. Publishing or exporting then would capture a version about to change.
   const lastEntry = entries.at(-1);
-  const lastReady = entries.findLast((e) => e.kind === 'ready');
+  const lastReady = entries.findLast((e) => e.kind === 'ready' || e.kind === 'changed');
   const settled =
     inDraft &&
     view !== null &&
@@ -779,6 +850,15 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
   const offerExport = settled && !exporting && lastEntry?.kind !== 'export';
   // It would replace what's being typed.
   const offerExample = !inDraft && entries.length === 0 && !text.trim();
+  // A reading someone else's save overtook: apply the same request to the trip as it is now, until something's sent.
+  const lastReading = entries.findLast((e) => e.kind === 'ready');
+  const offerRetry =
+    lastReading?.kind === 'ready' &&
+    lastReading.outcome === 'conflict' &&
+    !entries.some((x) => x.id > lastReading.id && (x.kind === 'user' || x.kind === 'action')) &&
+    !busy &&
+    !exhausted &&
+    ready;
 
   function typeInstead(paste = false) {
     if (liveQuestions) setTypingFor(liveQuestions.id);
@@ -1054,6 +1134,25 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
                   </Message>
                 );
               }
+              if (e.kind === 'ready' && e.outcome === 'conflict') {
+                return (
+                  <Message key={e.id} from="assistant">
+                    <MessageContent>
+                      <p>Your trip changed while I was reading that, so I didn’t apply it: it would have undone the other change.</p>
+                    </MessageContent>
+                  </Message>
+                );
+              }
+              if (e.kind === 'changed') {
+                return (
+                  <Message key={e.id} from="assistant">
+                    <MessageContent>
+                      <p>Your trip was changed outside this chat, by your agent or in another window. Here it is now, in local times.</p>
+                      <LegList legs={e.legs} />
+                    </MessageContent>
+                  </Message>
+                );
+              }
               if (e.kind === 'ready') {
                 const live = e.id === latestReady;
                 return (
@@ -1168,6 +1267,7 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
           data-chat-footer
           className="flex max-h-[75%] shrink-0 flex-col gap-2 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-1"
         >
+          {inDraft && draft.activity && <AgentActivity message={draft.activity.message} />}
           {dock === 'exporting' && runningExport ? (
             <div className="rounded-lg border p-4">
               <ExportProgress phase={runningExport.phase} onCancel={() => exportJob.current?.controller.abort()} />
@@ -1190,8 +1290,9 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
             </div>
           ) : (
             <>
-              {(answerChip || offerPublish || offerShare || offerExport || offerExample) && (
+              {(answerChip || offerRetry || offerPublish || offerShare || offerExport || offerExample) && (
                 <Suggestions>
+                  {offerRetry && <Suggestion suggestion="Apply my change again" onClick={retry} />}
                   {/* Questions answered by typing can be brought back. */}
                   {answerChip && <Suggestion suggestion="Answer the questions" onClick={() => setTypingFor(null)} />}
                   {offerPublish && <Suggestion suggestion={publishLabel} onClick={() => void publish()} />}

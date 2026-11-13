@@ -29,6 +29,8 @@ export interface Draft {
   etag: RefObject<string | null>;
   /** Show a saved revision at once (after a PUT, say), before the socket's refetch brings it. */
   adopt: (v: SceneView, tag: string | null) => void;
+  /** Fetch the draft now, as a "changed" event would (after a revision conflict, say). */
+  refresh: () => Promise<void>;
   /** Publish the revision on screen; resolves to its watch link. */
   publish: () => Promise<PublicationRef>;
   connected: boolean;
@@ -70,7 +72,14 @@ export function markSessionStarted(sceneId: string) {
   handshakes.set(sceneId, Promise.resolve(null));
 }
 
-export function useDraft(sceneId: string | null): Draft {
+export interface DraftOptions {
+  /** An agent showed the creator a moment: the player has paused there, so make sure it's in view. */
+  onSeek?: () => void;
+}
+
+export function useDraft(sceneId: string | null, { onSeek }: DraftOptions = {}): Draft {
+  const seekCallback = useRef(onSeek);
+  seekCallback.current = onSeek;
   const [load, setLoad] = useState<LoadState>(sceneId ? { kind: 'loading' } : { kind: 'idle' });
   const [view, setView] = useState<SceneView | null>(null);
   const [connected, setConnected] = useState(false);
@@ -205,7 +214,10 @@ export function useDraft(sceneId: string | null): Draft {
         } catch {
           return;
         }
-        if (m.type === 'seek' && typeof m.t === 'number') player.current?.seekSeconds(m.t, true);
+        if (m.type === 'seek' && typeof m.t === 'number') {
+          player.current?.seekSeconds(m.t, true);
+          seekCallback.current?.();
+        }
         else if (m.type === 'activity') {
           setActivity(m.state === 'working' ? { message: m.message ?? '', until: Date.now() + (m.expiresInMs ?? 0) } : null);
         } else void poll();
@@ -245,6 +257,7 @@ export function useDraft(sceneId: string | null): Draft {
     viewRef,
     etag,
     adopt,
+    refresh: poll,
     publish,
     connected,
     activity,

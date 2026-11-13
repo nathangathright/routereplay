@@ -174,7 +174,7 @@ export function compose(messages: ComposeMessage[]) {
 
 /** Create a draft as an agent would (POST /api/v1/scenes). The response's credentials are shown only once. */
 export function createScene(spec: SceneSpecV1) {
-  return request<{ id: string; previewUrl: string; credentials: { edit: string; owner: string } }>('/api/v1/scenes', {
+  return request<{ id: string; revision: number; previewUrl: string; credentials: { edit: string; owner: string } }>('/api/v1/scenes', {
     method: 'POST',
     headers: { 'idempotency-key': crypto.randomUUID() },
     body: JSON.stringify(spec),
