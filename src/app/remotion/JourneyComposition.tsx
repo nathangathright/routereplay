@@ -1,6 +1,6 @@
 import { ThreeCanvas } from '@remotion/three';
 import * as THREE from 'three';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AbsoluteFill, useDelayRender, useVideoConfig } from 'remotion';
 import type { NormalizedSceneV1 } from '../../shared/scene/types';
 import { buildTimeline } from '../../shared/timeline/evaluate';
@@ -70,6 +70,11 @@ export function JourneyComposition({ scene, quality, dpr = 1, capture = false, o
 
   // Full-resolution city lights near the airports, in the order the camera reaches them. Export waits for all of
   // them; playback starts once the first frame's are in, and the rest arrive while it plays.
+  //
+  // When the plan changes (a live edit to a draft, or a quality switch), the previous tiles stay on screen until
+  // the new plan's first frame's are in. Tiles are the same imagery whichever plan fetched them, so they are never
+  // wrong, only incomplete, and the canvas never has to be torn down for them. Like clouds, the detail is
+  // optional: a tile that fails to load leaves the global map in its cell rather than failing the journey.
   const plan = useMemo(() => planNightDetail(timeline, DETAIL_MAX_TILES[quality]), [timeline, quality]);
   useEffect(() => {
     const night = new NightDetail(plan, quality);
@@ -78,25 +83,41 @@ export function JourneyComposition({ scene, quality, dpr = 1, capture = false, o
     let waiting = true;
     const needed = capture ? night.tileCount : night.tilesBy(0);
     let version = 0;
-    const update = (inOrder: number) => {
-      if (inOrder < needed) return;
+    const show = () => {
       setDetail({ textures: night, version: ++version });
       if (waiting) {
         waiting = false;
         continueRender(handle);
       }
     };
+    const update = (inOrder: number) => {
+      if (inOrder >= needed) show();
+    };
     update(0);
     night.load(controller.signal, update).catch((e: unknown) => {
-      if (!controller.signal.aborted) cancelRender(e instanceof Error ? e : new Error(String(e)));
+      if (controller.signal.aborted) return;
+      console.warn('Night detail incomplete; drawing the global night map where tiles are missing.', e);
+      show();
     });
     return () => {
       controller.abort();
-      if (waiting) continueRender(handle);
-      setDetail(null);
-      night.dispose();
+      if (waiting) {
+        continueRender(handle);
+        night.dispose();
+      }
     };
-  }, [plan, quality, capture, delayRender, continueRender, cancelRender]);
+  }, [plan, quality, capture, delayRender, continueRender]);
+
+  // Free a replaced detail once the scene has drawn with its successor. The scene's own React root picks up new
+  // props a little after this component commits, so the old textures get a moment's grace; freeing them while the
+  // globe material still points at them would make three.js upload them again.
+  const shown = useRef<NightDetail | null>(null);
+  useEffect(() => {
+    const previous = shown.current;
+    shown.current = detail?.textures ?? null;
+    if (previous && previous !== shown.current) setTimeout(() => previous.dispose(), 1000);
+  }, [detail]);
+  useEffect(() => () => shown.current?.dispose(), []);
 
   const onCreated = useCallback(
     (state: { gl: { domElement: HTMLCanvasElement } }) => {
