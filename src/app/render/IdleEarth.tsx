@@ -395,6 +395,31 @@ export function IdleEarth({
     invalidate();
   };
 
+  // A two-finger trackpad drag arrives as wheel events, not pointer events. It moves the view like a drag
+  // anywhere on the page, which never scrolls (.landing in styles.css). The system sends its own momentum
+  // afterwards, so there is no flick. A pinch (ctrlKey) stays the browser's zoom. Handling the event also keeps
+  // a sideways swipe from going back in history.
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) return;
+      const unit = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : e.deltaMode === WheelEvent.DOM_DELTA_PAGE ? window.innerHeight : 1;
+      const dx = e.deltaX * unit;
+      const dy = e.deltaY * unit;
+      if (!dx && !dy) return;
+      e.preventDefault();
+      // The same scale as a drag; scrolling right or down moves the view east or south, so the surface
+      // follows the fingers with natural scrolling.
+      const perPx = 2 / Math.max(1, container.current?.clientHeight ?? window.innerHeight);
+      const v = view.current;
+      v.vLat = v.vLon = 0;
+      v.lon += dx * perPx;
+      v.lat = clampLat(v.lat - dy * perPx);
+      invalidate();
+    };
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => window.removeEventListener('wheel', onWheel);
+  }, []);
+
   return (
     <div
       ref={container}
