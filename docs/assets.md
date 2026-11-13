@@ -59,7 +59,7 @@ The pages carry no credit line beyond the homepage's info icon.
 | [mwgg/Airports](https://github.com/mwgg/Airports) | MIT | IANA time zones |
 | [@photostructure/tz-lookup](https://github.com/photostructure/tz-lookup) (build time only) | CC0-1.0 | Coordinate time-zone fallback for 278 airports missing a zone |
 
-The table contains 5,405 airports: every IATA-coded large or medium airport, plus smaller ones with scheduled service. Its version (`YYYY-MM-DD.<source hash>`) is pinned into every normalized record. Rebuild with `npm run assets:airports`.
+The table contains 5,405 airports: every IATA-coded large or medium airport, plus smaller ones with scheduled service. Its version (`YYYY-MM-DD.<source hash>`) is pinned into every normalized record. Rebuild with `npm run assets:airports`. `npm run gen` (part of test, typecheck, and build) turns it into one tab-separated string in `src/server/generated/airports.ts`, which the Worker binary-searches; see [Worker CPU](decisions.md#worker-cpu-within-the-free-plan).
 
 ## Runtime dependencies
 

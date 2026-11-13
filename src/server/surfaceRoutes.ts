@@ -70,7 +70,8 @@ async function failure(res: Response): Promise<Raw> {
 
 /**
  * BRouter returns every track node (about 13 per km, with elevations and a per-segment log): some 1 KB per km.
- * Parsing and simplifying costs about 1 ms per 100 km, and a free-plan Worker has 10 ms of CPU per request, so
+ * Reading and simplifying costs about 0.4 ms per 100 km in a warm isolate, almost all of it JSON.parse, and
+ * several times that in a fresh one (docs/budgets.md). A free-plan Worker has 10 ms of CPU per request, so
  * longer rail routes are drawn straight rather than risk failing the save.
  */
 export const MAX_RAIL_RESPONSE_CHARS = 1_500_000;
