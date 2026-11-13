@@ -49,7 +49,10 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
   // When an agent shows the creator a moment, a phone's drawer gets out of the way so the scene has the screen.
   const draft = useDraft(sceneId, { onSeek: () => !desktop && setExpanded(false) });
   const getStarted = useRef<HTMLButtonElement>(null);
-  const rail = useRef<HTMLElement>(null);
+  const studio = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  // On a phone the chat's questions and answers slide up in a layer of their own, over the floating window too.
+  const [faqLayer, setFaqLayer] = useState<HTMLDivElement | null>(null);
   const [landingGone, setLandingGone] = useState(initialSceneId !== null);
 
   useEffect(() => {
@@ -116,10 +119,10 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
     if (!sceneId) requestAnimationFrame(() => getStarted.current?.focus());
   }, [sceneId]);
 
-  // On a phone the on-screen keyboard covers the bottom of the layout viewport; keep the drawer, and its message
-  // box, above it and inside what's visible.
+  // On a phone the on-screen keyboard covers the bottom of the layout viewport; keep the drawer, its message box, and
+  // the questions and answers' layer above it and inside what's visible.
   useEffect(() => {
-    const el = rail.current;
+    const el = studio.current;
     const vv = window.visualViewport;
     if (desktop || !chatOpen || !el || !vv) return;
     const update = () => {
@@ -140,8 +143,6 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
 
   // On a phone, while the drawer fills the screen, the scene floats over the chat in a small window (pip.ts).
   const pip = !desktop && chatOpen && expanded;
-  const studio = useRef<HTMLDivElement>(null);
-  const stage = useRef<HTMLDivElement>(null);
   const pipHandlers = usePip(studio, stage, !desktop, pip, useCallback(() => setExpanded(false), []));
 
   const layout = desktop ? 'rail' : 'drawer';
@@ -154,7 +155,7 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
       data-page={sceneId ? 'draft' : 'home'}
       data-pip={pip}
     >
-      <aside ref={rail} id="chat-panel" className="studio-chat" aria-label="Chat" inert={!chatOpen || undefined}>
+      <aside id="chat-panel" className="studio-chat" aria-label="Chat" inert={!chatOpen || undefined}>
         {chatMounted && (
           <Suspense fallback={null}>
             <ChatPanel
@@ -164,6 +165,7 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
               layout={layout}
               expanded={desktop || expanded}
               onExpandedChange={setExpanded}
+              faqLayer={desktop ? null : faqLayer}
               onHide={hide}
               onDraftCreated={onDraftCreated}
               onNewTrip={onNewTrip}
@@ -200,6 +202,7 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
           {...pipHandlers}
         />
       )}
+      {!desktop && <div ref={setFaqLayer} className="studio-faq" />}
     </div>
   );
 }

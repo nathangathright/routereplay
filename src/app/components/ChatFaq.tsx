@@ -30,7 +30,8 @@ function Paragraph({ text, className }: { text: string; className?: string }) {
 
 /**
  * The questions and answers, as a second drawer that slides over the chat (from the left beside the stage, up from
- * the bottom on phones). Everything here is in the page: asking costs no message and no model call.
+ * the bottom on phones, where it covers the scene's floating window too). Everything here is in the page: asking costs
+ * no message and no model call.
  */
 export function ChatFaq({ request, layout, onClose }: { request: FaqRequest | null; layout: 'rail' | 'drawer'; onClose: () => void }) {
   const open = request !== null;
@@ -78,7 +79,8 @@ export function ChatFaq({ request, layout, onClose }: { request: FaqRequest | nu
       id="chat-faq"
       role="region"
       aria-labelledby="chat-faq-title"
-      className="chat-faq absolute inset-0 z-10 flex flex-col bg-sidebar"
+      // On phones it lives outside the chat (ChatPanel.tsx), so it brings the chat's typeface.
+      className="chat-faq absolute inset-0 z-10 flex flex-col bg-sidebar font-sans"
       data-layout={layout}
       data-open={open}
       inert={!open || undefined}

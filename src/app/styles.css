@@ -36,8 +36,10 @@ a {
   color: var(--blue);
 }
 
-/* The chat is stock shadcn/ui: its links take the colour of the text around them, as the components expect. */
-.chat-panel a {
+/* The chat is stock shadcn/ui: its links take the colour of the text around them, as the components expect. On phones
+   its questions and answers live outside it (ChatPanel.tsx). */
+.chat-panel a,
+.chat-faq a {
   color: inherit;
 }
 
@@ -190,7 +192,7 @@ select:focus-visible {
 }
 
 /* The questions and answers slide over the chat as a second drawer: from the left, as the rail did, or up from the
-   bottom on phones. Closed, they wait out of sight, clipped by the chat, and inert (ChatFaq.tsx). Not
+   bottom on phones. Closed, they wait out of sight, clipped by the chat or their layer, and inert (ChatFaq.tsx). Not
    visibility: hidden, which the accordion's transitions would carry into the first frame after opening, so its
    answers couldn't take focus. */
 .chat-faq {
@@ -203,6 +205,30 @@ select:focus-visible {
 
 .chat-faq[data-layout='drawer'][data-open='false'] {
   transform: translateY(100%);
+}
+
+/*
+ * On phones they slide up in a layer of their own (ChatPanel.tsx), above the scene's floating window, so they cover it
+ * as they cover the chat. The layer is the expanded drawer's size; only they take touches in it.
+ */
+.studio-faq {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--keyboard, 0px);
+  z-index: 6;
+  height: var(--visible-height, 100dvh);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.studio-faq > .chat-faq {
+  pointer-events: auto;
+}
+
+/* Covered, the window can't be reached by focus either. */
+.studio:has(.studio-faq > .chat-faq[data-open='true']) .studio-pip {
+  visibility: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {

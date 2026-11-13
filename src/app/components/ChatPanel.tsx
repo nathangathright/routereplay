@@ -20,6 +20,7 @@ import {
   TrainFrontIcon,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Conversation, ConversationContent, ConversationFollow, ConversationScrollButton } from '@/components/ai-elements/conversation';
 import { Message, MessageContent } from '@/components/ai-elements/message';
 import { PromptInput, PromptInputFooter, PromptInputSubmit, PromptInputTextarea } from '@/components/ai-elements/prompt-input';
@@ -529,6 +530,11 @@ export interface ChatPanelProps {
   layout: 'rail' | 'drawer';
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
+  /**
+   * On phones, where the questions and answers go instead of over the chat: a layer above the scene's floating
+   * window, so they cover it as well.
+   */
+  faqLayer: HTMLElement | null;
   /** Hide the rail, or close the homepage drawer. */
   onHide: () => void;
   /** The chat made a draft: the page becomes it, opening it with the owner credential as an agent's link would. */
@@ -562,7 +568,7 @@ export function ShowChatButton({ onClick }: { onClick: () => void }) {
  * POST /api/v1/compose with the conversation so far. When the journey is complete, the chat saves it: the first
  * time as a new draft that this page becomes, then as new revisions of it.
  */
-export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onHide, onDraftCreated, onNewTrip, onDeleted }: ChatPanelProps) {
+export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, faqLayer, onHide, onDraftCreated, onNewTrip, onDeleted }: ChatPanelProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const [entries, setEntries] = useState<Entry[]>(() => (draft.sceneId ? loadEntries(draft.sceneId) : []));
@@ -935,6 +941,7 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
   const [faq, setFaq] = useState<FaqRequest | null>(null);
   const showFaq = (item: string | null, opener: HTMLElement) => setFaq({ item, opener });
   if (faq && (!open || collapsed)) setFaq(null);
+  const faqPanel = <ChatFaq request={faq} layout={layout} onClose={() => setFaq(null)} />;
 
   return (
     <div className="chat-panel relative flex h-full min-h-0 flex-col font-sans" data-layout={layout} data-expanded={expanded}>
@@ -1366,7 +1373,7 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
         </div>
       </div>
 
-      <ChatFaq request={faq} layout={layout} onClose={() => setFaq(null)} />
+      {drawer && faqLayer ? createPortal(faqPanel, faqLayer) : faqPanel}
     </div>
   );
 }
