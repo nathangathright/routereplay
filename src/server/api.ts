@@ -20,6 +20,7 @@ import {
   beginIdempotent,
   completeIdempotent,
   enforceLimit,
+  enforceLimits,
   readIdempotencyKey,
   withinLimit,
   type LimitRule,
@@ -247,8 +248,7 @@ async function createScene(request: Request, env: Env, ctx: Ctx, origin: string,
   }
   try {
     const lim = limits(env);
-    await enforceLimit(env.DB, lim.createPerClient, await clientSubject(request, env), now);
-    await enforceLimit(env.DB, lim.createGlobal, 'all', now);
+    await enforceLimits(env.DB, [[lim.createPerClient, await clientSubject(request, env)], [lim.createGlobal, 'all']], now);
     const routed = await withSurfaceRoutes(env, now, result.normalized, null);
     const warnings = [...sceneWarnings(routed.scene, now), ...routed.warnings];
 
@@ -268,7 +268,7 @@ async function createScene(request: Request, env: Env, ctx: Ctx, origin: string,
     };
     await store.insertScene(env.DB, row);
     const body = {
-      ...(await sceneView(env.DB, origin, row, 'owner')),
+      ...(await sceneView(env.DB, origin, row, 'owner', [])),
       previewUrl: `${origin}/s/${id}#k=${editToken}`,
       credentials: {
         edit: editToken,
@@ -407,16 +407,11 @@ async function replaceSceneOp(request: Request, env: Env, id: string, origin: st
   if (expectedRevision !== auth.row.revision) throw await conflict();
   const previous = JSON.parse(auth.row.normalized_json) as NormalizedSceneV1;
   const routed = await withSurfaceRoutes(env, now, result.normalized, previous);
-  const next = await store.replaceScene(
-    env.DB,
-    id,
-    expectedRevision,
-    JSON.stringify(result.spec),
-    JSON.stringify(routed.scene),
-    now,
-  );
+  const specJson = JSON.stringify(result.spec);
+  const normalizedJson = JSON.stringify(routed.scene);
+  const next = await store.replaceScene(env.DB, id, expectedRevision, specJson, normalizedJson, now);
   if (next === null) throw await conflict();
-  const row = (await store.getScene(env.DB, id))!;
+  const row = { ...auth.row, revision: next, spec_json: specJson, normalized_json: normalizedJson, updated_at: now };
   const warnings = [...sceneWarnings(routed.scene, now), ...routed.warnings];
   return json(
     {

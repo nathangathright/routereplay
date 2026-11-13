@@ -8,24 +8,23 @@ export interface LimitRule {
   limit: number;
 }
 
+const COUNT_SQL = `INSERT INTO rate_limits (bucket, window_start, count) VALUES (?, ?, 1)
+  ON CONFLICT(bucket, window_start) DO UPDATE SET count = count + 1
+  RETURNING count`;
+
 /**
- * Fixed-window counter. Each call costs one D1 write, so it is applied only to
- * operations that write anyway (create, replace, publish, session exchange).
+ * Fixed-window counters, counted in one D1 round trip. Each costs one D1 write, so they are applied
+ * only to operations that write anyway (create, replace, publish, session exchange).
  */
-export async function enforceLimit(db: D1Database, rule: LimitRule, subject: string, now: number): Promise<void> {
-  const windowStart = Math.floor(now / rule.windowMs) * rule.windowMs;
-  const bucket = `${rule.name}:${subject}`;
-  const row = await db
-    .prepare(
-      `INSERT INTO rate_limits (bucket, window_start, count) VALUES (?, ?, 1)
-       ON CONFLICT(bucket, window_start) DO UPDATE SET count = count + 1
-       RETURNING count`,
-    )
-    .bind(bucket, windowStart)
-    .first<{ count: number }>();
-  const count = row?.count ?? 1;
-  if (count > rule.limit) {
-    const retryAfterSeconds = Math.max(1, Math.ceil((windowStart + rule.windowMs - now) / 1000));
+export async function enforceLimits(db: D1Database, checks: [rule: LimitRule, subject: string][], now: number): Promise<void> {
+  const windows = checks.map(([rule]) => Math.floor(now / rule.windowMs) * rule.windowMs);
+  const results = await db.batch<{ count: number }>(
+    checks.map(([rule, subject], i) => db.prepare(COUNT_SQL).bind(`${rule.name}:${subject}`, windows[i])),
+  );
+  checks.forEach(([rule], i) => {
+    const count = results[i]?.results[0]?.count ?? 1;
+    if (count <= rule.limit) return;
+    const retryAfterSeconds = Math.max(1, Math.ceil((windows[i]! + rule.windowMs - now) / 1000));
     throw new ApiError(
       429,
       'rate_limited',
@@ -33,7 +32,11 @@ export async function enforceLimit(db: D1Database, rule: LimitRule, subject: str
       { retryAfterSeconds, hint: `Wait ${retryAfterSeconds} seconds before retrying. Do not retry in a tight loop.` },
       { 'retry-after': String(retryAfterSeconds) },
     );
-  }
+  });
+}
+
+export function enforceLimit(db: D1Database, rule: LimitRule, subject: string, now: number): Promise<void> {
+  return enforceLimits(db, [[rule, subject]], now);
 }
 
 /** Like enforceLimit, but reports whether the call fits instead of failing the request. */
