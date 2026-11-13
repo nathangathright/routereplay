@@ -208,7 +208,8 @@ describe('surface legs: storyboards', () => {
   it('sketches surface legs dotted', () => {
     const svg = storyboardSvg(scene, buildStoryboard(scene), 0);
     expect(svg.match(/<polyline [^>]*stroke-dasharray/g)).toHaveLength(4);
-    expect(svg.match(/<polyline /g)).toHaveLength(9);
-    expect(svg).toContain('· dotted: train, bus, car, or ferry</text>');
+    // Each leg is a line over its glow.
+    expect(svg.match(/<polyline /g)).toHaveLength(18);
+    expect(svg).toContain('· dotted: train, bus, car, or ferry · ringed dots: stations</text>');
   });
 });

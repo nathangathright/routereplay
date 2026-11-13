@@ -5,11 +5,14 @@
  * - Only the current flight's endpoints are introduced. A destination's label appears on the first frame its
  *   airport is on screen during the incoming flight; the origin's on the first frame.
  * - Until arrival the panel holds a fixed screen slot, chosen before playback from the route's direction on
- *   screen, clear of the centred aircraft and of the airport's path. A leader line joins it to the airport.
+ *   screen, clear of the centred aircraft and of the airport's path.
  * - On arrival its anchor locks to the ground under the panel: it stays put through the stop (the camera is still),
  *   then recedes with the ground as the camera climbs away, shrinking with distance and fading out.
  * - A departed visit retires before the leg after next begins, fading over its last 0.3 s if it is still showing.
  *   Repeated visits to an airport have separate lifetimes.
+ * - A deliberate difference: a departed label never grows back. The offline renderer lets it, when the camera
+ *   comes down toward the next airport on a short or north–south leg before the old label has gone; here it
+ *   retires on the first frame it would grow, fading over 0.3 s.
  *
  * Everything is a pure function of the timeline, the frame's shape, and presentation time. Lengths are pixels of
  * the offline renderer's frame, whose short side is 1080, measured from the frame's centre with y down; this
@@ -26,6 +29,8 @@ export const FLAP_DURATION = 0.52;
 export const FLAP_STAGGER = 0.11;
 /** How long an arrival pulse lasts, in presentation seconds. */
 export const PULSE_SECONDS = 1.7;
+/** A retiring label fades out over this long. */
+const RETIRE_SECONDS = 0.3;
 
 /** Focal length in pixels: 70° across a 1080-pixel short side. */
 const FOCAL = 540 / Math.tan((35 * Math.PI) / 180);
@@ -60,8 +65,13 @@ export interface LabelState {
   /** The panel: its top-left corner and size. */
   panel: Rect;
   opacity: number;
-  /** The airport's marker, while it is on screen; `reached` once the aircraft has arrived there. */
-  marker: { x: number; y: number; reached: boolean } | null;
+  /**
+   * The airport on screen, while it is in front of the globe's limb (`margin` as in ScreenPoint); `reached` once
+   * the aircraft has arrived there.
+   */
+  marker: { x: number; y: number; margin: number; reached: boolean } | null;
+  /** True when a flight arrives at or leaves this place somewhere in the journey; false for a station or terminal. */
+  airport: boolean;
 }
 
 /** A ring that grows from an airport as the aircraft lands there. */
@@ -118,8 +128,15 @@ interface Visit {
   anchor: Vec3;
   /** Depth of the anchor when it locked: the panel's size scales by this over its current depth. */
   refDepth: number;
+  /** When the visit's outgoing leg starts, after which its label only recedes; null for the final visit. */
+  departs: number | null;
   end: number;
-  forcedEnd: number;
+  /** True when `end` is a deadline the label fades out toward, rather than the frame it was found gone. */
+  deadline: boolean;
+  /** From `heldFrom` on, the panel keeps the size it had shrunk to, `held`, while it fades out instead of growing. */
+  heldFrom: number;
+  held: number;
+  airport: boolean;
 }
 
 interface Layout {
@@ -179,14 +196,15 @@ function anchorFor(v: View, slot: Rect): { anchor: Vec3; refDepth: number } {
 }
 
 /** A locked panel: centred on its anchor, scaled by depth, fading out between 30 % and 12 % of its size. */
-function groundPanel(v: View, visit: Visit): { panel: Rect; opacity: number } {
+function groundPanel(v: View, visit: Visit, t: number): { panel: Rect; opacity: number; scale: number } {
   const p = project(v, visit.anchor);
-  const s = visit.refDepth / (v.d - dot(visit.anchor, v.radial));
+  const depthScale = visit.refDepth / (v.d - dot(visit.anchor, v.radial));
+  const s = t >= visit.heldFrom ? Math.min(depthScale, visit.held) : depthScale;
   const w = PANEL_W * s;
   const h = PANEL_H * s;
   let opacity = p.margin > 0 ? smootherstep((s - 0.12) / 0.18) : 0;
   if (opacity < 1 / 255) opacity = 0;
-  return { panel: { x: p.x - w / 2, y: p.y - h / 2, w, h }, opacity };
+  return { panel: { x: p.x - w / 2, y: p.y - h / 2, w, h }, opacity, scale: s };
 }
 
 function buildLayout(tl: Timeline, aspect: number, cameraAt: CameraAt): Layout {
@@ -226,10 +244,25 @@ function buildLayout(tl: Timeline, aspect: number, cameraAt: CameraAt): Layout {
     const lock = i < legs.length ? (i === 0 ? 0 : legs[i - 1]!.flightEnd) : null;
     const forcedEnd = i + 1 < legs.length ? legs[i + 1]!.flightStart : i < legs.length ? tl.duration : Infinity;
     const { anchor, refDepth } = lock === null ? { anchor: position, refDepth: 1 } : anchorFor(viewOf(cameraAt(lock)), slot);
-    return { slot, appear: null, lock, anchor, refDepth, end: forcedEnd, forcedEnd };
+    const code = tl.occurrences[i]!.code;
+    return {
+      slot,
+      appear: null,
+      lock,
+      anchor,
+      refDepth,
+      departs: i < legs.length ? legs[i]!.flightStart : null,
+      end: forcedEnd,
+      deadline: true,
+      heldFrom: Infinity,
+      held: Infinity,
+      airport: legs.some((l) => l.mode === null && (l.from === code || l.to === code)),
+    };
   });
 
-  // First frame each visit is seen; first frame a locked panel has gone (transparent or out of frame).
+  // First frame each visit is seen. For a locked panel: the first frame it has gone (transparent or out of frame),
+  // or, once departed, the first frame it would grow back, from which it fades out instead.
+  const shrinking = visits.map(() => Infinity);
   for (let tick = 0; tick < frames; tick++) {
     const t = tick / fps;
     const v = views[tick]!;
@@ -237,10 +270,18 @@ function buildLayout(tl: Timeline, aspect: number, cameraAt: CameraAt): Layout {
       const intro = i === 0 ? 0 : legs[i - 1]!.flightStart;
       if (visit.appear === null && t >= intro && visible(frame, project(v, positions[i]!))) visit.appear = t;
       if (visit.lock !== null && visit.lock <= t && t < visit.end) {
-        const { panel, opacity } = groundPanel(v, visit);
+        const { panel, opacity, scale: s } = groundPanel(v, visit, t);
         const gone =
           panel.x >= frame.halfW || panel.x + panel.w <= -frame.halfW || panel.y >= frame.halfH || panel.y + panel.h <= -frame.halfH;
-        if (opacity === 0 || gone) visit.end = t;
+        if (opacity === 0 || gone) {
+          visit.end = t;
+          visit.deadline = false;
+        } else if (visit.departs !== null && t > visit.departs && s > shrinking[i]! * (1 + 1e-9)) {
+          visit.end = Math.min(visit.end, t + RETIRE_SECONDS + 1 / fps);
+          visit.heldFrom = t;
+          visit.held = shrinking[i]!;
+        }
+        shrinking[i] = s;
       }
     });
   }
@@ -276,16 +317,16 @@ export function labelsAt(
   trail: readonly number[],
 ): { labels: LabelState[]; pulses: Pulse[] } {
   const layout = layoutFor(tl, aspect, cameraAt);
-  const frame = frameFor(aspect);
   const v = viewOf(camera);
   const labels: LabelState[] = [];
   layout.visits.forEach((visit, i) => {
     if (visit.appear === null || t < visit.appear || t >= visit.end) return;
     const occ = tl.occurrences[i]!;
-    let { panel, opacity } = visit.lock !== null && t >= visit.lock ? groundPanel(v, visit) : { panel: visit.slot, opacity: 1 };
-    if (visit.end === visit.forcedEnd) {
-      // A short or polar flight can leave an old anchor on screen: fade it out before the deadline frame.
-      opacity *= smootherstep((visit.forcedEnd - 1 / tl.fps - t) / 0.3);
+    let { panel, opacity } = visit.lock !== null && t >= visit.lock ? groundPanel(v, visit, t) : { panel: visit.slot, opacity: 1 };
+    if (visit.deadline) {
+      // Retiring while still on screen (a departed label that would grow back, or the leg after next is
+      // starting): fade it out before the deadline frame.
+      opacity *= smootherstep((visit.end - 1 / tl.fps - t) / RETIRE_SECONDS);
       if (opacity < 1 / 255) opacity = 0;
     }
     const p = project(v, occ.position);
@@ -297,7 +338,8 @@ export function labelsAt(
       age: t - visit.appear,
       panel,
       opacity,
-      marker: visible(frame, p) ? { x: p.x, y: p.y, reached } : null,
+      marker: p.margin >= 0 ? { x: p.x, y: p.y, margin: p.margin, reached } : null,
+      airport: visit.airport,
     });
   });
   const pulses: Pulse[] = [];

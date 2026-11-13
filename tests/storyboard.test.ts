@@ -56,7 +56,12 @@ describe('storyboards', () => {
   it('draws an SVG sketch with routes, airports, numbered keyframes, and night shading', () => {
     const svg = storyboardSvg(scene, buildStoryboard(scene), 0);
     expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"')).toBe(true);
-    expect(svg.match(/<polyline /g)).toHaveLength(2);
+    // Each leg is a line over its glow.
+    expect(svg.match(/<polyline /g)).toHaveLength(4);
+    // Airports a flight touches are drawn as the renderer's control tower from above (roof, glass, beacon).
+    expect(svg.match(/r="3.6" fill="#ffa974"/g)).toHaveLength(3);
+    // Routes take the renderer's accent, not the old gold.
+    expect(svg).not.toContain('stroke="#ffc76b"');
     for (const code of ['ORD', 'SFO', 'AKL']) expect(svg).toContain(`>${code}</text>`);
     for (let i = 1; i <= 8; i++) expect(svg).toContain(`>${i}</text>`);
     expect(svg).toContain('fill-opacity="0.62"');

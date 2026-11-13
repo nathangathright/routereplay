@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ASPECT_VALUE, type Timeline, buildTimeline, evaluate } from '../src/shared/timeline/evaluate';
 import { FLAP_DURATION, FLAP_STAGGER, PANEL_H, PANEL_W } from '../src/shared/timeline/labels';
-import { leg, normalize, spec } from './helpers';
+import { leg, normalize, spec, surface } from './helpers';
 
 /**
  * The offline renderer's README demo (routereplay `.local/readme-demo-current/trip.json`, 18 s at 30 fps, rendered
@@ -75,6 +75,51 @@ describe('airport labels', () => {
     expect(fading.opacity).toBeGreaterThan(0);
     expect(fading.opacity).toBeLessThan(1);
     expect(FLAP_DURATION + 2 * FLAP_STAGGER).toBeCloseTo(0.74, 9);
+  });
+
+  it('never grow back after departure, unlike the offline renderer', () => {
+    // A short north–south hop: the camera comes back down at WLG while AKL's departed label is still on screen.
+    const crossing = buildTimeline(
+      normalize(
+        spec([
+          leg('akl-wlg', 'AKL', 'WLG', '2027-02-10T08:00:00+13:00', '2027-02-10T09:05:00+13:00'),
+          surface('wlg-pcn', 'WLG', 'PCN', '2027-02-10T11:00:00+13:00', '2027-02-10T14:30:00+13:00', 'ferry'),
+        ]),
+      ),
+    );
+    for (const tl of [crossing, buildTimeline(normalize(README))]) {
+      for (const aspect of [ASPECT_VALUE['16:9'], ASPECT_VALUE['9:16']]) {
+        const last = new Map<number, { w: number; opacity: number }>();
+        for (let f = 0; f < tl.durationInFrames; f++) {
+          const t = f / tl.fps;
+          for (const l of evaluate(tl, t, aspect).labels) {
+            const departs = tl.legs[l.index]?.flightStart ?? Infinity;
+            const before = last.get(l.index);
+            if (t > departs && before) {
+              expect(l.panel.w).toBeLessThanOrEqual(before.w + 1e-9);
+              expect(l.opacity).toBeLessThanOrEqual(before.opacity + 1e-9);
+            }
+            last.set(l.index, { w: l.panel.w, opacity: l.opacity });
+          }
+        }
+      }
+    }
+    // At WLG, only WLG is labelled.
+    expect(evaluate(crossing, crossing.legs[0]!.flightEnd).labels.map((l) => l.code)).toEqual(['WLG']);
+  });
+
+  it('mark airports with a tower and stations that only surface legs touch with a dot', () => {
+    const tl = buildTimeline(
+      normalize(
+        spec([
+          leg('akl-wlg', 'AKL', 'WLG', '2027-02-10T08:00:00+13:00', '2027-02-10T09:05:00+13:00'),
+          surface('wlg-pcn', 'WLG', 'PCN', '2027-02-10T11:00:00+13:00', '2027-02-10T14:30:00+13:00', 'ferry'),
+        ]),
+      ),
+    );
+    const seen = new Map<string, boolean>();
+    for (let f = 0; f < tl.durationInFrames; f++) for (const l of evaluate(tl, f / tl.fps).labels) seen.set(l.code, l.airport);
+    expect(Object.fromEntries(seen)).toEqual({ AKL: true, WLG: true, PCN: false });
   });
 
   it('pulse at each arrival for 1.7 s', () => {

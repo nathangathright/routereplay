@@ -106,7 +106,7 @@ RELIEF_STEP = 3
 EARTH_RADIUS_M = 6371000.0
 
 # Copied unchanged from the previous version directory.
-CARRIED = ('Dosis-Variable.ttf', 'OFL.txt', 'BarlowCondensed-SemiBold.ttf', 'BarlowCondensed-OFL.txt')
+CARRIED = ('BarlowCondensed-SemiBold.ttf', 'BarlowCondensed-OFL.txt')
 
 NASA_LICENSE = 'Public domain (NASA)'
 
@@ -386,11 +386,6 @@ def main():
     files = []
     for part in parts:
         BUILDERS[part](files)
-    files.append(record(
-        OUT / 'Dosis-Variable.ttf', kind='font',
-        source='https://github.com/google/fonts/tree/main/ofl/dosis',
-        credit='The Dosis Project Authors', license='SIL Open Font License 1.1 (OFL.txt)',
-    ))
     files.append(record(
         OUT / 'BarlowCondensed-SemiBold.ttf', kind='font',
         source='https://github.com/google/fonts/tree/main/ofl/barlowcondensed',

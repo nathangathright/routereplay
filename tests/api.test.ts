@@ -677,7 +677,7 @@ describe('agent documents', () => {
     expect(r.status).toBe(200);
     expect(r.res.headers.get('content-type')).toMatch(/^text\/plain/);
     expect(r.text).not.toMatch(/\{\{[A-Z_]+\}\}/);
-    expect(r.text).toContain(`${ORIGIN}/assets/${ASSET_MANIFEST_VERSION}/OFL.txt`);
+    expect(r.text).toContain(`${ORIGIN}/assets/${ASSET_MANIFEST_VERSION}/BarlowCondensed-OFL.txt`);
     expect(r.text).toContain('Blue Marble');
     expect(r.text).toContain('Copyright (c) 2014 mwgg');
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url).pathname, 'utf8'));

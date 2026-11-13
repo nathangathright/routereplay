@@ -44,4 +44,4 @@ Asset rebuilds, which download sources into `.cache/`, are `npm run assets:airpo
 
 This project is separate from the offline renderer, [`routereplay-offline`](https://github.com/nathangathright/routereplay-offline). Its conventions informed the design, but the web app shares no code, data, or history with it.
 
-Earth imagery: NASA Blue Marble and Black Marble (public domain). Airport data: OurAirports (public domain) and mwgg/Airports (MIT). Label font: Dosis (SIL OFL 1.1).
+Earth imagery: NASA Blue Marble and Black Marble (public domain). Airport data: OurAirports (public domain) and mwgg/Airports (MIT). Label font: Barlow Condensed (SIL OFL 1.1).

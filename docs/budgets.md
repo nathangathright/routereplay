@@ -13,7 +13,7 @@ Gzip sizes from `dist/` (Cloudflare serves Brotli where supported, which is smal
 | Page | JavaScript + CSS | Font | Textures | First-view total |
 | --- | --- | --- | --- | --- |
 | Landing | 318 KiB (`index` 316 + CSS 2) | — | 0.96–1.09 MiB low (this month's 4096 day texture, night, water mask, relief), then 3.6–4.0 MiB more for standard on capable devices | ~1.3–1.4 MiB (low) |
-| Watch or preview | 318 + 133 (`JourneyStage`: Remotion and the player) + 1–5 (page) | 51 KiB (Barlow Condensed; Dosis, 59 KiB, until November 12, 2026) | 0.96–1.09 MiB low / 3.6–4.0 MiB standard | ~1.5–1.7 MiB low / ~4.2–4.6 MiB standard |
+| Watch or preview | 318 + 133 (`JourneyStage`: Remotion and the player) + 1–5 (page) | 51 KiB (Barlow Condensed) | 0.96–1.09 MiB low / 3.6–4.0 MiB standard | ~1.5–1.7 MiB low / ~4.2–4.6 MiB standard |
 | Export (on demand) | +117 KiB (`@remotion/web-renderer` + mediabunny core) | — | standard set | Loaded only when Export is pressed |
 
 Real iPhone, cold load over Wi-Fi: **919 KiB**, first journey frame at **981 ms**. Emulated phone (Fast 4G, 4× CPU): a cold load transferred **916 KiB**: JS 317 + 120 + 2, font 59, low textures 415, snapshot and HTML 2. The globe appeared **2.6 s** after navigation.
@@ -61,7 +61,7 @@ In Chrome's phone emulation (390×844, low quality, Fast 4G), JFK → BOS showed
 
 These were measured before the November 12 lighting work (tone mapping, moonlight, city lights, cloud lighting), which adds per-pixel work: a few Chapman-function evaluations for sunlight through the air, a cloud shadow per light, two hashed noise fields only where the night map has lights, and the sky's reflection on water by day (about 150 arithmetic operations, two dozen of them exponentials or square roots, and no texture reads; see [decisions.md](decisions.md#water-that-reflects-the-sky)). Re-measure on the iPhone before relying on these numbers. Metering a journey's exposure costs about 80 ms of main-thread time for 2 minutes of frames, once, when it first plays.
 
-Airport labels add little per frame: each split-flap panel is a canvas texture redrawn and uploaded only while its cards turn (0.74 s after it appears), about 0.1–0.4 ms a frame at 720p–1080p and 1 ms at a 2,160-pixel short side in headless Chrome on an M1 Max. Laying the labels out costs 1–4 ms once per journey and frame shape (18–120 s journeys, warm, Node); a resized window lays them out again.
+Airport labels add little per frame: each split-flap panel is a canvas texture redrawn and uploaded only while its cards turn (0.74 s after it appears), about 0.1–0.4 ms a frame at 720p–1080p and 1 ms at a 2,160-pixel short side in headless Chrome on an M1 Max. Each airport's control tower is 320 triangles in 4 draw calls (5 after dusk), with at most two on screen. Laying the labels out costs 1–4 ms once per journey and frame shape (18–120 s journeys, warm, Node); a resized window lays them out again.
 
 **Cloud-top relief and the aircraft's shadow** (November 13, 2026; [decisions.md](decisions.md#cloud-tops-lit-as-shapes)) didn't measurably change GPU time. These figures come from the GPU's own timer (`EXT_disjoint_timer_query_webgl2`), per rendered frame, in headless Chrome on an M1 Max. Each is the median of two 7-second plays of three test journeys with real clouds, before and after, on the same build of everything else:
 

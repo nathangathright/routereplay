@@ -365,15 +365,6 @@
       "sha256": "7d4960f43d9ae66daa4995027cc3b14ca76e331ac4c7657d534eb709259a8569"
     },
     {
-      "path": "Dosis-Variable.ttf",
-      "kind": "font",
-      "source": "https://github.com/google/fonts/tree/main/ofl/dosis",
-      "credit": "The Dosis Project Authors",
-      "license": "SIL Open Font License 1.1 (OFL.txt)",
-      "bytes": 117280,
-      "sha256": "b2238eef0b3464904fed097ef274c704bc63d21407369b7d7a5be7b0821a0e82"
-    },
-    {
       "path": "earth-night-detail-standard",
       "kind": "earth-night-detail",
       "quality": "standard",

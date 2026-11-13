@@ -5,7 +5,7 @@
 | Field | Meaning | Current |
 | --- | --- | --- |
 | `schemaVersion` | Authoring contract (`/schemas/scene-v1.json`) | 1 |
-| `compatibility.rendererVersion` | Semver of the timeline and scene code | 2.2.0 |
+| `compatibility.rendererVersion` | Semver of the timeline and scene code | 2.3.0 |
 | `compatibility.assetManifestVersion` | Directory under `/assets/` holding textures and font when the record was saved | 2026-11-12 |
 | `compatibility.airportDataVersion` | Airport table used to normalize the record | `2026-11-11.<hash>` |
 
@@ -25,6 +25,8 @@ Renderer 2.0 (November 2026) replaced the camera presets with the offline render
 Renderer 2.1 added train, bus, car, and ferry legs (`legs[].mode` in place of `aircraft`; see [decisions.md](decisions.md#surface-legs-one-marker-for-every-mode)). Journeys with only flights evaluate exactly as before, so the fixture's golden states and storyboard are unchanged. Drawing each mode as its own vehicle ([decisions.md](decisions.md#train-bus-car-and-ferry-models)) changed only the picture and which craft a connection dissolves between, so the renderer version stayed 2.1.0.
 
 Renderer 2.2 (November 12, 2026) draws airport labels and route lines as the offline renderer does ([decisions.md](decisions.md#airport-labels-and-route-lines-the-offline-renderers)). Labels now appear when their airport comes into view, hold a fixed slot until arrival, and recede with the ground, so the golden states' label entries and the storyboard's `labels` changed and both files were regenerated. Nothing else in them changed: camera, aircraft, Sun, trail, and timing are identical, and the fixture record itself was not rewritten. By the rule above this calls for a major version. It was kept minor on purpose: there are no users yet, and a major would make every saved journey unplayable only to keep the old labels. Once there are users, a label change like this one needs the major bump.
+
+Renderer 2.3 (November 13, 2026) draws a control tower at each airport and stops departed labels from growing back ([decisions.md](decisions.md#airport-towers-and-labels-that-stay-gone)). One golden label entry changed (ORD at frame 150 no longer comes back as the camera descends to SFO), so the golden states were regenerated; the storyboard fixture and everything else in the golden states are unchanged. It stays a minor version for the same reason as 2.2.
 
 Pixel-identical output across GPUs is not promised. The golden states pin what is drawn, not how a GPU rasterizes it.
 
