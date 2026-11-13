@@ -1,6 +1,6 @@
 ## Workflow
 
-Route Replay turns a travel itinerary (flights, and any train, bus, car, or ferry legs between them) into an animated journey on a 3D Earth. You (the agent) research and clarify the itinerary with the creator, then submit a small JSON scene spec over HTTPS. Route Replay validates it, stores a private draft, and shows it in a live browser preview. You do the authoring; the page only plays, shares, and exports.
+Route Replay turns a travel itinerary (flights, and any train, bus, car, or ferry legs between them) into an animated journey on a 3D Earth. You (the agent) research and clarify the itinerary with the creator, then submit a small JSON scene spec over HTTPS. Route Replay validates it, stores a private draft, and shows it in a live browser preview. The preview also has a chat, where the creator can change the trip in plain words, publish it, and export a video, so the draft can change between your turns. Read it before each revision (step 6).
 
 Every successful response includes `next`: a short list of suggested next steps. Follow it unless the creator asked for something else.
 
@@ -43,7 +43,7 @@ Idempotency-Key: <new random UUID>
 
 The `201` response contains `id`, `revision`, `previewUrl`, and `credentials.edit` / `credentials.owner`. Credentials are shown only once. Capture the whole response before printing or redacting anything, and keep the credentials in this conversation's working state. If you lose them within 24 hours, repeating the identical request with the same `Idempotency-Key` returns the original response, credentials included.
 
-- Give the creator `previewUrl`. Opening it shows the journey (on desktop or phone) and refreshes automatically when you revise it. Its credential, after the `#`, allows editing, so the creator should share it only with people who may edit.
+- Give the creator `previewUrl`. Opening it shows the journey with the page's chat beside it (a drawer on phones), and refreshes automatically when you revise it. Its credential, after the `#`, allows editing, so the creator should share it only with people who may edit.
 - Keep `credentials.owner` private. It is needed to publish, delete, or rotate the edit credential. Give it to the creator in your private conversation and suggest they keep it somewhere safe, such as a password manager, so they can manage the journey after this conversation ends; there are no accounts and it cannot be recovered.
 - Never put either credential in a public place. If you must keep credentials between sessions, store them only where the creator approves, never in a repository or anything shared.
 - If the request fails with a network error, retry with the same `Idempotency-Key` and the same body; you will not create a duplicate.
@@ -70,7 +70,9 @@ When the creator asks for a change ("slow down the Pacific leg", "make it vertic
 2. Change the returned `spec` (not `normalized`), keeping leg ids stable.
 3. `PUT {{ORIGIN}}/api/v1/scenes/{id}` with body `{"expectedRevision": <revision you read>, "spec": <changed spec>}`.
 
-A `409 revision_conflict` means the draft changed since you read it (perhaps the creator used another agent). The response includes the current spec. Reapply your intended change to it and retry with the current revision; do not blindly overwrite. An open preview shows each new revision immediately. Check the response's `warnings` and the storyboard (step 5) before telling the creator it's done.
+A `409 revision_conflict` means the draft changed since you read it (perhaps the creator changed it in the page's chat, or used another agent). The response includes the current spec. Reapply your intended change to it and retry with the current revision; do not blindly overwrite. An open preview shows each new revision immediately. Check the response's `warnings` and the storyboard (step 5) before telling the creator it's done.
+
+**Edits from the page's chat.** The chat saves each change the creator describes as a new revision, as a PUT would. It replaces `legs` as a whole and keeps the title, look, and weather. `presentation.legWeights` and `stopHolds` survive only while every leg they name keeps its id. The chat names legs `<from>-<to>` in lowercase (`lax-sfo`, then `lax-sfo-2` for a repeat), so use the same ids and your pacing survives the creator's edits. The chat never overwrites a revision it didn't read: if you save while it is working on a change, it leaves yours in place, shows the creator the trip as it is now, and offers to apply their change to it. Your changes also appear in its thread, so the creator sees what changed.
 
 To undo, list `GET /api/v1/scenes/{id}/revisions`, fetch an earlier revision, and PUT its `spec` as a new revision.
 
@@ -83,9 +85,9 @@ While the creator has the preview open, reading the draft with your credential (
 
 When the creator says "this part", "here", or "now", read the draft and use `viewer.at`. Say what you assumed ("I'll slow down the Pacific crossing, where you paused"). If no preview is open or it is playing, ask which part they mean. A paused position stays accurate however long ago it was reported (`reportedSecondsAgo`), because the preview reports again whenever the creator moves. `viewer.revision` appears only while the preview is still showing an older revision, typically for a second after you save.
 
-**Showing a moment.** `POST {{ORIGIN}}/api/v1/scenes/{id}/viewer` with `{"seek": <seconds>}` pauses open previews at that moment; storyboard keyframes give the times. Move the creator's view only when they ask ("show me the layover"), or once at the end of a change to bring it into view. Never move it while you work.
+**Showing a moment.** `POST {{ORIGIN}}/api/v1/scenes/{id}/viewer` with `{"seek": <seconds>}` pauses open previews at that moment; storyboard keyframes give the times. Move the creator's view only when they ask ("show me the layover"), or once at the end of a change to bring it into view. Never move it while you work. On a phone, the chat drawer collapses so the journey has the screen.
 
-**Showing that you are working.** Before work that will take you more than about 10 seconds in all, such as researching flights or a read–check–save sequence, `POST {{ORIGIN}}/api/v1/scenes/{id}/activity` with `{"state": "working", "message": "Checking your connection in San Francisco"}`. The message is plain text, up to 80 characters. Open previews show "Your agent is working: …" until you send `{"state": "idle"}`, or for 3 minutes unless you send it again.
+**Showing that you are working.** Before work that will take you more than about 10 seconds in all, such as researching flights or a read–check–save sequence, `POST {{ORIGIN}}/api/v1/scenes/{id}/activity` with `{"state": "working", "message": "Checking your connection in San Francisco"}`. The message is plain text, up to 80 characters. Open previews show "Your agent is working" with your message: in the page's chat, or over the journey while the chat is hidden or collapsed. It lasts until you send `{"state": "idle"}`, or for 3 minutes unless you send it again. While it shows, the chat holds back its Publish and Export video suggestions, so send `idle` as soon as you finish.
 
 Viewer state is never stored or published. It exists only while a preview is open.
 
@@ -104,6 +106,8 @@ Idempotency-Key: <new random UUID>
 
 Give the creator the returned `watchUrl`. Anyone can watch it without an account or credentials. It is an immutable snapshot: later edits do not change it, and publishing again creates a new link. Published data contains the journey and presentation only.
 
+The creator can also publish from the page's chat. Before publishing, check the draft's `publications` (in `GET /api/v1/scenes/{id}`): if the revision they approved already has a watch link, give them that one instead of making another.
+
 ### 8. Delete
 
 When the creator asks, `DELETE {{ORIGIN}}/api/v1/scenes/{id}` with the owner credential removes the draft, its revisions, and all its watch links. Explain that this cannot be undone.
@@ -114,4 +118,4 @@ When the creator has the preview open in a browser that supports WebMCP, the pag
 
 ### Video export
 
-The page has an Export button. On browsers that support it, the creator can save a 720p MP4 locally. Export runs on their device, may take longer than the clip's length, and is not required for sharing.
+The draft page's chat offers Export video once the draft is settled, and watch pages have an Export button. On browsers that support it, the creator picks landscape (16:9), square (1:1), or portrait (9:16), at 720p or 1080p, and saves an MP4 (WebM where the browser can't encode MP4) on their device. Export runs there, may take longer than the clip's length, and is not required for sharing.
