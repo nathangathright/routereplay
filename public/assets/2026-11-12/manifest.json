@@ -1,6 +1,6 @@
 {
   "version": "2026-11-12",
-  "note": "Static assets for Route Replay Web. Day textures are monthly (earth-day-<month>-<width>.webp); the aircraft model is generated in code (src/app/render/Aircraft.tsx).",
+  "note": "Static assets for Route Replay Web. Day textures are monthly (earth-day-<month>-<width>.webp), with a water mask at each width (earth-water-<width>.webp); the aircraft model is generated in code (src/app/render/Aircraft.tsx).",
   "files": [
     {
       "path": "earth-day-01-8192.webp",
@@ -341,15 +341,26 @@
       "sha256": "b3e2fb5d7b7cd0bd6990a843001e6560fabee9b5eb00acdc0933f96169b75bac"
     },
     {
-      "path": "earth-water.png",
+      "path": "earth-water-4096.webp",
       "kind": "earth-water",
-      "width": 2048,
-      "height": 1024,
-      "source": "https://www.naturalearthdata.com/downloads/50m-physical-vectors/ (ne_50m_land, ne_50m_lakes)",
+      "width": 4096,
+      "height": 2048,
+      "source": "https://www.naturalearthdata.com/downloads/10m-physical-vectors/ (ne_10m_land, ne_10m_minor_islands, ne_10m_antarctic_ice_shelves_polys, ne_10m_lakes)",
       "credit": "Made with Natural Earth",
       "license": "Public domain (Natural Earth)",
-      "bytes": 47581,
-      "sha256": "90d14e3e31445c1a7c72b55246baa6f69016737c8b03a01de7611e93d3303f0e"
+      "bytes": 84794,
+      "sha256": "94f13bb5ca78f56572a0cf6f3ed23544dfe6af031fe5a070f3d6af00bf1ef1c2"
+    },
+    {
+      "path": "earth-water-8192.webp",
+      "kind": "earth-water",
+      "width": 8192,
+      "height": 4096,
+      "source": "https://www.naturalearthdata.com/downloads/10m-physical-vectors/ (ne_10m_land, ne_10m_minor_islands, ne_10m_antarctic_ice_shelves_polys, ne_10m_lakes)",
+      "credit": "Made with Natural Earth",
+      "license": "Public domain (Natural Earth)",
+      "bytes": 209982,
+      "sha256": "47edfb682f1b22cff2ee3a27e85d36f4b792a773c965add211ef28317d2f61e5"
     },
     {
       "path": "Dosis-Variable.ttf",

@@ -12,8 +12,8 @@ Gzip sizes from `dist/` (Cloudflare serves Brotli where supported, which is smal
 
 | Page | JavaScript + CSS | Font | Textures | First-view total |
 | --- | --- | --- | --- | --- |
-| Landing | 318 KiB (`index` 316 + CSS 2) | — | 584–717 KiB low (this month's 4096 day texture, night, water mask), then 1.8–2.2 MiB more for standard on capable devices | ~0.9–1.0 MiB (low) |
-| Watch or preview | 318 + 133 (`JourneyStage`: Remotion and the player) + 1–5 (page) | 115 KiB | 584–717 KiB low / 1.8–2.2 MiB standard | ~1.1–1.3 MiB low / ~2.4–2.8 MiB standard |
+| Landing | 318 KiB (`index` 316 + CSS 2) | — | 620–753 KiB low (this month's 4096 day texture, night, water mask), then 2.0–2.4 MiB more for standard on capable devices | ~0.9–1.0 MiB (low) |
+| Watch or preview | 318 + 133 (`JourneyStage`: Remotion and the player) + 1–5 (page) | 115 KiB | 620–753 KiB low / 2.0–2.4 MiB standard | ~1.2–1.3 MiB low / ~2.5–2.9 MiB standard |
 | Export (on demand) | +117 KiB (`@remotion/web-renderer` + mediabunny core) | — | standard set | Loaded only when Export is pressed |
 
 Real iPhone, cold load over Wi-Fi: **919 KiB**, first journey frame at **981 ms**. Emulated phone (Fast 4G, 4× CPU): a cold load transferred **916 KiB**: JS 317 + 120 + 2, font 59, low textures 415, snapshot and HTML 2. The globe appeared **2.6 s** after navigation.
@@ -22,14 +22,14 @@ Real iPhone, cold load over Wi-Fi: **919 KiB**, first journey frame at **981 ms*
 
 | Set | Day texture (by month) | Night | Water mask | Total |
 | --- | --- | --- | --- | --- |
-| Low | 4096×2048 WebP, 408–541 KiB | 2048×1024 JPEG, 129 KiB | 46 KiB | 584–717 KiB |
-| Standard | 8192×4096 WebP, 1,369–1,786 KiB | 3600×1800 JPEG, 434 KiB | 46 KiB | 1.8–2.2 MiB |
+| Low | 4096×2048 WebP, 408–541 KiB | 2048×1024 JPEG, 129 KiB | 4096×2048 WebP, 83 KiB | 620–753 KiB |
+| Standard | 8192×4096 WebP, 1,369–1,786 KiB | 3600×1800 JPEG, 434 KiB | 8192×4096 WebP, 205 KiB | 2.0–2.4 MiB |
 
-Standard falls back to the 4096 day texture on devices whose largest WebGL texture is under 8192. December and January are the largest files and July and August the smallest, probably because northern snow cover adds detail. The whole directory, all 12 months at both widths, is 25 MiB on the server.
+Standard falls back to the 4096 day texture and water mask on devices whose largest WebGL texture is under 8192. December and January are the largest files and July and August the smallest, probably because northern snow cover adds detail. The whole directory, all 12 months at both widths, is 25 MiB on the server.
 
 The landing page does not download Remotion: the player pages are code-split. Muted export does not load the audio encoder chunks (aac, mp3, flac; 470 KiB gzip).
 
-**Clouds** add about 240 KB per model step (cloud water plus 700 hPa wind, as GRIB2), cached for a year in the browser and at the edge: about 0.5–0.7 MB when the homepage opens, then about 10 KB/s while it stays on screen, and about 1 MB for a short journey (24 steps, about 5.8 MB, at most). The water mask for sun glint is 46 KiB. These figures are from November 12, 2026 and were not part of the earlier device measurements below.
+**Clouds** add about 240 KB per model step (cloud water plus 700 hPa wind, as GRIB2), cached for a year in the browser and at the edge: about 0.5–0.7 MB when the homepage opens, then about 10 KB/s while it stays on screen, and about 1 MB for a short journey (24 steps, about 5.8 MB, at most). These figures are from November 12, 2026 and were not part of the earlier device measurements below.
 
 ## Frame time
 
@@ -50,7 +50,7 @@ The textures are the dominant allocation. RGBA8 plus mipmaps is about 1.33 × wi
 
 - Low: a 4096×2048 day texture (43 MiB) and a 2048×1024 night texture (11 MiB), about 54 MiB.
 - Standard: an 8192×4096 day texture (171 MiB) and a 3600×1800 night texture (33 MiB), about 204 MiB. Where the largest texture is under 8192, the 4096 day texture keeps it to about 76 MiB.
-- The water mask (2048×1024) adds 11 MiB to either set.
+- The water mask has the day texture's size but keeps one channel (`RedFormat`), a quarter of RGBA: 11 MiB at 4096×2048 and 43 MiB at 8192×4096.
 - The homepage shows the low set first. Two seconds after the standard set is on screen it frees the low set's GPU copies.
 - Framebuffers at 1280×720 with DPR 2 add about 30 MiB.
 - During export, a second WebGL context temporarily holds a standard set as well.

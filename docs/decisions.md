@@ -179,7 +179,7 @@ Layover warnings now measure rate, not length: `compressed_connection` fires whe
 
 - **Day:** NASA Blue Marble Next Generation with topography and bathymetry, 3600×1800.
 - **Night:** NASA Black Marble 2016, 3840 px source.
-- **Water:** Natural Earth land and lakes, rasterized to a 2048×1024 mask for ocean sun glint (46 KiB).
+- **Water:** Natural Earth 1:10m land, islands, ice shelves, and lakes, rasterized to a mask the size of each day texture (4096×2048, 83 KiB; 8192×4096, 205 KiB) for ocean glint and sky reflection.
 - Both are public domain and resampled into **low** (2048×1024, 415 KiB total) and **standard** (3600×1800, 1.3 MiB total) sets.
 - **Font:** the unmodified Dosis variable font (OFL) for airport codes.
 - **Aircraft:** a library of original procedural models generated in code from published dimensions, one per ICAO type designator ([aircraft.md](aircraft.md)), so they need no model files or licenses.

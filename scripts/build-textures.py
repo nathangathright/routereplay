@@ -3,7 +3,8 @@
 
 Sources are public-domain NASA images (the monthly Blue Marble: Next Generation base map
 from NASA's own host, Black Marble 2016 through Wikimedia Commons) and public-domain
-Natural Earth land and lake outlines for the water mask (see docs/assets.md). Downloads are
+Natural Earth outlines of land, islands, ice shelves, and lakes for the water mask (see
+docs/assets.md). Downloads are
 cached under .cache/textures; outputs go to public/assets/<ASSET_MANIFEST_VERSION>/, read
 from src/shared/scene/constants.ts. Older version directories are left untouched. Requires
 Pillow with WebP support.
@@ -56,12 +57,15 @@ NIGHT_VARIANTS = {
     'standard': (3600, 1800, 85),
 }
 
-# Natural Earth 1:50m land and lakes (public domain), rasterized into the ocean-glint mask.
-NATURAL_EARTH = {
-    'land': 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_land.geojson',
-    'lakes': 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_lakes.geojson',
-}
-WATER_SIZE = (2048, 1024)
+# Natural Earth 1:10m outlines (public domain), rasterized into the water mask for ocean glint and sky
+# reflection. Minor islands and Antarctic ice shelves count as land: the day map shows both, and ice shelves
+# are white there, not water. Lakes are cut back out.
+NATURAL_EARTH_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_{}.geojson'
+LAND_LAYERS = ('land', 'minor_islands', 'antarctic_ice_shelves_polys')
+WATER_LAYERS = ('lakes',)
+NATURAL_EARTH_PAGE = 'https://www.naturalearthdata.com/downloads/10m-physical-vectors/'
+# One mask per day texture width, texel for texel.
+WATER_WIDTHS = DAY_WIDTHS
 
 # Copied unchanged from the previous version directory.
 CARRIED = ('Dosis-Variable.ttf', 'OFL.txt')
@@ -90,24 +94,34 @@ def rings(geometry):
             yield ring, i > 0
 
 
-def build_water_mask(out):
-    """Equirectangular mask matching the day texture (west edge -180°, top +90°): 255 = water, 0 = land."""
-    scale = 4  # draw large, then downsample for smooth coastlines
-    w, h = WATER_SIZE[0] * scale, WATER_SIZE[1] * scale
+def build_water_masks(files):
+    """Equirectangular masks matching the day textures (west edge -180°, top +90°): 255 = water, 0 = land."""
+    scale = 4  # draw at 4x the largest width; each texel is then the share of its 16 samples that is water
+    w = max(WATER_WIDTHS) * scale
+    h = w // 2
     land = Image.new('L', (w, h), 0)
     draw = ImageDraw.Draw(land)
 
     def px(lon, lat):
         return ((lon + 180) / 360 * w, (90 - lat) / 180 * h)
 
-    for name, fill, hole_fill in (('land', 255, 0), ('lakes', 0, 255)):
-        path = fetch(NATURAL_EARTH[name], f'ne_50m_{name}.geojson')
+    names = [(name, 255, 0) for name in LAND_LAYERS] + [(name, 0, 255) for name in WATER_LAYERS]
+    for name, fill, hole_fill in names:
+        path = fetch(NATURAL_EARTH_URL.format(name), f'ne_10m_{name}.geojson')
         for feature in json.loads(path.read_text())['features']:
             for ring, is_hole in rings(feature['geometry']):
                 draw.polygon([px(lon, lat) for lon, lat in ring], fill=hole_fill if is_hole else fill)
-    # Four grey levels keep smooth coastlines once the GPU filters the texture, at under a third of the size.
-    water = Image.eval(land.resize(WATER_SIZE, Image.LANCZOS), lambda v: round((255 - v) / 85) * 85)
-    water.save(out, 'PNG', optimize=True)
+    for width in WATER_WIDTHS:
+        # Four levels place the coastline within a quarter texel once the GPU filters the mask, and flat sea and
+        # land compress to almost nothing. Lossless WebP is about a fifth smaller than the same image as a PNG.
+        water = Image.eval(land.reduce(w // width), lambda v: round((255 - v) / 85) * 85)
+        out = OUT / f'earth-water-{width}.webp'
+        water.save(out, 'WEBP', lossless=True, quality=100, method=6)
+        files.append(record(
+            out, kind='earth-water', width=width, height=width // 2,
+            source=f'{NATURAL_EARTH_PAGE} (ne_10m_{", ne_10m_".join(LAND_LAYERS + WATER_LAYERS)})',
+            credit='Made with Natural Earth', license='Public domain (Natural Earth)',
+        ))
 
 
 def sha256(path):
@@ -161,13 +175,7 @@ def main():
     files = []
     build_day(files)
     build_night(files)
-    water = OUT / 'earth-water.png'
-    build_water_mask(water)
-    files.append(record(
-        water, kind='earth-water', width=WATER_SIZE[0], height=WATER_SIZE[1],
-        source='https://www.naturalearthdata.com/downloads/50m-physical-vectors/ (ne_50m_land, ne_50m_lakes)',
-        credit='Made with Natural Earth', license='Public domain (Natural Earth)',
-    ))
+    build_water_masks(files)
     files.append(record(
         OUT / 'Dosis-Variable.ttf', kind='font',
         source='https://github.com/google/fonts/tree/main/ofl/dosis',
@@ -176,8 +184,9 @@ def main():
     manifest = {
         'version': VERSION,
         'note': (
-            'Static assets for Route Replay Web. Day textures are monthly (earth-day-<month>-<width>.webp); '
-            'the aircraft model is generated in code (src/app/render/Aircraft.tsx).'
+            'Static assets for Route Replay Web. Day textures are monthly (earth-day-<month>-<width>.webp), '
+            'with a water mask at each width (earth-water-<width>.webp); the aircraft model is generated in code '
+            '(src/app/render/Aircraft.tsx).'
         ),
         'files': files,
     }

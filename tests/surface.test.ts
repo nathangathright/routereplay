@@ -53,16 +53,18 @@ describe('asset directory', () => {
     files: { path: string; kind: string; month?: number; width?: number; bytes: number; sha256: string }[];
   };
 
-  it('has a day texture for every month at every width', () => {
+  it('has a day texture for every month and a water mask at every width', () => {
     expect(manifest.version).toBe(ASSET_MANIFEST_VERSION);
-    for (let month = 1; month <= 12; month++) {
-      for (const width of DAY_TEXTURE_WIDTHS) {
+    for (const width of DAY_TEXTURE_WIDTHS) {
+      for (let month = 1; month <= 12; month++) {
         const mm = String(month).padStart(2, '0');
         const file = manifest.files.find((f) => f.path === `earth-day-${mm}-${width}.webp`);
         expect(file, `earth-day-${mm}-${width}.webp`).toMatchObject({ kind: 'earth-day', month, width });
       }
+      const water = manifest.files.find((f) => f.path === `earth-water-${width}.webp`);
+      expect(water, `earth-water-${width}.webp`).toMatchObject({ kind: 'earth-water', width });
     }
-    for (const name of ['earth-night-low.jpg', 'earth-night-standard.jpg', 'earth-water.png', 'Dosis-Variable.ttf', 'OFL.txt']) {
+    for (const name of ['earth-night-low.jpg', 'earth-night-standard.jpg', 'Dosis-Variable.ttf', 'OFL.txt']) {
       expect(existsSync(`${dir}${name}`), name).toBe(true);
     }
   });

@@ -56,8 +56,8 @@ NOAA Open Data Dissemination Program on AWS. Public domain.
 
 COASTLINES
 
-Natural Earth (public domain): land and lake outlines that mark open water
-for sun glint. Made with Natural Earth.
+Natural Earth (public domain): land, island, ice shelf, and lake outlines
+that mark open water for sun glint and sky reflection. Made with Natural Earth.
   https://www.naturalearthdata.com/
 
 

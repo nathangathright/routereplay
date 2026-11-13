@@ -17,7 +17,7 @@ export const LABEL_FONT_FAMILY = 'RouteReplayLabel';
 export interface EarthTextures {
   day: THREE.Texture;
   night: THREE.Texture;
-  /** Open water (1) versus land (0), for sun glint. One size serves both qualities. */
+  /** Open water (1) versus land (0), for sun glint and sky reflection: one channel, texel for texel with `day`. */
   water: THREE.Texture;
   quality: Quality;
   /** Month (1–12) of the Blue Marble surface in `day`. */
@@ -46,7 +46,12 @@ export function maxTextureSize(): number {
 const textureCache = new Map<string, Promise<THREE.Texture>>();
 const setCache = new Map<string, Promise<EarthTextures>>();
 
-function loadTexture(url: string, colorSpace: THREE.ColorSpace = THREE.SRGBColorSpace): Promise<THREE.Texture> {
+/** `format`: what the GPU keeps; RedFormat stores one channel of the image, a quarter of RGBA's memory. */
+function loadTexture(
+  url: string,
+  colorSpace: THREE.ColorSpace = THREE.SRGBColorSpace,
+  format: THREE.PixelFormat = THREE.RGBAFormat,
+): Promise<THREE.Texture> {
   let p = textureCache.get(url);
   if (!p) {
     p = new Promise((resolve, reject) => {
@@ -54,6 +59,7 @@ function loadTexture(url: string, colorSpace: THREE.ColorSpace = THREE.SRGBColor
         url,
         (t) => {
           t.colorSpace = colorSpace;
+          t.format = format;
           t.anisotropy = 4;
           t.wrapS = THREE.RepeatWrapping;
           resolve(t);
@@ -81,7 +87,7 @@ export function loadEarthTextures(quality: Quality, month: number): Promise<Eart
     p = Promise.all([
       loadTexture(`${ASSET_BASE}/earth-day-${mm}-${width}.webp`),
       loadTexture(`${ASSET_BASE}/earth-night-${quality}.jpg`),
-      loadTexture(`${ASSET_BASE}/earth-water.png`, THREE.NoColorSpace),
+      loadTexture(`${ASSET_BASE}/earth-water-${width}.webp`, THREE.NoColorSpace, THREE.RedFormat),
     ]).then(([day, night, water]) => ({ day, night, water, quality, month: Number(mm) }));
     p.catch(() => setCache.delete(key));
     setCache.set(key, p);
