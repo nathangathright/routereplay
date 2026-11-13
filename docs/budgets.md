@@ -12,8 +12,8 @@ Gzip sizes from `dist/` (Cloudflare serves Brotli where supported, which is smal
 
 | Page | JavaScript + CSS | Font | Textures | First-view total |
 | --- | --- | --- | --- | --- |
-| Landing | 318 KiB (`index` 316 + CSS 2) | — | 0.99–1.12 MiB low (this month's 4096 day texture, night, water mask, relief), then 3.8–4.2 MiB more for standard on capable devices | ~1.3–1.4 MiB (low) |
-| Watch or preview | 318 + 133 (`JourneyStage`: Remotion and the player) + 1–5 (page) | 51 KiB (Barlow Condensed; Dosis, 59 KiB, until November 12, 2026) | 0.99–1.12 MiB low / 3.8–4.2 MiB standard | ~1.5–1.7 MiB low / ~4.4–4.8 MiB standard |
+| Landing | 318 KiB (`index` 316 + CSS 2) | — | 0.96–1.09 MiB low (this month's 4096 day texture, night, water mask, relief), then 3.6–4.0 MiB more for standard on capable devices | ~1.3–1.4 MiB (low) |
+| Watch or preview | 318 + 133 (`JourneyStage`: Remotion and the player) + 1–5 (page) | 51 KiB (Barlow Condensed; Dosis, 59 KiB, until November 12, 2026) | 0.96–1.09 MiB low / 3.6–4.0 MiB standard | ~1.5–1.7 MiB low / ~4.2–4.6 MiB standard |
 | Export (on demand) | +117 KiB (`@remotion/web-renderer` + mediabunny core) | — | standard set | Loaded only when Export is pressed |
 
 Real iPhone, cold load over Wi-Fi: **919 KiB**, first journey frame at **981 ms**. Emulated phone (Fast 4G, 4× CPU): a cold load transferred **916 KiB**: JS 317 + 120 + 2, font 59, low textures 415, snapshot and HTML 2. The globe appeared **2.6 s** after navigation.
@@ -22,29 +22,29 @@ Real iPhone, cold load over Wi-Fi: **919 KiB**, first journey frame at **981 ms*
 
 | Set | Day texture (by month) | Night | Water mask | Relief | Total |
 | --- | --- | --- | --- | --- | --- |
-| Low | 4096×2048 WebP, 408–541 KiB | 2048×1024 JPEG, 129 KiB | 4096×2048 WebP, 83 KiB | 2160×1080 lossless WebP, 393 KiB | 0.99–1.12 MiB |
-| Standard | 8192×4096 WebP, 1,369–1,786 KiB | 3600×1800 JPEG, 434 KiB | 8192×4096 WebP, 205 KiB | 4320×2160 lossless WebP, 1,871 KiB | 3.8–4.2 MiB |
+| Low | 4096×2048 WebP, 408–541 KiB | 2048×1024 lossless WebP, 100 KiB | 4096×2048 WebP, 83 KiB | 2160×1080 lossless WebP, 393 KiB | 0.96–1.09 MiB |
+| Standard | 8192×4096 WebP, 1,369–1,786 KiB | 3600×1800 lossless WebP, 244 KiB | 8192×4096 WebP, 205 KiB | 4320×2160 lossless WebP, 1,871 KiB | 3.6–4.0 MiB |
 
 Standard falls back to the 4096 day texture and water mask on devices whose largest WebGL texture is under 8192. December and January are the largest files and July and August the smallest, probably because northern snow cover adds detail. The whole directory, all 12 months at both widths, is 25 MiB on the server.
 
 The landing page does not download Remotion: the player pages are code-split. Muted export does not load the audio encoder chunks (aac, mp3, flac; 470 KiB gzip).
 
-**Night detail** (November 12, 2026): journeys also download full-resolution city-light tiles around their airports ([assets.md](assets.md#static-assets-publicassets2026-11-12)), in the order the camera reaches them. Playback starts once the first frame's tiles are in (34–45 in the journeys below); the rest arrive while it plays. Export waits for all of them. The homepage downloads none. From each journey's plan and the tile files:
+**Night detail** (November 12, 2026; tiles rebuilt November 13 with the new light level, about 15–25 % larger): journeys also download full-resolution city-light tiles around their airports ([assets.md](assets.md#static-assets-publicassets2026-11-12)), in the order the camera reaches them. Playback starts once the first frame's tiles are in (34–45 in the journeys below); the rest arrive while it plays. Export waits for all of them. The homepage downloads none. From each journey's plan and the tile files:
 
 | Journey | Tiles | Standard | Low | Before the first frame: tiles, standard / low |
 | --- | --- | --- | --- | --- |
-| JFK → BOS | 43 | 838 KiB | 335 KiB | 34, 779 / 311 KiB |
-| LHR → AMS | 60 | 1,329 KiB | 532 KiB | 43, 1,123 / 446 KiB |
-| HND → ITM | 43 | 478 KiB | 189 KiB | 34, 285 / 112 KiB |
-| DEL → BOM | 53 | 1,302 KiB | 503 KiB | 38, 1,202 / 462 KiB |
-| DEL → HND | 99 | 1,831 KiB | 714 KiB | 38, 1,202 / 462 KiB |
-| ORD → SFO → AKL (the example) | 110 | 1,285 KiB | 528 KiB | 45, 1,059 / 430 KiB |
+| JFK → BOS | 43 | 1,021 KiB | 346 KiB | 34, 952 / 322 KiB |
+| LHR → AMS | 60 | 1,452 KiB | 518 KiB | 43, 1,232 / 436 KiB |
+| HND → ITM | 43 | 591 KiB | 197 KiB | 34, 354 / 118 KiB |
+| DEL → BOM | 53 | 1,424 KiB | 490 KiB | 38, 1,308 / 449 KiB |
+| DEL → HND | 99 | 2,071 KiB | 709 KiB | 38, 1,308 / 449 KiB |
+| ORD → SFO → AKL (the example) | 110 | 1,549 KiB | 542 KiB | 45, 1,282 / 442 KiB |
 
-In Chrome against the local dev server, the first four journeys downloaded exactly these bytes at standard, as did JFK → BOS and DEL → BOM at low. Planning takes 1–2 ms.
+In Chrome against the local dev server on November 13, JFK → BOS, LHR → AMS, and DEL → BOM downloaded exactly these bytes at standard. Planning takes 1–2 ms.
 
-An airport takes about 40–60 tiles: 0.3–1.3 MiB at standard (Tokyo's is light, Europe, India, and the US north-east heavy), and about 40 % of that at low. Nearby airports share tiles. A journey loads at most 128 tiles, in the order first needed, so a long trip keeps its first airports sharp and draws later ones from the global map.
+An airport takes about 40–60 tiles: 0.35–1.4 MiB at standard (Tokyo's is light, Europe, India, and the US north-east heavy), and about 35 % of that at low. Nearby airports share tiles. A journey loads at most 128 tiles, in the order first needed, so a long trip keeps its first airports sharp and draws later ones from the global map.
 
-In Chrome's phone emulation (390×844, low quality, Fast 4G), JFK → BOS showed its first frame after 3.23 s instead of 2.86 s (median of three cold loads each), for the 311 KiB of tiles it needs first.
+In Chrome's phone emulation (390×844, low quality, Fast 4G), JFK → BOS showed its first frame after 3.23 s instead of 2.86 s (median of three cold loads each), for the 311 KiB of tiles it needed first (322 KiB since the November 13 rebuild).
 
 **Clouds** add about 240 KB per model step (cloud water plus 700 hPa wind, as GRIB2), cached for a year in the browser and at the edge: about 0.5–0.7 MB when the homepage opens, then about 10 KB/s while it stays on screen, and about 1 MB for a short journey (24 steps, about 5.8 MB, at most). These figures are from November 12, 2026 and were not part of the earlier device measurements below.
 
@@ -79,8 +79,8 @@ CPU throttling does not slow the GPU, so the emulated-phone frame times are opti
 
 The textures are the dominant allocation. RGBA8 plus mipmaps is about 1.33 × width × height × 4 bytes per texture.
 
-- Low: a 4096×2048 day texture (43 MiB) and a 2048×1024 night texture (11 MiB), about 54 MiB.
-- Standard: an 8192×4096 day texture (171 MiB) and a 3600×1800 night texture (33 MiB), about 204 MiB. Where the largest texture is under 8192, the 4096 day texture keeps it to about 76 MiB.
+- Low: a 4096×2048 day texture (43 MiB) and a 2048×1024 night map (one channel, 2.7 MiB), about 46 MiB.
+- Standard: an 8192×4096 day texture (171 MiB) and a 3600×1800 night map (one channel, 8.2 MiB), about 179 MiB. Where the largest texture is under 8192, the 4096 day texture keeps it to about 51 MiB. The night maps were RGBA (11 and 33 MiB) until November 13, 2026.
 - The water mask has the day texture's size but keeps one channel (`RedFormat`), a quarter of RGBA: 11 MiB at 4096×2048 and 43 MiB at 8192×4096.
 - The relief map is uploaded as two channels (RG8): 24 MiB standard (4320×2160), 6 MiB low (2160×1080).
 - Night-detail tiles share one texture array, one channel (R8) with mipmaps: 0.47 MiB per tile at standard (608×608), 0.12 MiB at low (304×304). An airport's 40–60 tiles take 19–28 MiB at standard and 5–7 MiB at low; the 128-tile cap is 60 MiB and 15 MiB. three.js also keeps a copy of the array in JavaScript memory, three quarters of those figures. Journeys allocate exactly the tiles they plan; the homepage allocates none.

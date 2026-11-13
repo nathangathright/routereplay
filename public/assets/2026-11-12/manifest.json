@@ -1,6 +1,6 @@
 {
   "version": "2026-11-12",
-  "note": "Static assets for Route Replay Web. Day textures are monthly (earth-day-<month>-<width>.webp), with a water mask at each width (earth-water-<width>.webp). Night-detail tiles (earth-night-detail-<quality>/, one record per directory) cover 5-degree cells with city light; each record hashes a sha256sum-style listing of its tiles. The aircraft model is generated in code (src/app/render/Aircraft.tsx).",
+  "note": "Static assets for Route Replay Web. Day textures are monthly (earth-day-<month>-<width>.webp), with a water mask at each width (earth-water-<width>.webp). The night maps (earth-night-<quality>.webp) and night-detail tiles hold one channel, the city-light level. The tiles (earth-night-detail-<quality>/, one record per directory) cover 5-degree cells with city light; each record hashes a sha256sum-style listing of its tiles. The aircraft model is generated in code (src/app/render/Aircraft.tsx).",
   "files": [
     {
       "path": "earth-day-01-8192.webp",
@@ -315,32 +315,6 @@
       "sha256": "6b0c885f6a4fd2b46157bec848325bcbfbb13689d1cff49b5d2e73e5fee55809"
     },
     {
-      "path": "earth-night-low.jpg",
-      "kind": "earth-night",
-      "quality": "low",
-      "width": 2048,
-      "height": 1024,
-      "source": "https://commons.wikimedia.org/wiki/File:BlackMarble20161km.jpg",
-      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/BlackMarble20161km.jpg/3840px-BlackMarble20161km.jpg",
-      "credit": "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA's Goddard Space Flight Center (Black Marble 2016)",
-      "license": "Public domain (NASA)",
-      "bytes": 132489,
-      "sha256": "556d1124db1c891195a4a03c8d2a2f396bd2567162fbb08911581b55bc03a9ae"
-    },
-    {
-      "path": "earth-night-standard.jpg",
-      "kind": "earth-night",
-      "quality": "standard",
-      "width": 3600,
-      "height": 1800,
-      "source": "https://commons.wikimedia.org/wiki/File:BlackMarble20161km.jpg",
-      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/BlackMarble20161km.jpg/3840px-BlackMarble20161km.jpg",
-      "credit": "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA's Goddard Space Flight Center (Black Marble 2016)",
-      "license": "Public domain (NASA)",
-      "bytes": 444420,
-      "sha256": "b3e2fb5d7b7cd0bd6990a843001e6560fabee9b5eb00acdc0933f96169b75bac"
-    },
-    {
       "path": "earth-water-4096.webp",
       "kind": "earth-water",
       "width": 4096,
@@ -410,9 +384,9 @@
       "url": "https://upload.wikimedia.org/wikipedia/commons/a/af/BlackMarble20161km.jpg",
       "credit": "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA's Goddard Space Flight Center (Black Marble 2016)",
       "license": "Public domain (NASA)",
-      "tiles": 1215,
-      "bytes": 8075554,
-      "sha256": "c7f6df0720a93889cc5c8974a828e15610cf0b6e942a426d19b0a6cdf3ae8127"
+      "tiles": 1213,
+      "bytes": 9183176,
+      "sha256": "83d78afe2fe83ebb7fe4963f3b98a54d6848bd03633d73e5af12a7a6d689c8e5"
     },
     {
       "path": "earth-night-detail-low",
@@ -425,9 +399,9 @@
       "url": "https://upload.wikimedia.org/wikipedia/commons/a/af/BlackMarble20161km.jpg",
       "credit": "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA's Goddard Space Flight Center (Black Marble 2016)",
       "license": "Public domain (NASA)",
-      "tiles": 1215,
-      "bytes": 3314282,
-      "sha256": "14d31c3c151664837de83681c444b61e5d2af8cc4378ebc57e0c96db48bc1c56"
+      "tiles": 1213,
+      "bytes": 3301996,
+      "sha256": "9658d19aee3e65ebdaf152ad9c11431bd40c863fd4f12d62297bbfe9abd01b61"
     },
     {
       "path": "BarlowCondensed-SemiBold.ttf",
@@ -437,6 +411,32 @@
       "license": "SIL Open Font License 1.1 (BarlowCondensed-OFL.txt)",
       "bytes": 109428,
       "sha256": "7b619d14bc2327509a9ef32b0890f709626f7ecc9ff61191c2a4314c5499d2d9"
+    },
+    {
+      "path": "earth-night-low.webp",
+      "kind": "earth-night",
+      "quality": "low",
+      "width": 2048,
+      "height": 1024,
+      "source": "https://commons.wikimedia.org/wiki/File:BlackMarble20161km.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/af/BlackMarble20161km.jpg",
+      "credit": "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA's Goddard Space Flight Center (Black Marble 2016)",
+      "license": "Public domain (NASA)",
+      "bytes": 102032,
+      "sha256": "705bed2d278056d1f6f3acb420e98e8682fa5039fa47ce0f9011f7677ede8f5c"
+    },
+    {
+      "path": "earth-night-standard.webp",
+      "kind": "earth-night",
+      "quality": "standard",
+      "width": 3600,
+      "height": 1800,
+      "source": "https://commons.wikimedia.org/wiki/File:BlackMarble20161km.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/af/BlackMarble20161km.jpg",
+      "credit": "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA's Goddard Space Flight Center (Black Marble 2016)",
+      "license": "Public domain (NASA)",
+      "bytes": 249612,
+      "sha256": "ae475230884a89ca0ea3114491af5383a4f49c0c3c5d42649eb3dbcf07a4c6f1"
     }
   ]
 }

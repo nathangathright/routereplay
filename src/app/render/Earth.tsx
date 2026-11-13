@@ -104,6 +104,18 @@ vec3 reliefNormal(vec3 g, vec2 uv) {
   return normalize(en.x * east + en.y * north + sqrt(max(1.0 - dot(en, en), 0.0)) * g);
 }
 
+// The global night map's light level. Where the map is magnified, bilinear sampling draws its texel grid as soft
+// squares, so it is sampled through a cubic B-spline there; where it is minified, its mipmaps serve. The two blend
+// over the last halving of magnification.
+float globalLevel(vec2 uv) {
+  vec2 size = vec2(textureSize(nightMap, 0));
+  vec2 dx = dFdx(uv * size);
+  vec2 dy = dFdy(uv * size);
+  float lod = 0.5 * log2(max(dot(dx, dx), dot(dy, dy)));
+  float smoothed = cubicSample(nightMap, uv, size, 0.0).r;
+  return mix(smoothed, texture2D(nightMap, uv).r, smoothstep(-1.0, 0.0, lod));
+}
+
 // Night-side floor: a trace of the map so coasts still read (routereplay render.py, its lunar-mode level).
 const vec3 NIGHT_FLOOR = vec3(0.00061, 0.00182, 0.00368);
 // The orange band of civil twilight along the terminator.
@@ -145,7 +157,7 @@ void main() {
   color += exp(-pow(mu / 0.065, 2.0)) * TWILIGHT;
   // City light from the global night map, or the full-resolution tiles where the camera is close.
   float spread = length(cameraPosition - vPosW) / max(viewDepth, 1e-3);
-  color += cityLights(g, nightLevel(vUv, lightLevel(texture2D(nightMap, vUv).rgb), spread));
+  color += cityLights(g, nightLevel(vUv, globalLevel(vUv), spread));
 
   gl_FragColor = vec4(color, 1.0);
   #include <tonemapping_fragment>

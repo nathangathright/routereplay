@@ -16,6 +16,7 @@ export const LABEL_FONT_FAMILY = 'RouteReplayLabel';
 
 export interface EarthTextures {
   day: THREE.Texture;
+  /** City light: one channel, the light level 0–1, proportional to the light emitted (scripts/build-textures.py). */
   night: THREE.Texture;
   /** Open water (1) versus land (0), for sun glint and sky reflection: one channel, texel for texel with `day`. */
   water: THREE.Texture;
@@ -88,7 +89,7 @@ export function loadEarthTextures(quality: Quality, month: number): Promise<Eart
   if (!p) {
     p = Promise.all([
       loadTexture(`${ASSET_BASE}/earth-day-${mm}-${width}.webp`),
-      loadTexture(`${ASSET_BASE}/earth-night-${quality}.jpg`),
+      loadTexture(`${ASSET_BASE}/earth-night-${quality}.webp`, THREE.NoColorSpace, THREE.RedFormat),
       loadTexture(`${ASSET_BASE}/earth-water-${width}.webp`, THREE.NoColorSpace, THREE.RedFormat),
       loadTexture(`${ASSET_BASE}/earth-relief-${quality}.webp`, THREE.NoColorSpace, THREE.RGFormat),
     ]).then(([day, night, water, relief]) => ({ day, night, water, relief, quality, month: Number(mm) }));

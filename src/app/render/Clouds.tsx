@@ -365,8 +365,8 @@ void main() {
   vec2 uv = vec2(atan(-n.z, n.x) / (2.0 * PI) + 0.5, asin(clamp(n.y, -1.0, 1.0)) / PI + 0.5);
   float tau = -log(1.0 - min(alpha, 0.98));
   float penetration = 0.7 * exp(-tau) + 0.3 * exp(-0.4 * tau);
-  vec3 spread = cubicSample(nightMap, uv, vec2(textureSize(nightMap, 2)), 2.0).rgb;
-  color += cityLights(n, lightLevel(spread)) * 0.5 * penetration;
+  float spread = cubicSample(nightMap, uv, vec2(textureSize(nightMap, 2)), 2.0).r;
+  color += cityLights(n, spread) * 0.5 * penetration;
 
   gl_FragColor = vec4(color, alpha);
   #include <tonemapping_fragment>

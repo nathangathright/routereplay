@@ -208,18 +208,22 @@ const hourAfterNoon = (h: number) => (h >= 12 ? h : h + 24);
 const SKY_ALTITUDE = [-90, -18, -12, -9, -6, -3, 0, 6, 15, 45, 90];
 const SKY_LUX = [0.0001, 0.0001, 0.001, 0.054, 1.35, 43, 430, 8000, 25000, 80000, 120000];
 
-/** Brightest city light, in scene units (routereplay nightlighting.py EMISSION_LUMINANCE). */
-const CITY_EMISSION = 0.45;
+/**
+ * Brightest city light, in scene units. The offline renderer's EMISSION_LUMINANCE is 0.45 (routereplay
+ * nightlighting.py). Ours is raised by the light the levels gave up when they stopped saturating: the earlier
+ * mapping put a third of all lit pixels at full level, and the world’s total light is now 0.679 of what it gave.
+ * So the night side as a whole is as bright as before, and city centres stand out from their suburbs.
+ */
+const CITY_EMISSION = 0.45 / 0.679;
 
 const glslArray = (type: string, items: string[]) => `${type}[${items.length}](${items.join(', ')})`;
 
 /**
- * lightLevel(texel): how bright the city light in a night-map texel is, 0–1, proportional to the light emitted.
- * scripts/build-textures.py computes the same level for the night-detail tiles, which store it directly.
- *
  * cityLights(n, level): light from cities at the ground point n (unit vector, Earth frame), given the light level
- * there. The map gives only where lights are and how bright; the model decides their colour, when they switch on
- * at dusk (later) and off at dawn, and how buildings and signs go dark late at night. Needs LIGHT_GLSL first.
+ * there, 0–1 and proportional to the light emitted, as the night maps and night-detail tiles store it
+ * (scripts/build-textures.py, night_light_level). The maps give only where lights are and how bright; the model
+ * decides their colour, when they switch on at dusk (later) and off at dawn, and how buildings and signs go dark
+ * late at night. Needs LIGHT_GLSL first.
  */
 export const CITY_GLSL = /* glsl */ `
 const vec3 SODIUM = ${v3(LAMP.sodium, 4)};
@@ -273,13 +277,6 @@ float wrapHours(float h) { return mod(h + 12.0, 24.0) - 12.0; }
 float occupied(float hour, float start, float end, float width) {
   float distance = abs(wrapHours(hour - 0.5 * (start + end)));
   return 1.0 / (1.0 + exp(-((end - start) * 0.5 - distance) / width));
-}
-
-float lightLevel(vec3 texel) {
-  // The night map shows lights warm or white over a faint bluish moonlit land (deserts a little warmer);
-  // keep only the lights.
-  vec3 e = pow(max(texel, vec3(0.0)), vec3(1.0 / 2.2));
-  return pow(clamp((e.r - 0.55 * e.b - 0.06) / 0.39, 0.0, 1.0), 0.82);
 }
 
 vec3 cityLights(vec3 n, float level) {

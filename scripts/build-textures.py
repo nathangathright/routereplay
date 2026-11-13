@@ -15,6 +15,7 @@ relief) builds only those and replaces their records in the existing manifest.
 """
 import base64
 import calendar
+import functools
 import hashlib
 import json
 import math
@@ -56,26 +57,20 @@ BMNG_CREDIT = 'Reto Stöckli and Robert Simmon, NASA Earth Observatory (Blue Mar
 DAY_WIDTHS = (4096, 8192)
 DAY_WEBP_QUALITY = 82
 
-NIGHT = {
-    'url': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/BlackMarble20161km.jpg/3840px-BlackMarble20161km.jpg',
-    'page': 'https://commons.wikimedia.org/wiki/File:BlackMarble20161km.jpg',
-    'credit': "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA's Goddard Space Flight Center (Black Marble 2016)",
-    'file': 'black-marble-2016-3840.jpg',
-}
-NIGHT_VARIANTS = {
-    'low': (2048, 1024, 82),
-    'standard': (3600, 1800, 85),
-}
-
-# The same Black Marble at full resolution (43200x21600: 30 arc seconds, about 0.93 km per pixel; 279 MB), for the
-# night-detail tiles journeys load around their airports. URL and SHA-1 from the Commons API
+# NASA Black Marble 2016 at full resolution (43200x21600: 30 arc seconds, about 0.93 km per pixel; 279 MB), the
+# source of the global night maps and the night-detail tiles. URL and SHA-1 from the Commons API
 # (action=query&prop=imageinfo&iiprop=url|sha1). Decoding it takes about 4 GB of memory.
-NIGHT_FULL = {
+NIGHT = {
     'url': 'https://upload.wikimedia.org/wikipedia/commons/a/af/BlackMarble20161km.jpg',
+    'page': 'https://commons.wikimedia.org/wiki/File:BlackMarble20161km.jpg',
     'sha1': '2f94891914481e85c80f1a9892886e4473a871b6',
+    'credit': "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA's Goddard Space Flight Center (Black Marble 2016)",
     'file': 'black-marble-2016-43200.jpg',
 }
-# Night-detail tiles: 5-degree cells of the shader's light level (one channel), only for cells with any light, as
+# Global night maps by quality: the light level averaged over 12 x 12 source pixels (standard) or about 21 x 21
+# (low), one channel, lossless WebP.
+NIGHT_SIZES = {'low': (2048, 1024), 'standard': (3600, 1800)}
+# Night-detail tiles: 5-degree cells of the same light level (one channel), only for cells with any light, as
 # lossless WebP. Each tile also holds NIGHT_DETAIL_GUTTER pixels of its neighbours on every side, so filtering is
 # seamless across tile edges. Standard keeps the full resolution (600 + 2 x 4 pixels square); low averages 2 x 2
 # (300 + 2 x 2). src/shared/scene/nightTiles.ts lists the cells that have a tile; nightDetail.ts mirrors the layout.
@@ -255,34 +250,45 @@ def build_day(files):
 
 
 def build_night(files):
-    image = Image.open(fetch(NIGHT['url'], NIGHT['file'])).convert('RGB')
-    for quality, (w, h, q) in NIGHT_VARIANTS.items():
-        out = OUT / f'earth-night-{quality}.jpg'
-        image.resize((w, h), Image.LANCZOS).save(out, 'JPEG', quality=q, optimize=True, progressive=True)
+    level = night_light_level()
+    for quality, (w, h) in NIGHT_SIZES.items():
+        out = OUT / f'earth-night-{quality}.webp'
+        Image.fromarray(level).resize((w, h), Image.BOX).save(out, 'WEBP', lossless=True, quality=100, method=6)
         files.append(record(
             out, kind='earth-night', quality=quality, width=w, height=h,
             source=NIGHT['page'], url=NIGHT['url'], credit=NIGHT['credit'], license=NASA_LICENSE,
         ))
 
 
+@functools.cache
 def night_light_level():
-    """The shader's light level for every pixel of the full-resolution Black Marble, 0-255, rows from the north: the
-    pixel decoded from sRGB and raised to 1/2.2, warm light (red less 0.55 x blue) above the moonlit land, to the
-    power 0.82 (lightLevel in src/app/render/lighting.ts). It is proportional to the light emitted, so filtering
-    and mipmaps average it correctly."""
-    path = fetch(NIGHT_FULL['url'], NIGHT_FULL['file'])
-    if hashlib.sha1(path.read_bytes()).hexdigest() != NIGHT_FULL['sha1']:
+    """How bright the city light in each pixel of the full-resolution Black Marble is, 0-255, rows from the north.
+    It is proportional to the light emitted, so averaging it (the global maps, filtering, mipmaps) is correct.
+
+    NASA drew the lights over a faint bluish moonlit land, dim orange through yellow to white as they brighten.
+    Their brightness is the pixel's luma above the land under them: NASA's grayscale Black Marble, lights only,
+    matches (luma - 0.114) / 0.886 within a few levels from dim orange to white. Faint lights are told from the
+    land by their warmth, red less 0.55 x blue above 0.06, over 0.39. The lesser of the two counts, so the land
+    drops out and every light brighter than that keeps its luma. The level is that gray value as it is; the offline
+    renderer raises NASA's gray to the power 0.82, which lifts suburbs toward their city centres. Channels are the
+    sRGB values decoded and re-encoded with a 2.2 power, which matches the stored values except near black, where
+    the land threshold was tuned."""
+    path = fetch(NIGHT['url'], NIGHT['file'])
+    if hashlib.sha1(path.read_bytes()).hexdigest() != NIGHT['sha1']:
         sys.exit(f'{path} does not match the SHA-1 Commons lists; delete it to download it again')
     v = np.arange(256) / 255
-    e = np.where(v <= 0.04045, v / 12.92, ((v + 0.055) / 1.055) ** 2.4) ** (1 / 2.2)
-    lut = np.round(255 * np.clip((e[:, None] - 0.55 * e[None, :] - 0.06) / 0.39, 0, 1) ** 0.82).astype(np.uint8)
+    e = (np.where(v <= 0.04045, v / 12.92, ((v + 0.055) / 1.055) ** 2.4) ** (1 / 2.2)).astype(np.float32)
+    r, g, b = e[:, None, None], e[None, :, None], e[None, None, :]
+    warmth = (r - 0.55 * b - 0.06) / 0.39
+    luma = (0.299 * r + 0.587 * g + 0.114 * b - 0.114) / 0.886
+    lut = np.round(255 * np.clip(np.minimum(warmth, luma), 0, 1)).astype(np.uint8)  # [R, G, B]
     image = Image.open(path)
     width, height = image.size
     level = np.empty((height, width), np.uint8)
-    band = 1200
+    band = 400
     for top in range(0, height, band):
         rgb = np.asarray(image.crop((0, top, width, top + band)))
-        level[top:top + band] = lut[rgb[..., 0], rgb[..., 2]]
+        level[top:top + band] = lut[rgb[..., 0], rgb[..., 1], rgb[..., 2]]
     return level
 
 
@@ -335,7 +341,7 @@ def build_night_detail(files):
         files.append(record_dir(
             out, kind='earth-night-detail', quality=quality, degrees=NIGHT_DETAIL_DEGREES,
             width=(n + 2 * g) // reduction, gutter=g // reduction,
-            source=NIGHT['page'], url=NIGHT_FULL['url'], credit=NIGHT['credit'], license=NASA_LICENSE,
+            source=NIGHT['page'], url=NIGHT['url'], credit=NIGHT['credit'], license=NASA_LICENSE,
         ))
 
     bits = bytearray(rows * cols // 8)
@@ -391,15 +397,16 @@ def main():
         credit='The Barlow Project Authors', license='SIL Open Font License 1.1 (BarlowCondensed-OFL.txt)',
     ))
     if sys.argv[1:]:
-        # A partial build replaces its own records and keeps the rest, in place.
+        # A partial build replaces its own records and keeps the rest, in place, less any whose file is gone.
         merged = {f['path']: f for f in json.loads((OUT / 'manifest.json').read_text())['files']}
         merged.update({f['path']: f for f in files})
-        files = list(merged.values())
+        files = [f for f in merged.values() if (OUT / f['path']).exists()]
     manifest = {
         'version': VERSION,
         'note': (
             'Static assets for Route Replay Web. Day textures are monthly (earth-day-<month>-<width>.webp), '
-            'with a water mask at each width (earth-water-<width>.webp). Night-detail tiles '
+            'with a water mask at each width (earth-water-<width>.webp). The night maps (earth-night-<quality>.webp) and '
+            'night-detail tiles hold one channel, the city-light level. The tiles '
             '(earth-night-detail-<quality>/, one record per directory) cover 5-degree cells with city light; '
             'each record hashes a sha256sum-style listing of its tiles. The aircraft model is generated in code '
             '(src/app/render/Aircraft.tsx).'

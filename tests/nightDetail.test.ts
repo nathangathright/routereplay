@@ -43,7 +43,7 @@ describe('night-detail tiles', () => {
       expect(existsSync(`${DIR}earth-night-detail-low/${name}`), name).toBe(cellHasTile(cell));
       if (cellHasTile(cell)) count++;
     }
-    expect(count).toBe(1215);
+    expect(count).toBe(1213);
     expect(cellHasTile(cellOf(40.64, -73.78))).toBe(true); // New York
     expect(cellHasTile(cellOf(-85, 0))).toBe(false); // inland Antarctica
   });

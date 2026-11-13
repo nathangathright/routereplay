@@ -132,7 +132,7 @@ Viewer context already tells the agent *where*. The creator tells their agent *w
 Deliberate differences:
 - **Lamp colours** are our own blackbody derivations (2000, 3000, 4000, and 5000 K, unit luminance). The offline renderer's CIE-derived palette is CC BY-SA.
 - **Always-on lights** switch off by day with the building lights, so no specks of city light show on sunlit ground.
-- **Night map:** the source map has a faint bluish land base under the lights, so the shader keeps only light warmer than that base.
+- **City-light level and emission:** the source map draws the lights over a faint bluish land, so the level drops that land; and city light is 1.47× the offline renderer's emission, to keep the night side as bright as it was before the level stopped saturating ([city lights with their gradation](#city-lights-with-their-gradation)).
 
 ## Terrain relief lit by the Sun and Moon
 
@@ -187,18 +187,28 @@ Limits:
 
 *Decided November 12, 2026.* Journeys draw city lights from the full-resolution Black Marble (about 0.93 km per pixel) where the camera comes close, and from the global night map everywhere else. At the closest airport framing a screen pixel is about 1.35 km, and the global map's texel 11 km (standard) or 20 km (low), so towns drew as soft squares 8–15 pixels across. Now they are points, and roads and coastlines show.
 
-- **Tiles.** 5° cells of the shader's light level, one channel, only for cells with light (1,215 of 2,592): 7.7 MiB for the world at standard, 3.2 MiB at low (half resolution). Encoding and layout: [assets.md](assets.md#static-assets-publicassets2026-11-12).
+- **Tiles.** 5° cells of the city-light level, one channel, only for cells with light (1,213 of 2,592): 8.8 MiB for the world at standard, 3.1 MiB at low (half resolution). Encoding and layout: [assets.md](assets.md#static-assets-publicassets2026-11-12).
 - **Plan.** The camera is a function of the timeline, so before playback the planner (`src/shared/timeline/nightDetail.ts`) steps through every frame, takes the circle of ground where that frame draws detail, and lists the cells it touches in the order first needed (by frame, then nearest first). Cells without a tile are part of the plan too: they are known to be dark and cost nothing. Nearby airports share cells. The plan stops at 128 tiles, so a long trip keeps its first airports sharp and draws later ones from the global map.
 - **Where the detail shows.** By ground scale: kilometres per pixel of a 1080-pixel short side, as if the point were at the frame's centre (the camera's distance divided by the cosine of the viewing angle, over the 771-pixel focal length). The detail is whole below 4 km per pixel and gone at 6 (`DETAIL_FADE_KM_PER_PX`). At the closest framing that is 1,210 km around the airport, gone by 1,540 km (the left and right edges of a 16:9 frame); as the camera climbs it lasts at the frame's centre until the global map is magnified only 2×. It depends only on the camera and the ground, not the screen's resolution or shape, so export and preview agree, and the planner covers the same circle the shader uses.
 - **Fading out.** At that circle's edge, and where a neighbouring cell isn't covered (a coverage flag in the index texture, filtered across the outer eighth of a cell), the tile first blurs toward the global map's resolution by raising its mip level, and only then gives way to the global map. A plain crossfade overlaid crisp points on soft squares and read as a line.
 - **GPU.** One texture array (R8 with mipmaps) holding the plan's tiles in plan order, and an index texture (RG8, 4 texels per cell side) giving each cell's layer and coverage. Per ground pixel: two index reads, one array read where the detail shows, and about 20 arithmetic operations. The derivatives for the array's mip level come from the globe's texture coordinates, not from the tile's, which jump at cell edges.
 - **Loading.** Tiles are fetched 8 at a time in plan order, decoded through an `OffscreenCanvas`, and uploaded one layer at a time. Playback waits for the first frame's tiles (the start hold sits at the first airport) and shows the rest as they arrive; export waits for every tile. The homepage loads none. Costs per journey: [budgets.md](budgets.md#startup-transfer).
-- **Same light, same colours.** The tiles store the level the shader computed from the night map's colour, so lamp colours, switching, and curfews are unchanged, and the cloud layer's glow still uses the global map. Averaged to the global map's resolution, the tiles carry 0–13 % more light, from small towns the coarse map's threshold drops.
+- **Same light, same colours.** The tiles and the global night maps hold the same light level, and the global maps are the tiles averaged, so lamp colours, switching, and curfews are unchanged across the hand-off, and the cloud layer's glow still uses the global map ([city lights with their gradation](#city-lights-with-their-gradation)).
 
 Not done:
 - **Tiles for the frame's shape.** The detailed area is a circle sized for a 16:9 frame's width, so a landscape frame loads tiles above and below its edges that it never shows, and the corners of a 16:9 frame (out to 1,920 km) and the far ends of a tall phone's frame blur into the global map. Planning per frame shape would make the plan depend on the viewport.
 - **Reusing layers.** A trip with more than 128 tiles' worth of airports could evict tiles it has passed, but seeking back would then need them again mid-playback.
-- **A softer light mapping.** The mapping saturates: most lit pixels reach full level, which at 11 km was hidden by the blur. At 1 km, city centres and dense suburbs look flat. Changing it would change the global map's look too.
+
+## City lights with their gradation
+
+*Decided November 13, 2026.* City lights keep the gradation NASA drew: bright centres, dimmer suburbs, and structure inside big cities, near airports and from orbit alike.
+
+- **What was wrong.** The level came from the night map's warmth alone (red less 0.55 × blue), which peaks at bright orange and falls toward white. So bright suburbs and white city centres both clipped to full level: a third of all lit pixels. At the global map's 11 km it was hidden by the blur; at 1 km every city was one flat cream, and from orbit the global map's threshold dropped most small towns.
+- **The level now.** The pixel's luma above the moonlit land under the lights, which matches NASA's grayscale Black Marble (the offline renderer's source) within a few levels from dim orange to white, with the warmth test kept only where it is smaller, to tell faint lights from the land. 10.5 % of lit pixels are now at full level, where the source itself is white. The level is used as it is: the offline renderer's power of 0.82 lifted suburbs toward their centres, and 1.2 lost the faintest towns. [assets.md](assets.md#static-assets-publicassets2026-11-12) has the details.
+- **Computed once, offline.** `scripts/build-textures.py` computes the level per pixel of the full-resolution Black Marble. The night-detail tiles store it, and the global night maps are it averaged (3600×1800 and 2048×1024, one channel), so the global maps are the tiles averaged and the hand-off can't change brightness. The shaders read the level directly; nothing in them separates lights from land any more. The global maps also come from the full-resolution image now, not a 3840-pixel thumbnail, so towns too small for the old threshold glow faintly from orbit, and their download and GPU memory are smaller (see [budgets.md](budgets.md)).
+- **Brightness.** The new levels carry 0.679 of the old total light, so city-light emission is 0.45 / 0.679 (the offline renderer's 0.45 is the numerator). Centres are brighter than before and suburbs a little dimmer. Mean screen luminance moved by −4 % to −1 % at the closest airport framings, +1 % to +2 % mid-flight, and +15 % on the homepage globe, where the small towns now show.
+- **Sampling.** Where the global map is magnified (the frame's edges near airports, beyond the detailed area), the shader samples it through a cubic B-spline; bilinear sampling of a level map draws its texel grid as soft squares. The old map hid that grid behind its threshold.
+- **Unchanged:** lamp colours, regional mixes, switching at dusk and dawn, curfews, twilight, and city light glowing up through cloud.
 
 ## One camera: the offline renderer's
 
@@ -302,7 +312,7 @@ Other choices:
 ## Asset set
 
 - **Day:** NASA Blue Marble Next Generation with topography and bathymetry, 3600×1800.
-- **Night:** NASA Black Marble 2016, 3840 px source, plus 5° tiles of the full-resolution image (43200 px) for journeys' close views ([sharp city lights](#sharp-city-lights-near-airports)).
+- **Night:** NASA Black Marble 2016 at full resolution (43200 px), as one channel of city-light level: global maps (3600 and 2048 px) and 5° tiles for journeys' close views ([sharp city lights](#sharp-city-lights-near-airports), [gradation](#city-lights-with-their-gradation)).
 - **Water:** Natural Earth 1:10m land, islands, ice shelves, and lakes, rasterized to a mask the size of each day texture (4096×2048, 83 KiB; 8192×4096, 205 KiB) for ocean glint and sky reflection.
 - **Relief:** NOAA ETOPO 2022 elevation (public domain), stored as the ground's normal at 12× relief ([terrain relief](#terrain-relief-lit-by-the-sun-and-moon)).
 - Both are public domain and resampled into **low** (2048×1024, 415 KiB total) and **standard** (3600×1800, 1.3 MiB total) sets.
