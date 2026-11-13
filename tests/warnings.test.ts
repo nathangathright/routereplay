@@ -127,10 +127,11 @@ describe('advisory warnings: likely mistakes', () => {
 });
 
 describe('airport labels', () => {
-  // Plan 2 proposed a label_crowding warning. It cannot fire with this renderer: a label fades
-  // out from 30% of the outgoing leg and the next fades in from 50%, so two labels are never
-  // both clearly visible. This pins that property; if it fails, reconsider the warning.
-  it('never shows two airport labels clearly at once, even with legs squeezed to the minimum', () => {
+  // Plan 2 proposed a label_crowding warning. Labels follow the offline renderer's layout: only the current leg's
+  // two endpoints show, in fixed slots on alternating lanes, and a departed label retires before the leg after next.
+  // Two can show at once (a departing label recedes while the next is introduced), but never more, and never a
+  // label from another leg. This pins that; if it fails, reconsider the warning.
+  it('shows only the current leg’s endpoints, even with legs squeezed to the minimum', () => {
     const squeezed = spec(
       [
         leg('lax-hnl', 'LAX', 'HNL', '2027-07-10T08:00:00-07:00', '2027-07-10T10:50:00-10:00'),
@@ -141,9 +142,16 @@ describe('airport labels', () => {
     );
     for (const s of [...Object.values(CORPUS), squeezed]) {
       const tl = buildTimeline(normalize(s));
-      for (let t = 0; t <= tl.duration; t += 0.02) {
-        expect(evaluate(tl, t).labels.filter((l) => l.opacity >= 0.5).length).toBeLessThanOrEqual(1);
+      const seen = new Set<number>();
+      for (let f = 0; f <= tl.durationInFrames; f++) {
+        const state = evaluate(tl, f / tl.fps);
+        for (const l of state.labels) {
+          expect([state.legIndex, state.legIndex + 1]).toContain(l.index);
+          seen.add(l.index);
+        }
       }
+      // Every visit is introduced, repeated airports included.
+      expect([...seen].sort((a, b) => a - b)).toEqual(tl.occurrences.map((o) => o.index));
     }
   });
 });

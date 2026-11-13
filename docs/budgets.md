@@ -13,7 +13,7 @@ Gzip sizes from `dist/` (Cloudflare serves Brotli where supported, which is smal
 | Page | JavaScript + CSS | Font | Textures | First-view total |
 | --- | --- | --- | --- | --- |
 | Landing | 318 KiB (`index` 316 + CSS 2) | — | 0.99–1.12 MiB low (this month's 4096 day texture, night, water mask, relief), then 3.8–4.2 MiB more for standard on capable devices | ~1.3–1.4 MiB (low) |
-| Watch or preview | 318 + 133 (`JourneyStage`: Remotion and the player) + 1–5 (page) | 115 KiB | 0.99–1.12 MiB low / 3.8–4.2 MiB standard | ~1.5–1.7 MiB low / ~4.4–4.8 MiB standard |
+| Watch or preview | 318 + 133 (`JourneyStage`: Remotion and the player) + 1–5 (page) | 51 KiB (Barlow Condensed; Dosis, 59 KiB, until November 12, 2026) | 0.99–1.12 MiB low / 3.8–4.2 MiB standard | ~1.5–1.7 MiB low / ~4.4–4.8 MiB standard |
 | Export (on demand) | +117 KiB (`@remotion/web-renderer` + mediabunny core) | — | standard set | Loaded only when Export is pressed |
 
 Real iPhone, cold load over Wi-Fi: **919 KiB**, first journey frame at **981 ms**. Emulated phone (Fast 4G, 4× CPU): a cold load transferred **916 KiB**: JS 317 + 120 + 2, font 59, low textures 415, snapshot and HTML 2. The globe appeared **2.6 s** after navigation.
@@ -60,6 +60,8 @@ In Chrome's phone emulation (390×844, low quality, Fast 4G), JFK → BOS showed
 | **Watch page playback, real iPhone (iOS 27.3)** | low (chosen automatically) | 17 ms | 17 ms; 29.8 of 30 composition frames rendered per second |
 
 These were measured before the November 12 lighting work (tone mapping, moonlight, city lights, cloud lighting), which adds per-pixel work: a few Chapman-function evaluations for sunlight through the air, a cloud shadow per light, two hashed noise fields only where the night map has lights, and the sky's reflection on water by day (about 150 arithmetic operations, two dozen of them exponentials or square roots, and no texture reads; see [decisions.md](decisions.md#water-that-reflects-the-sky)). Re-measure on the iPhone before relying on these numbers. Metering a journey's exposure costs about 80 ms of main-thread time for 2 minutes of frames, once, when it first plays.
+
+Airport labels add little per frame: each split-flap panel is a canvas texture redrawn and uploaded only while its cards turn (0.74 s after it appears), about 0.1–0.4 ms a frame at 720p–1080p and 1 ms at a 2,160-pixel short side in headless Chrome on an M1 Max. Laying the labels out costs 1–4 ms once per journey and frame shape (18–120 s journeys, warm, Node); a resized window lays them out again.
 
 CPU throttling does not slow the GPU, so the emulated-phone frame times are optimistic. The player steps down from standard to low automatically if playback stays below 20 fps for 3 seconds. Timing is unaffected.
 
@@ -180,5 +182,7 @@ An airport lookup (`GET /api/v1/airports/AKL`) sent after 20 s to 4 minutes of i
 | Weather fields from NOAA, warm (code unchanged; a smaller heap or noise) | 6.3 ms | 3.7 ms |
 
 Production figures after the change: not yet measured (needs a deploy).
+
+**Storyboards and seeks lay out airport labels** (renderer 2.2): one pass over every frame of the journey, about 1 ms for 18–30 s journeys and 3–4 ms for the 120 s maximum, warm, in Node. A storyboard, a seek, or an agent's read of a draft with an open preview pays it once per request. Not yet measured in workerd or production.
 
 **Still over budget:** a save that looks up a new train, bus, car or ferry route in a fresh isolate. The route's own work is now about 2.5 ms per 650 km warm, but the first lookup in an isolate also pays for the runtime's fetch and cache machinery and for running cold code. Lookups are infrequent: about once per route, per Cloudflare location, per 30 days (edge caches can evict sooner). See [decisions.md](decisions.md#worker-cpu-within-the-free-plan) for the options if production shows them recurring.

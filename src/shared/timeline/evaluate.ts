@@ -19,11 +19,13 @@ import {
   normalize,
   scale,
   smoothstep,
+  smootherstep,
   sub,
 } from '../geo/vec';
 import type { AircraftType } from '../scene/aircraft';
 import { type AspectRatio, HOLD_MINUTES, SURFACE_MODES, type SurfaceMode } from '../scene/constants';
 import { exposureProfile, meterGlobe } from './exposure';
+import { type LabelState, type Pulse, labelsAt } from './labels';
 import type { NormalizedSceneV1 } from '../scene/types';
 
 /** `flight` and `surface` are a leg in motion: flown, or travelled by train, bus, car, or ferry. */
@@ -90,12 +92,8 @@ export interface CameraState {
   fovDeg: number;
 }
 
-export interface LabelState {
-  index: number;
-  code: string;
-  position: Vec3;
-  opacity: number;
-}
+export type { LabelState, Pulse } from './labels';
+export { smootherstep };
 
 export interface SceneState {
   t: number;
@@ -121,10 +119,12 @@ export interface SceneState {
   trail: number[];
   sun: Vec3;
   camera: CameraState;
+  /** Airport labels in the offline renderer's layout, for this frame shape (see labels.ts). */
   labels: LabelState[];
+  /** Rings growing from airports the aircraft has just reached. */
+  pulses: Pulse[];
 }
 
-const LABEL_FADE_S = 0.45;
 const NORTH: Vec3 = [0, 1, 0];
 const DEG = Math.PI / 180;
 
@@ -154,12 +154,6 @@ const CRUISE_DISPLAY = (11_000 * 12) / 6_371_000;
  */
 export const AIRCRAFT_SHORT_SIDE_FRACTION = ((12.01 / 16.4) * 224) / SHORT_SIDE_PX;
 const HOLD_MS = HOLD_MINUTES * 60_000;
-
-/** Zero speed and acceleration at both ends. */
-export function smootherstep(x: number): number {
-  const v = clamp(x, 0, 1);
-  return v * v * v * (v * (v * 6 - 15) + 10);
-}
 
 /** Flight progress (fraction of the route covered) for a fraction u of a flight's screen time. */
 export const flightProgress = smootherstep;
@@ -369,39 +363,6 @@ function evaluateCamera(k: Kinematics, aspect: number): CameraState {
   };
 }
 
-function fadeWindow(t: number, inStart: number | null, outStart: number | null): number {
-  const fin = inStart === null ? 1 : smoothstep(inStart, inStart + LABEL_FADE_S, t);
-  const fout = outStart === null ? 1 : 1 - smoothstep(outStart, outStart + LABEL_FADE_S, t);
-  return clamp(Math.min(fin, fout), 0, 1);
-}
-
-/** When an airport label starts fading in and out (null: shown from the start or until the end). */
-function labelFades(tl: Timeline, occ: LabelOccurrence): { inStart: number | null; outStart: number | null } {
-  // Occurrence k appears during the incoming flight (leg k-1) and retires during the outgoing flight (leg k).
-  const incoming = occ.index > 0 ? tl.legs[occ.index - 1]! : null;
-  const outgoing = occ.index < tl.legs.length ? tl.legs[occ.index]! : null;
-  return {
-    inStart: incoming ? incoming.flightStart + (incoming.flightEnd - incoming.flightStart) * 0.5 : null,
-    outStart: outgoing ? outgoing.flightStart + (outgoing.flightEnd - outgoing.flightStart) * 0.3 : null,
-  };
-}
-
-function evaluateLabels(tl: Timeline, t: number): LabelState[] {
-  const out: LabelState[] = [];
-  for (const occ of tl.occurrences) {
-    const { inStart, outStart } = labelFades(tl, occ);
-    const opacity = fadeWindow(t, inStart, outStart);
-    if (opacity > 0.001) out.push({ index: occ.index, code: occ.code, position: occ.position, opacity });
-  }
-  return out;
-}
-
-/** A label's drawn opacity: hidden behind the globe and faded near the horizon. */
-export function visibleLabelOpacity(label: LabelState, cameraPosition: Vec3): number {
-  const facing = dot(label.position, cameraPosition);
-  return label.opacity * smoothstep(1.0, 1.0 + 0.05 * length(cameraPosition), facing);
-}
-
 function aircraftMix(tl: Timeline, k: Kinematics, t: number): SceneState['aircraft']['mix'] {
   const here = tl.legs[k.legIndex]!.craft;
   const seg = k.seg;
@@ -425,6 +386,9 @@ export function evaluate(tl: Timeline, tIn: number, aspect: number = DEFAULT_ASP
     if (i > k.legIndex) return 0;
     return k.seg.kind === 'start' ? 0 : k.legProgress;
   });
+  const camera = evaluateCamera(k, aspect);
+  const shape = Number.isFinite(aspect) && aspect > 0 ? aspect : DEFAULT_ASPECT;
+  const { labels, pulses } = labelsAt(tl, t, shape, camera, (when) => evaluateCamera(kinematics(tl, when), shape), trail);
   return {
     t,
     phase: k.seg.kind,
@@ -434,8 +398,9 @@ export function evaluate(tl: Timeline, tIn: number, aspect: number = DEFAULT_ASP
     aircraft: { ground: k.ground, altitude: k.altitude, heading: k.heading, mix: aircraftMix(tl, k, t) },
     trail,
     sun: sunDirection(k.physicalUtcMs),
-    camera: evaluateCamera(k, aspect),
-    labels: evaluateLabels(tl, t),
+    camera,
+    labels,
+    pulses,
   };
 }
 

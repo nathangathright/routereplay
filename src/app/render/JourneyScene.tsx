@@ -10,7 +10,7 @@ import type { EarthTextures } from './assets';
 import { type CloudSet, Clouds, cloudFrameAt } from './Clouds';
 import type { NightDetailTextures } from './nightDetail';
 import { Atmosphere, Earth } from './Earth';
-import { Labels, labelHeightFor } from './Labels';
+import { Labels } from './Labels';
 import { skyLights } from './lighting';
 import { Routes } from './Routes';
 import { Stars } from './Stars';
@@ -73,7 +73,6 @@ export function JourneyScene({
     if (typeof window !== 'undefined' && window.__rrRenderedFrames !== undefined) window.__rrRenderedFrames++;
   }, [frame, t, invalidate, onFrame, state, detailVersion]);
 
-  const codes = useMemo(() => [...new Set(timeline.occurrences.map((o) => o.code))], [timeline]);
   const sun = state.sun;
   const lights = useMemo(() => skyLights(state.physicalUtcMs), [state.physicalUtcMs]);
   const cloudFrame = clouds ? cloudFrameAt(clouds, state.physicalUtcMs) : null;
@@ -82,7 +81,6 @@ export function JourneyScene({
   const toAircraft = camDist - 1 - state.aircraft.altitude;
   const shortSide = toAircraft * 2 * Math.tan((35 * Math.PI) / 180);
   const aircraftSize = AIRCRAFT_SHORT_SIDE_FRACTION * shortSide;
-  const halfWidth = 0.0022 * (camDist - 1);
 
   return (
     <>
@@ -98,7 +96,7 @@ export function JourneyScene({
       <Earth textures={textures} lights={lights} segments={segments} clouds={cloudFrame} detail={detail} />
       {cloudFrame && <Clouds frame={cloudFrame} lights={lights} night={textures.night} segments={segments} />}
       <Atmosphere sun={sun} segments={Math.max(48, segments / 2)} />
-      <Routes timeline={timeline} trail={state.trail} currentLeg={state.legIndex} halfWidth={halfWidth} />
+      <Routes timeline={timeline} trail={state.trail} />
       {state.aircraft.mix.map((m) =>
         isSurfaceMode(m.type) ? (
           <Vehicle key={m.type} mode={m.type} timeline={timeline} state={state} shortSide={shortSide} opacity={m.weight} />
@@ -116,14 +114,7 @@ export function JourneyScene({
           />
         ),
       )}
-      <Labels
-        labels={state.labels}
-        codes={codes}
-        camera={cam.position}
-        fovDeg={cam.fovDeg}
-        heightFraction={labelHeightFor(aspect)}
-        lift={0.4}
-      />
+      <Labels labels={state.labels} pulses={state.pulses} />
     </>
   );
 }

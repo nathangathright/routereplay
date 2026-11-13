@@ -99,7 +99,10 @@
         "sunElevationDeg": 24.1,
         "daylight": true
       },
-      "labels": [],
+      "labels": [
+        "ORD",
+        "SFO"
+      ],
       "camera": {
         "centerLat": 41.6,
         "centerLon": -101.06,
@@ -226,7 +229,9 @@
         "sunElevationDeg": -61.8,
         "daylight": false
       },
-      "labels": [],
+      "labels": [
+        "AKL"
+      ],
       "camera": {
         "centerLat": 1.97,
         "centerLon": -152.83,

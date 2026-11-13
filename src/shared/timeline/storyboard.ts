@@ -6,7 +6,7 @@
 import { vecToLatLon, dot } from '../geo/vec';
 import { formatLocalTimestamp, formatUtc, zoneOffsetMinutes } from '../scene/time';
 import type { NormalizedSceneV1 } from '../scene/types';
-import { DEFAULT_ASPECT, type Phase, type Timeline, buildTimeline, evaluate, visibleLabelOpacity } from './evaluate';
+import { DEFAULT_ASPECT, type Phase, type Timeline, buildTimeline, evaluate } from './evaluate';
 import { framing } from './view';
 
 export const STORYBOARD_FRAMES = { default: 8, min: 2, max: 24 } as const;
@@ -90,7 +90,7 @@ export function keyframeAt(tl: Timeline, tIn: number): Keyframe {
     local,
     aircraft: { lat: round(ground.lat, 2), lon: round(ground.lon, 2), sunElevationDeg: round(elevation, 1), daylight: elevation > 0 },
     labels: s.labels
-      .filter((l) => visibleLabelOpacity(l, s.camera.position) >= 0.5)
+      .filter((l) => l.opacity >= 0.5)
       .sort((a, b) => a.index - b.index)
       .map((l) => l.code),
     camera: { centerLat: round(center.lat, 2), centerLon: round(center.lon, 2), viewRadiusKm: Math.round(view.viewRadiusKm / 10) * 10 },

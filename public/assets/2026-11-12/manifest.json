@@ -428,6 +428,15 @@
       "tiles": 1215,
       "bytes": 3314282,
       "sha256": "14d31c3c151664837de83681c444b61e5d2af8cc4378ebc57e0c96db48bc1c56"
+    },
+    {
+      "path": "BarlowCondensed-SemiBold.ttf",
+      "kind": "font",
+      "source": "https://github.com/google/fonts/tree/main/ofl/barlowcondensed",
+      "credit": "The Barlow Project Authors",
+      "license": "SIL Open Font License 1.1 (BarlowCondensed-OFL.txt)",
+      "bytes": 109428,
+      "sha256": "7b619d14bc2327509a9ef32b0890f709626f7ecc9ff61191c2a4314c5499d2d9"
     }
   ]
 }

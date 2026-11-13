@@ -5,7 +5,7 @@
 | Field | Meaning | Current |
 | --- | --- | --- |
 | `schemaVersion` | Authoring contract (`/schemas/scene-v1.json`) | 1 |
-| `compatibility.rendererVersion` | Semver of the timeline and scene code | 2.1.0 |
+| `compatibility.rendererVersion` | Semver of the timeline and scene code | 2.2.0 |
 | `compatibility.assetManifestVersion` | Directory under `/assets/` holding textures and font when the record was saved | 2026-11-12 |
 | `compatibility.airportDataVersion` | Airport table used to normalize the record | `2026-11-11.<hash>` |
 
@@ -23,6 +23,8 @@ The player plays a record when its schema version is supported and its renderer 
 Renderer 2.0 (November 2026) replaced the camera presets with the offline renderer's single camera and moved time through the start and end holds (see [decisions.md](decisions.md#one-camera-the-offline-renderers)). It also added weather-model clouds (`environment.weather: "clouds"` with a pinned `environment.cloudRun`), made `legs[].aircraft` (an ICAO type designator) required, and dropped `presentation.camera`, `presentation.aspectRatio`, and `assets.aircraft`. This was a development reset: no outside agents or owners existed yet, so there is no migration. 1.x records show the "can't be played here" page with their route summary, and the fixture and its golden states were regenerated for 2.0. From here on the policy above applies. The ocean-glint water mask joined the existing asset directory because it adds a file and changes none. Its sharper replacements, one per day-texture width, joined it the same way, and so did the terrain relief maps (November 12, 2026). The old mask was deleted rather than kept: with no users yet, no page still runs the build that loaded it.
 
 Renderer 2.1 added train, bus, car, and ferry legs (`legs[].mode` in place of `aircraft`; see [decisions.md](decisions.md#surface-legs-one-marker-for-every-mode)). Journeys with only flights evaluate exactly as before, so the fixture's golden states and storyboard are unchanged. Drawing each mode as its own vehicle ([decisions.md](decisions.md#train-bus-car-and-ferry-models)) changed only the picture and which craft a connection dissolves between, so the renderer version stayed 2.1.0.
+
+Renderer 2.2 (November 12, 2026) draws airport labels and route lines as the offline renderer does ([decisions.md](decisions.md#airport-labels-and-route-lines-the-offline-renderers)). Labels now appear when their airport comes into view, hold a fixed slot until arrival, and recede with the ground, so the golden states' label entries and the storyboard's `labels` changed and both files were regenerated. Nothing else in them changed: camera, aircraft, Sun, trail, and timing are identical, and the fixture record itself was not rewritten. By the rule above this calls for a major version. It was kept minor on purpose: there are no users yet, and a major would make every saved journey unplayable only to keep the old labels. Once there are users, a label change like this one needs the major bump.
 
 Pixel-identical output across GPUs is not promised. The golden states pin what is drawn, not how a GPU rasterizes it.
 

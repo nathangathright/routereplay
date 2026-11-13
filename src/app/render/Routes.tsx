@@ -1,107 +1,186 @@
+import { useThree } from '@react-three/fiber';
 import { useMemo } from 'react';
 import * as THREE from 'three';
-import { cross, normalize, scale } from '../../shared/geo/vec';
+import { normalize, scale, sub } from '../../shared/geo/vec';
 import { type Timeline, displayAltitude } from '../../shared/timeline/evaluate';
 
+/*
+ * The flown route as the offline renderer draws it (routereplay `scene_overlays.route`): only the part already
+ * travelled, a 5-pixel line in its accent colour over a 16-pixel line of 59 % opacity blurred by a Gaussian of
+ * 11 pixels. Widths are pixels of a 1080-pixel short side, scaled to the screen's, so the line keeps its width at
+ * every zoom. Train, bus, car, and ferry legs draw the line as dots, as storyboard sketches do.
+ */
+
+/** The offline renderer's accent, (255, 169, 116). */
+const ROUTE_COLOR = '#ffa974';
+const CORE_HALF = 2.5;
+const GLOW_HALF = 8;
+const GLOW_SIGMA = 11;
+const GLOW_ALPHA = 150 / 255;
+/** Reach of the glow beyond the line's centre, where its profile has fallen under 0.2 %. */
+const GLOW_EXTENT = GLOW_HALF + 3 * GLOW_SIGMA;
+/** Ground legs: 6-pixel dots every 12 pixels at the airports' zoom (4742 pixels per radian). */
+const DOT_RADIUS = 3;
+const DOT_SPACING_RAD = 12 / 4742;
+/** The glow's sample spacing: about 20 pixels at the airports' zoom. */
+const GLOW_SAMPLE_RAD = 20 / 4742;
+
 const vertex = /* glsl */ `
-attribute vec3 center;
-attribute vec3 side;
+attribute vec3 tangent;
 attribute float sideSign;
 attribute float along;
+attribute float alongRad;
+attribute float cap;
+uniform vec2 buffer;
 uniform float halfWidth;
 varying float vAlong;
-varying float vSide;
+varying float vAlongRad;
+varying float vAcross;
+varying float vBeyond;
+varying float vPxPerRad;
 void main() {
   vAlong = along;
-  vSide = sideSign;
-  vec3 p = center + side * sideSign * halfWidth;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+  vAlongRad = alongRad;
+  mat4 m = projectionMatrix * modelViewMatrix;
+  vec4 c = m * vec4(position, 1.0);
+  vec4 n = m * vec4(position + tangent * 1e-3, 1.0);
+  vec2 s0 = c.xy / c.w * buffer * 0.5;
+  vec2 s1 = n.xy / n.w * buffer * 0.5;
+  vec2 d = s1 - s0;
+  float len = max(length(d), 1e-6);
+  vec2 dir = d / len;
+  vPxPerRad = len / 1e-3;
+  vAcross = sideSign * halfWidth;
+  vBeyond = abs(cap) * halfWidth;
+  vec2 offset = vec2(-dir.y, dir.x) * vAcross + dir * cap * halfWidth;
+  c.xy += offset / (buffer * 0.5) * c.w;
+  gl_Position = c;
 }
 `;
 
 const fragment = /* glsl */ `
 uniform float progress;
-uniform float planned;
-uniform float dashCount;
+uniform float glow;
+uniform float dotted;
 uniform vec3 color;
-uniform float opacity;
+uniform float pxPerRef;
 varying float vAlong;
-varying float vSide;
+varying float vAlongRad;
+varying float vAcross;
+varying float vBeyond;
+varying float vPxPerRad;
+
+// Abramowitz and Stegun 7.1.26, within 1.5e-7.
+float erf1(float x) {
+  float s = sign(x);
+  float a = abs(x);
+  float t = 1.0 / (1.0 + 0.3275911 * a);
+  float y = 1.0 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * exp(-a * a);
+  return s * y;
+}
+
 void main() {
-  float edge = 1.0 - smoothstep(0.55, 1.0, abs(vSide));
+  if (vAlong > progress) discard;
   float a;
-  if (planned > 0.5) {
-    if (vAlong < progress) discard;
-    float dash = step(0.5, fract(vAlong * dashCount));
-    a = dash * edge * opacity;
+  vec3 rgb = color;
+  if (glow > 0.5) {
+    // A 16-pixel line blurred by a Gaussian: the box's profile across, and a soft round end.
+    float k = 1.0 / (${GLOW_SIGMA.toFixed(1)} * pxPerRef * 1.41421356);
+    float h = ${GLOW_HALF.toFixed(1)} * pxPerRef;
+    float p = 0.5 * (erf1((vAcross + h) * k) - erf1((vAcross - h) * k));
+    p *= 1.0 - erf1(vBeyond * k);
+    // Pillow blurs colour and alpha separately, so the glow's colour dims with its alpha.
+    rgb *= p;
+    a = ${GLOW_ALPHA.toFixed(6)} * p;
   } else {
-    if (vAlong > progress) discard;
-    a = edge * opacity;
+    if (vBeyond > 0.0) discard;
+    float across = abs(vAcross);
+    if (dotted > 0.5) {
+      float spacing = ${DOT_SPACING_RAD.toExponential(6)};
+      float along = (fract(vAlongRad / spacing) - 0.5) * spacing * vPxPerRad;
+      a = clamp(${DOT_RADIUS.toFixed(1)} * pxPerRef + 0.5 - length(vec2(along, across)), 0.0, 1.0);
+    } else {
+      a = clamp(${CORE_HALF.toFixed(1)} * pxPerRef + 0.5 - across, 0.0, 1.0);
+    }
   }
-  if (a <= 0.001) discard;
-  gl_FragColor = vec4(color, a);
+  if (a <= 0.002) discard;
+  gl_FragColor = sRGBTransferEOTF(vec4(rgb, a));
   #include <colorspace_fragment>
 }
 `;
 
+const evenFractions = (n: number) => Array.from({ length: n + 1 }, (_, i) => i / n);
+
 /** Evenly spaced fractions along a track, plus its corners so a looked-up route keeps its shape. */
 function sampleFractions(angle: number, corners: readonly number[]): number[] {
-  const n = Math.max(48, Math.ceil(angle * 160));
-  const even = Array.from({ length: n + 1 }, (_, i) => i / n);
+  const even = evenFractions(Math.max(48, Math.ceil(angle * 160)));
   if (corners.length === 0) return even;
   const all = [...even, ...corners].sort((a, b) => a - b);
   return all.filter((f, i) => i === 0 || f - all[i - 1]! > 1e-9);
 }
 
-function legGeometry(tl: Timeline, index: number): THREE.BufferGeometry {
+/**
+ * A ribbon along a leg, widened on screen by the vertex shader, with a cap quad at each end for the glow. The line
+ * follows every corner of a looked-up route. The glow, 80 pixels wide, follows it smoothly instead: evenly spaced
+ * samples about 20 pixels apart at the airports' zoom, turned along the chord through their neighbours, so a winding
+ * road doesn't fold the wide ribbon over itself.
+ */
+function legGeometry(tl: Timeline, index: number, glow: boolean): THREE.BufferGeometry {
   const leg = tl.legs[index]!;
   const track = leg.track;
-  const fractions = sampleFractions(track.angle, track.corners);
-  const n = fractions.length - 1;
-  const center = new Float32Array((n + 1) * 2 * 3);
-  const side = new Float32Array((n + 1) * 2 * 3);
-  const sideSign = new Float32Array((n + 1) * 2);
-  const along = new Float32Array((n + 1) * 2);
-  for (let i = 0; i <= n; i++) {
-    const f = fractions[i]!;
-    const p = track.at(f);
-    const t = track.tangent(f);
-    const s = normalize(cross(t, p));
-    const c = scale(p, 1.0015 + displayAltitude(leg.cruise, f));
+  const fractions = glow ? evenFractions(Math.max(2, Math.ceil(track.angle / GLOW_SAMPLE_RAD))) : sampleFractions(track.angle, track.corners);
+  const step = 1 / (fractions.length - 1);
+  const direction = (f: number) =>
+    glow ? normalize(sub(track.at(Math.min(1, f + step)), track.at(Math.max(0, f - step)))) : normalize(track.tangent(f));
+  // Stations along the ribbon: the first and last repeat as the caps' outer edges.
+  const stations = [{ f: 0, cap: -1 }, ...fractions.map((f) => ({ f, cap: 0 })), { f: 1, cap: 1 }];
+  const count = stations.length * 2;
+  const position = new Float32Array(count * 3);
+  const tangent = new Float32Array(count * 3);
+  const sideSign = new Float32Array(count);
+  const along = new Float32Array(count);
+  const alongRad = new Float32Array(count);
+  const cap = new Float32Array(count);
+  stations.forEach(({ f, cap: c }, i) => {
+    const p = scale(track.at(f), 1.0015 + displayAltitude(leg.cruise, f));
+    const t = direction(f);
     for (let k = 0; k < 2; k++) {
       const j = i * 2 + k;
-      center.set(c, j * 3);
-      side.set(s, j * 3);
+      position.set(p, j * 3);
+      tangent.set(t, j * 3);
       sideSign[j] = k === 0 ? -1 : 1;
       along[j] = f;
+      alongRad[j] = f * track.angle;
+      cap[j] = c;
     }
-  }
-  const index32: number[] = [];
-  for (let i = 0; i < n; i++) {
+  });
+  const indices: number[] = [];
+  for (let i = 0; i < stations.length - 1; i++) {
     const a = i * 2;
-    index32.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+    indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
   }
   const g = new THREE.BufferGeometry();
-  // `position` is required by three for bounds; the shader uses `center`.
-  g.setAttribute('position', new THREE.BufferAttribute(center, 3));
-  g.setAttribute('center', new THREE.BufferAttribute(center, 3));
-  g.setAttribute('side', new THREE.BufferAttribute(side, 3));
+  g.setAttribute('position', new THREE.BufferAttribute(position, 3));
+  g.setAttribute('tangent', new THREE.BufferAttribute(tangent, 3));
   g.setAttribute('sideSign', new THREE.BufferAttribute(sideSign, 1));
   g.setAttribute('along', new THREE.BufferAttribute(along, 1));
-  g.setIndex(index32);
+  g.setAttribute('alongRad', new THREE.BufferAttribute(alongRad, 1));
+  g.setAttribute('cap', new THREE.BufferAttribute(cap, 1));
+  g.setIndex(indices);
   g.computeBoundingSphere();
   return g;
 }
 
-function routeMaterial(planned: boolean, color: string, opacity: number, dashCount: number) {
+function routeMaterial(glow: boolean, dotted: boolean, buffer: THREE.Vector2) {
   return new THREE.ShaderMaterial({
     uniforms: {
       progress: { value: 0 },
-      planned: { value: planned ? 1 : 0 },
-      dashCount: { value: dashCount },
-      color: { value: new THREE.Color(color) },
-      opacity: { value: opacity },
-      halfWidth: { value: 0.004 },
+      glow: { value: glow ? 1 : 0 },
+      dotted: { value: dotted ? 1 : 0 },
+      color: { value: new THREE.Color(ROUTE_COLOR).convertLinearToSRGB() },
+      halfWidth: { value: 1 },
+      pxPerRef: { value: 1 },
+      buffer: { value: buffer },
     },
     vertexShader: vertex,
     fragmentShader: fragment,
@@ -111,47 +190,41 @@ function routeMaterial(planned: boolean, color: string, opacity: number, dashCou
   });
 }
 
-export const ROUTE_COLOR = '#ffc76b';
-
-/** Flown trail for every leg plus a faint dashed path ahead on the current leg. */
-export function Routes({
-  timeline,
-  trail,
-  currentLeg,
-  halfWidth,
-}: {
-  timeline: Timeline;
-  trail: number[];
-  currentLeg: number;
-  halfWidth: number;
-}) {
+/** Each leg's flown part, up to the aircraft: a glow, then the line (dotted on the ground) over it. */
+export function Routes({ timeline, trail }: { timeline: Timeline; trail: number[] }) {
+  const gl = useThree((s) => s.gl);
+  // Re-render on resize; the drawing buffer's size is read below.
+  useThree((s) => s.size);
+  const buffer = useMemo(() => new THREE.Vector2(), []);
+  gl.getDrawingBufferSize(buffer);
+  const pxPerRef = Math.min(buffer.x, buffer.y) / 1080;
   const legs = useMemo(
     () =>
-      timeline.legs.map((leg, i) => {
-        const geometry = legGeometry(timeline, i);
-        const dashes = Math.max(6, Math.round(leg.track.angle * 90));
-        return {
-          geometry,
-          flown: routeMaterial(false, ROUTE_COLOR, 0.95, 1),
-          ahead: routeMaterial(true, '#ffffff', 0.32, dashes),
-        };
-      }),
-    [timeline],
+      timeline.legs.map((leg, i) => ({
+        glowGeometry: legGeometry(timeline, i, true),
+        lineGeometry: legGeometry(timeline, i, false),
+        glow: routeMaterial(true, false, buffer),
+        line: routeMaterial(false, leg.mode !== null, buffer),
+      })),
+    [timeline, buffer],
   );
   return (
-    <group renderOrder={2}>
+    <group>
       {legs.map((l, i) => {
         const progress = trail[i] ?? 0;
-        l.flown.uniforms.progress!.value = progress;
-        l.flown.uniforms.halfWidth!.value = halfWidth;
-        l.ahead.uniforms.progress!.value = progress;
-        l.ahead.uniforms.halfWidth!.value = halfWidth * 0.6;
+        if (progress <= 0) return null;
+        for (const [m, half] of [
+          [l.glow, GLOW_EXTENT],
+          [l.line, Math.max(CORE_HALF, DOT_RADIUS) + 1],
+        ] as const) {
+          m.uniforms.progress!.value = progress;
+          m.uniforms.pxPerRef!.value = pxPerRef;
+          m.uniforms.halfWidth!.value = half * pxPerRef;
+        }
         return (
           <group key={i}>
-            {progress > 0 && <mesh geometry={l.geometry} material={l.flown} renderOrder={3} frustumCulled={false} />}
-            {i === currentLeg && progress < 1 && (
-              <mesh geometry={l.geometry} material={l.ahead} renderOrder={2} frustumCulled={false} />
-            )}
+            <mesh geometry={l.glowGeometry} material={l.glow} renderOrder={2} frustumCulled={false} />
+            <mesh geometry={l.lineGeometry} material={l.line} renderOrder={3} frustumCulled={false} />
           </group>
         );
       })}

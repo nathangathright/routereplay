@@ -111,7 +111,7 @@ RELIEF_STEP = 3
 EARTH_RADIUS_M = 6371000.0
 
 # Copied unchanged from the previous version directory.
-CARRIED = ('Dosis-Variable.ttf', 'OFL.txt')
+CARRIED = ('Dosis-Variable.ttf', 'OFL.txt', 'BarlowCondensed-SemiBold.ttf', 'BarlowCondensed-OFL.txt')
 
 NASA_LICENSE = 'Public domain (NASA)'
 
@@ -352,7 +352,7 @@ def build_night_detail(files):
 
 
 def carry_forward():
-    """Copy the font and its license from the newest older version directory, if this one lacks them."""
+    """Copy the fonts and their licenses from the newest older version directory, if this one lacks them."""
     older = sorted(p for p in ASSETS.iterdir() if p.is_dir() and p.name < VERSION)
     for name in CARRIED:
         if not (OUT / name).exists():
@@ -384,6 +384,11 @@ def main():
         OUT / 'Dosis-Variable.ttf', kind='font',
         source='https://github.com/google/fonts/tree/main/ofl/dosis',
         credit='The Dosis Project Authors', license='SIL Open Font License 1.1 (OFL.txt)',
+    ))
+    files.append(record(
+        OUT / 'BarlowCondensed-SemiBold.ttf', kind='font',
+        source='https://github.com/google/fonts/tree/main/ofl/barlowcondensed',
+        credit='The Barlow Project Authors', license='SIL Open Font License 1.1 (BarlowCondensed-OFL.txt)',
     ))
     if sys.argv[1:]:
         # A partial build replaces its own records and keeps the rest, in place.

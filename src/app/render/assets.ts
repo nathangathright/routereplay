@@ -100,12 +100,15 @@ export function loadEarthTextures(quality: Quality, month: number): Promise<Eart
 
 let fontPromise: Promise<void> | null = null;
 
-/** Load the bundled OFL label font so canvas-drawn labels look the same on every device. */
+/**
+ * Load the bundled OFL font for the split-flap airport codes (Barlow Condensed SemiBold, standing in for the offline
+ * renderer's DIN Condensed Bold), so canvas-drawn labels look the same on every device.
+ */
 export function loadLabelFont(): Promise<void> {
   if (!fontPromise) {
     fontPromise = (async () => {
       if (typeof FontFace === 'undefined') return;
-      const face = new FontFace(LABEL_FONT_FAMILY, `url(${ASSET_BASE}/Dosis-Variable.ttf)`, { weight: '200 800' });
+      const face = new FontFace(LABEL_FONT_FAMILY, `url(${ASSET_BASE}/BarlowCondensed-SemiBold.ttf)`, { weight: '600' });
       await face.load();
       document.fonts.add(face);
     })().catch(() => {

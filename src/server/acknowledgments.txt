@@ -23,7 +23,11 @@ shaded by the Sun and Moon)
   https://doi.org/10.25921/fd45-gt74
 
 
-TYPEFACE
+TYPEFACES
+
+Barlow Condensed, by The Barlow Project Authors (airport codes)
+  SIL Open Font License 1.1: {{ORIGIN}}/assets/{{ASSET_VERSION}}/BarlowCondensed-OFL.txt
+  https://github.com/google/fonts/tree/main/ofl/barlowcondensed
 
 Dosis, by The Dosis Project Authors
   SIL Open Font License 1.1: {{ORIGIN}}/assets/{{ASSET_VERSION}}/OFL.txt
