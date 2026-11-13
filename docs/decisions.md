@@ -127,7 +127,7 @@ Viewer context already tells the agent *where*. The creator tells their agent *w
   - **Colour:** regional mixes of sodium, warm, and neutral lamps.
   - **Switching:** street lights come on at about 16 lux of sky light (later at dawn), and building lights at 100 lux. Thresholds vary across a seeded noise field identical to the offline renderer's.
   - **Schedule:** buildings and signs go dark after a regional curfew in local solar time.
-- **Cloud lighting:** sunlight reaches cloud tops through the same air as the atmosphere, so decks near the terminator turn gold and stay lit a few degrees past the ground's. Cloud lying in a thicker neighbour's lee falls into its shade, and city light glows up through thin cloud.
+- **Cloud lighting:** sunlight reaches cloud tops through the same air as the atmosphere, so decks near the terminator turn gold and stay lit a few degrees past the ground's. Billow tops facing the light catch more of it ([cloud tops lit as shapes](#cloud-tops-lit-as-shapes)), and city light glows up through thin cloud.
 
 Deliberate differences:
 - **Lamp colours** are our own blackbody derivations (2000, 3000, 4000, and 5000 K, unit luminance). The offline renderer's CIE-derived palette is CC BY-SA.
@@ -153,6 +153,20 @@ Not ported from the offline renderer:
 - **Night-side relief fill:** a fixed light from the south-east that scales the night floor by 0.77–1.12. At this scene's night levels it changed 99 % of pixels by 2/255 or less. It would also bring back a fixed light direction, the reason the shaded day map was dropped. Moonlight shows the relief at night instead.
 - **Cast shadows:** the offline renderer traces the terrain for moonlight. Here only slopes turned away from a light go dark.
 - **Raised terrain:** the offline renderer intersects the exaggerated terrain itself. Here the globe stays a sphere, so ridges don't stand out at the limb.
+
+## Cloud tops lit as shapes
+
+*Decided November 13, 2026.* Cloud tops are lit as billows: sides facing the Sun catch more light and sides turned away fall into soft shade, so decks read as volumes instead of flat blotches. The effect is strongest at sunrise and sunset and faint at noon. It replaces the earlier "lee" shading, which compared the cloud water a short step toward the light with the water here.
+
+- **Height:** a cloud top stands as high as the cloud is thick (cloud water × the billow noise that already shapes its opacity). Only lighting uses this; the shell stays a sphere.
+- **Normal:** tilted by the billow noise's gradient, times the cloud water, times `CLOUD_RELIEF` = 0.05 Earth radii per unit of thickness. Slopes are capped at 1.5 (`MAX_CLOUD_SLOPE`). The offline renderer tilts its billow normals the same way (`cloudvolume.py`, `BILLOW_NORMAL_RELIEF_M`), but inside a ray-marched volume this scene can't afford.
+- **Gradient for free:** the 32³ noise texture now carries its gradient in G, B, and A beside the noise in R. That is a central difference, smoothed [1, 2, 1] / 4 across the other two axes (a 3D Sobel filter). The gradient arrives with the noise reads the shader already makes, so there are no extra texture reads. Plain central differences showed the lattice as facets under a low Sun.
+- **Light:** the level deck's light, unchanged (it catches light a little past its horizon, reddened through the air), times e^(2.5 (N·l − n·l)) (`CLOUD_SHADING`). N is the tilted normal and n the shell's. For a tilt θ toward the light, the exponent is about 2.5 θ cos(elevation), so the contrast peaks at sunrise and sunset by itself. The result is smooth and never black. Flat decks get exactly what they did before, so the gold terminator, noon brightness, and the ground's cloud shadows (which read only the cloud water) are unchanged. Moonlight is shaded the same way.
+- **Cost:** per cloud pixel, the "lee" shading's extra cubic read of the cloud field is gone: 10 texture reads for the Sun, and 10 more under moonlight. In their place come about 30 arithmetic operations, and the noise texture grows from 32 KiB to 128 KiB (RGBA). Frame times didn't measurably change ([budgets.md](budgets.md#frame-time)).
+
+Not done:
+- **Deck-scale slopes from the cloud water.** Screen-space derivatives of the cloud water are free, but they come per 2×2-pixel block, which a low Sun turned into visible steps. Finite differences of the smooth field would cost 20 more texture reads per pixel. Edges of decks still thin out through their opacity.
+- **Shadows cast by one billow on another,** as the offline renderer's volume gives. Only slopes turned away from the light darken.
 
 ## Sharp city lights near airports
 

@@ -19,6 +19,19 @@ const WIND_STEP = 0.6;
 const MAX_ADVECTION_S = 3 * 3600;
 /** The procedural detail is carried by the wind and renewed on this cycle, so it never stretches out. */
 const DETAIL_PERIOD_S = 3 * 3600;
+/**
+ * Cloud-top relief for lighting only (the shell stays a sphere): tops rise this many Earth radii per unit of
+ * cloud thickness (cloud water × billow noise), about 320 km. Like the shell's height, it is exaggerated far
+ * beyond real cloud tops so billows read at globe scale.
+ */
+const CLOUD_RELIEF = 0.05;
+/** Steepest cloud-top slope (rise over run), so the steepest billows in thick cloud never turn edge-on. */
+const MAX_CLOUD_SLOPE = 1.5;
+/**
+ * How strongly a billow's slope brightens or dims it: light × e^(k (N·l − n·l)), N the tilted normal and n the
+ * shell's. For a tilt θ toward the light that is about e^(k θ cos(elevation)), strongest at sunrise and sunset.
+ */
+const CLOUD_SHADING = 2.5;
 
 /** One model time step: cloud opacity (R) and the 700 hPa wind (RG, east and north), both on the 1° grid. */
 export interface WeatherStep {
@@ -91,14 +104,51 @@ export function releaseWeatherStep(field: CloudField): void {
 
 let noise: THREE.Data3DTexture | null = null;
 
-/** Seeded value noise on a 32³ lattice that tiles; trilinear filtering smooths it. Same on every device. */
+/** Lattice points along each side of the noise texture. */
+const NOISE_SIZE = 32;
+
+/**
+ * Seeded value noise on a 32³ lattice that tiles; trilinear filtering smooths it. Same on every device. R holds
+ * the noise; G, B, and A its gradient along x, y, and z, so the cloud shader shapes billow tops without reading
+ * the noise again. The gradient is a central difference smoothed across the other two axes (a 3D Sobel filter,
+ * in noise units per lattice step, 128 = flat): plain differences turn the lattice's cells into facets under a
+ * low Sun.
+ */
 function noiseTexture(): THREE.Data3DTexture {
   if (!noise) {
-    const size = 32;
+    const size = NOISE_SIZE;
     const rand = mulberry32(0xc10d);
-    const data = new Uint8Array(size * size * size).map(() => Math.floor(rand() * 256));
+    const value = new Uint8Array(size * size * size).map(() => Math.floor(rand() * 256));
+    const at = (x: number, y: number, z: number) => value[(((z + size) % size) * size + ((y + size) % size)) * size + ((x + size) % size)]!;
+    const weight = [0.25, 0.5, 0.25];
+    // Along `step` (one lattice step) at x, y, z: (ahead − behind) / 2, averaged [1, 2, 1] / 4 along u and v.
+    type Step = [number, number, number];
+    const slope = (x: number, y: number, z: number, [sx, sy, sz]: Step, [ux, uy, uz]: Step, [vx, vy, vz]: Step) => {
+      let sum = 0;
+      for (let j = -1; j <= 1; j++) {
+        for (let k = -1; k <= 1; k++) {
+          const [cx, cy, cz] = [x + j * ux + k * vx, y + j * uy + k * vy, z + j * uz + k * vz];
+          sum += (weight[j + 1]! * weight[k + 1]! * (at(cx + sx, cy + sy, cz + sz) - at(cx - sx, cy - sy, cz - sz))) / 2;
+        }
+      }
+      return Math.round(128 + sum * (254 / 255));
+    };
+    const X: Step = [1, 0, 0];
+    const Y: Step = [0, 1, 0];
+    const Z: Step = [0, 0, 1];
+    const data = new Uint8Array(size * size * size * 4);
+    for (let z = 0, i = 0; z < size; z++) {
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++, i++) {
+          data[4 * i] = value[i]!;
+          data[4 * i + 1] = slope(x, y, z, X, Y, Z);
+          data[4 * i + 2] = slope(x, y, z, Y, X, Z);
+          data[4 * i + 3] = slope(x, y, z, Z, X, Y);
+        }
+      }
+    }
     noise = new THREE.Data3DTexture(data, size, size, size);
-    noise.format = THREE.RedFormat;
+    noise.format = THREE.RGBAFormat;
     noise.wrapS = noise.wrapT = noise.wrapR = THREE.RepeatWrapping;
     noise.magFilter = noise.minFilter = THREE.LinearFilter;
     noise.needsUpdate = true;
@@ -244,19 +294,24 @@ ${AIR_GLSL}
 ${CITY_GLSL}
 ${CLOUD_GLSL}
 
-// Two octaves of seeded noise (cells of roughly 100 km and 40 km) at a position.
-float billows(vec3 p) {
-  return 0.6 * texture(noise, p).r + 0.4 * texture(noise, p * 2.6 + 0.37).r;
+// The noise texture's gradient, per unit of texture coordinate.
+vec3 noiseSlope(vec4 texel) {
+  return (texel.gba * 255.0 - 128.0) * ${(NOISE_SIZE / 254).toFixed(6)};
 }
 
-// Brightness of a cloud deck lit from direction l: sides facing the light catch it a little past the
-// horizon, as volumes do, and deck parts lying in a thicker neighbour's lee fall into its shade.
-float deckLight(vec3 n, vec3 l, float here) {
-  float mu = dot(n, l);
-  vec3 toward = l - n * mu;
-  float lee = cloudOpacity(normalize(n + toward * 0.012), true);
-  float relief = clamp(1.0 - 1.4 * (lee - here) * (1.0 - abs(mu)), 0.45, 1.2);
-  return clamp((mu + 0.15) / 1.15, 0.0, 1.0) * relief;
+// Two octaves of seeded noise (cells of roughly 100 km and 40 km) at a position (x), and their gradient (yzw).
+vec4 billows(vec3 p) {
+  vec4 a = texture(noise, p);
+  vec4 b = texture(noise, p * 2.6 + 0.37);
+  return vec4(0.6 * a.r + 0.4 * b.r, 0.6 * noiseSlope(a) + 1.04 * noiseSlope(b));
+}
+
+// Brightness of a cloud top with normal N on the shell at n, lit from direction l. A level deck catches light a
+// little past its horizon, as volumes do. Slopes facing the light brighten it and slopes turned away dim it,
+// smoothly and never to black (light scatters through the cloud), most when the light is low.
+float deckLight(vec3 N, vec3 n, vec3 l) {
+  float level = clamp((dot(n, l) + 0.15) / 1.15, 0.0, 1.0);
+  return level * exp(${CLOUD_SHADING.toFixed(2)} * (dot(N, l) - dot(n, l)));
 }
 
 // Light reaching the deck from direction l, reddened by the air on its way. The deck has depth: its lowest
@@ -277,21 +332,30 @@ void main() {
   float phase2 = fract(detail.x + 0.5);
   vec3 seed1 = fract(vec3(0.173, 0.311, 0.457) * detail.y);
   vec3 seed2 = fract(vec3(0.173, 0.311, 0.457) * detail.z);
-  float b1 = billows(drift(n, wind, -detail.x * ${DETAIL_PERIOD_S.toFixed(1)}) * 2.0 + seed1);
-  float b2 = billows(drift(n, wind, -phase2 * ${DETAIL_PERIOD_S.toFixed(1)}) * 2.0 + seed2);
+  vec4 b1 = billows(drift(n, wind, -detail.x * ${DETAIL_PERIOD_S.toFixed(1)}) * 2.0 + seed1);
+  vec4 b2 = billows(drift(n, wind, -phase2 * ${DETAIL_PERIOD_S.toFixed(1)}) * 2.0 + seed2);
   float w1 = 1.0 - abs(2.0 * detail.x - 1.0);
-  float body = mix(b2, b1, w1);
+  vec4 body = mix(b2, b1, w1);
 
   // The model's cloud water sets where clouds are and how opaque; the noise breaks the 1° grid into texture.
   float water = cloudOpacity(n, true);
-  float density = smoothstep(0.04, 0.9, water * (0.6 + 0.8 * body));
+  float thickness = water * (0.6 + 0.8 * body.x);
+  float density = smoothstep(0.04, 0.9, thickness);
   float alpha = density * 0.95;
+
+  // Cloud tops stand as high as the cloud is thick, so they rise into billows where the noise peaks, and taller
+  // ones where there is more cloud water. Only the billows tilt the normal: the noise's gradient comes with it
+  // (its space is twice the Earth frame's), while the water's would need more reads of the cubic field.
+  vec3 rise = water * 1.6 * body.yzw;
+  rise = (rise - n * dot(rise, n)) * ${CLOUD_RELIEF.toFixed(4)};
+  vec3 N = normalize(n - rise * min(1.0, ${MAX_CLOUD_SLOPE.toFixed(2)} / max(length(rise), 1e-6)));
 
   // Sunlight reaching the cloud tops, reddened by the air and cut off by the planet: tops stay lit, in sunset
   // colours, a little past the ground's terminator. Thicker cloud reflects more.
   float reflectance = CLOUD_BRIGHTNESS * (0.55 + 0.45 * density);
-  vec3 color = deckSunlight(n, normalize(sunDir)) * deckLight(n, normalize(sunDir), water) * reflectance;
-  if (moonlight > 0.0) color += moonlight * deckSunlight(n, moonDir) * deckLight(n, moonDir, water) * reflectance;
+  vec3 sun = normalize(sunDir);
+  vec3 color = deckSunlight(n, sun) * deckLight(N, n, sun) * reflectance;
+  if (moonlight > 0.0) color += moonlight * deckSunlight(n, moonDir) * deckLight(N, n, moonDir) * reflectance;
 
   // City light scattered up through the cloud from below (routereplay cityglow.py): spread a little, and
   // strongest through moderate cloud; thick cloud swallows it. The spread is the lights map two mip levels
