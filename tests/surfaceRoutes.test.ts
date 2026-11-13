@@ -87,11 +87,27 @@ const RAIL: LatLon[] = [
   [-40.3, 175.6],
   [-41.28, 174.78],
 ];
+/** Shaped like BRouter's answer: pretty-printed, with the per-segment log and times ahead of the geometry. */
 const brouter = (points: LatLon[] = RAIL) =>
-  JSON.stringify({
-    type: 'FeatureCollection',
-    features: [{ properties: { 'track-length': '640000' }, geometry: { type: 'LineString', coordinates: points.map(([la, lo]) => [lo, la, 10]) } }],
-  });
+  JSON.stringify(
+    {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {
+            creator: 'BRouter-1.7',
+            'track-length': '640000',
+            messages: [['Longitude', 'Latitude', 'WayTags'], ['174820000', '-37000000', 'railway=rail name=[[North]] "coordinates"']],
+            times: points.map((_, i) => i * 60),
+          },
+          geometry: { type: 'LineString', coordinates: points.map(([la, lo]) => [lo, la, 10]) },
+        },
+      ],
+    },
+    null,
+    2,
+  );
 /** The Wellington–Picton ferry: a short drive, 99 km on the ferry line, and another short drive. */
 const FERRY: LatLon[] = [
   [-41.327, 174.805],

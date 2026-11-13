@@ -35,27 +35,29 @@ export function encodePolyline(points: readonly LatLon[]): string {
 /** Decodes an encoded polyline. Throws on malformed input rather than returning stray points. */
 export function decodePolyline(s: string): LatLon[] {
   const out: LatLon[] = [];
-  let i = 0;
   let lat = 0;
   let lon = 0;
-  const next = () => {
-    let result = 0;
-    let shift = 0;
-    let b: number;
-    do {
-      if (i >= s.length) throw new RangeError('Truncated polyline');
-      b = s.charCodeAt(i++) - 63;
-      if (b < 0 || b > 63 || shift > 30) throw new RangeError('Malformed polyline');
-      result |= (b & 0x1f) << shift;
-      shift += 5;
-    } while (b >= 0x20);
-    return result & 1 ? ~(result >> 1) : result >> 1;
-  };
-  while (i < s.length) {
-    lat += next();
-    lon += next();
-    out.push([lat / FACTOR, lon / FACTOR]);
+  let value = 0;
+  let shift = 0;
+  let isLat = true;
+  // One flat loop over the characters: a road route has tens of thousands, and this runs on saves.
+  for (let i = 0; i < s.length; i++) {
+    const b = s.charCodeAt(i) - 63;
+    if (b < 0 || b > 63 || shift > 30) throw new RangeError('Malformed polyline');
+    value |= (b & 0x1f) << shift;
+    shift += 5;
+    if (b >= 0x20) continue;
+    const delta = value & 1 ? ~(value >> 1) : value >> 1;
+    value = 0;
+    shift = 0;
+    if (isLat) lat += delta;
+    else {
+      lon += delta;
+      out.push([lat / FACTOR, lon / FACTOR]);
+    }
+    isLat = !isLat;
   }
+  if (shift !== 0 || !isLat) throw new RangeError('Truncated polyline');
   return out;
 }
 
@@ -90,29 +92,33 @@ export function pathLengthKm(points: readonly LatLon[]): number {
  * enough for the tolerance; routes are regional). Endpoints are always kept.
  */
 export function simplifyPath(input: readonly LatLon[], toleranceKm: number): LatLon[] {
-  const all = unwrapLongitudes(input);
-  if (all.length <= 2) return all;
+  if (input.length <= 2) return unwrapLongitudes(input);
   const R = Math.PI / 180;
   let latSum = 0;
-  for (const p of all) latSum += p[0];
-  const kx = EARTH_RADIUS_KM * R * Math.cos((latSum / all.length) * R);
+  for (let i = 0; i < input.length; i++) latSum += input[i]![0];
+  const kx = EARTH_RADIUS_KM * R * Math.cos((latSum / input.length) * R);
   const ky = EARTH_RADIUS_KM * R;
   const tol2 = toleranceKm * toleranceKm;
-  // A cheap first pass drops points within the tolerance of the last one kept, which is most of a detailed
-  // route; Douglas–Peucker then runs on what is left. Plain arrays of numbers keep both loops fast.
+  // A cheap first pass unwraps longitudes (as unwrapLongitudes does) and drops points within the tolerance of
+  // the last one kept, which is most of a detailed route; Douglas–Peucker then runs on what is left. Plain
+  // arrays of numbers keep both loops fast.
   const xs: number[] = [];
   const ys: number[] = [];
   const points: LatLon[] = [];
-  const last = all.length - 1;
+  const last = input.length - 1;
+  let lon = input[0]![1];
   for (let i = 0; i <= last; i++) {
-    const p = all[i]!;
-    const x = p[1] * kx;
-    const y = p[0] * ky;
+    const p = input[i]!;
+    const lat = p[0];
+    const rawLon = p[1];
+    if (i > 0) lon = rawLon + 360 * Math.round((lon - rawLon) / 360);
+    const x = lon * kx;
+    const y = lat * ky;
     const n = xs.length;
     if (n > 0 && i < last && (x - xs[n - 1]!) ** 2 + (y - ys[n - 1]!) ** 2 < tol2) continue;
     xs.push(x);
     ys.push(y);
-    points.push(p);
+    points.push([lat, lon]);
   }
   const keep = new Uint8Array(points.length);
   keep[0] = 1;
