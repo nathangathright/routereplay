@@ -8,7 +8,8 @@
  * on long legs and large on short ones, so a physically placed shadow would hide under it or land far away.
  * Instead the shadow is cast as if the aircraft flew SHADOW_HEIGHT of its own lengths up at cruise (in
  * proportion while climbing and descending; on the ground it touches the wheels), along a Sun at least
- * SHADOW_LOWEST_SUN high: the plane's own size and shape, never more than about a length away.
+ * SHADOW_LOWEST_SUN high: the plane's own size and shape, never more than about a length away. The higher the
+ * aircraft, the softer the shadow: crisp on the ground, more diffuse as it climbs, softest at cruise.
  */
 import * as THREE from 'three';
 import { type Vec3, cross, dot, length, normalize, scale, smoothstep, sub } from '../../shared/geo/vec';
@@ -27,13 +28,23 @@ const SHADOW_HEIGHT = 0.3;
 const SHADOW_LOWEST_SUN = 27 * DEG;
 /** The shadow fades in as the Sun climbs from the horizon to this height (radians), where the light is direct. */
 const SHADOW_FULL_SUN = 20 * DEG;
-/** The silhouette covers this many aircraft lengths square, centred on the model's origin (spans reach 1.16). */
-const MASK_EXTENT = 1.4;
-const MASK_SIZE = 128;
+/**
+ * The silhouette covers this many aircraft lengths square, centred on the model's origin: spans reach 1.16, and the
+ * softest shadow spreads about 0.3 lengths beyond the airframe.
+ */
+const MASK_EXTENT = 2;
+const MASK_SIZE = 160;
 /** Samples per texel along each side when rasterizing the silhouette. */
 const SUPERSAMPLE = 4;
-/** Radius in texels of the box blur, applied twice, that softens the silhouette's edge. */
-const MASK_BLUR = 2;
+/**
+ * The shadow's three levels of softness, as box blurs (radius in texels, passes): on the ground (a Gaussian of
+ * about 0.025 lengths), part way up (0.056), and at cruise (0.11). The shader blends between them by height.
+ */
+const LEVELS: readonly (readonly [radius: number, passes: number])[] = [
+  [2, 2],
+  [4, 3],
+  [8, 3],
+];
 
 /** An aircraft casting a shadow: where it is drawn (as in Aircraft.tsx) and how much of it there is (0–1). */
 export interface ShadowCaster {
@@ -66,11 +77,11 @@ function boxBlur(image: Float32Array, size: number, radius: number): void {
 }
 
 /**
- * The airframe seen from straight above, as coverage from 0 to 255 on a MASK_SIZE square: columns run along the
- * right wing (model x), rows along the nose (model z). Rasterized here rather than by the GPU, so it is the same
- * on every device. Propeller discs are left out: they are faint even on the aircraft.
+ * The airframe seen from straight above, as coverage from 0 to 1 on a MASK_SIZE square, unblurred: columns run
+ * along the right wing (model x), rows along the nose (model z). Rasterized here rather than by the GPU, so it is
+ * the same on every device. Propeller discs are left out: they are faint even on the aircraft.
  */
-export function silhouette(type: AircraftType): Uint8Array {
+function coverageOf(type: AircraftType): Float32Array {
   const { geometry } = airframeModel(type);
   const position = geometry.getAttribute('position');
   const index = geometry.getIndex()!;
@@ -115,9 +126,33 @@ export function silhouette(type: AircraftType): Uint8Array {
       if (hit[y * n + x]) coverage[Math.floor(y / SUPERSAMPLE) * MASK_SIZE + Math.floor(x / SUPERSAMPLE)]! += 1 / SUPERSAMPLE ** 2;
     }
   }
-  boxBlur(coverage, MASK_SIZE, MASK_BLUR);
-  boxBlur(coverage, MASK_SIZE, MASK_BLUR);
-  return Uint8Array.from(coverage, (c) => Math.round(255 * Math.min(1, c)));
+  return coverage;
+}
+
+/** The coverage blurred to one level of softness, from 0 to 255. */
+function level(coverage: Float32Array, [radius, passes]: readonly [number, number]): Uint8Array {
+  const image = coverage.slice();
+  for (let p = 0; p < passes; p++) boxBlur(image, MASK_SIZE, radius);
+  return Uint8Array.from(image, (c) => Math.round(255 * Math.min(1, c)));
+}
+
+/** The silhouette at its sharpest, as cast on the ground. */
+export function silhouette(type: AircraftType): Uint8Array {
+  return level(coverageOf(type), LEVELS[0]!);
+}
+
+/** All three levels in one image, red the sharpest and blue the softest, so the shader blends them with one read. */
+export function shadowLevels(type: AircraftType): Uint8Array {
+  const coverage = coverageOf(type);
+  const levels = LEVELS.map((l) => level(coverage, l));
+  const out = new Uint8Array(MASK_SIZE * MASK_SIZE * 4);
+  for (let i = 0; i < MASK_SIZE * MASK_SIZE; i++) {
+    out[4 * i] = levels[0]![i]!;
+    out[4 * i + 1] = levels[1]![i]!;
+    out[4 * i + 2] = levels[2]![i]!;
+    out[4 * i + 3] = 255;
+  }
+  return out;
 }
 
 const masks = new Map<AircraftType, THREE.DataTexture>();
@@ -126,7 +161,7 @@ const masks = new Map<AircraftType, THREE.DataTexture>();
 function shadowMask(type: AircraftType): THREE.DataTexture {
   let texture = masks.get(type);
   if (!texture) {
-    texture = new THREE.DataTexture(silhouette(type), MASK_SIZE, MASK_SIZE, THREE.RedFormat, THREE.UnsignedByteType);
+    texture = new THREE.DataTexture(shadowLevels(type), MASK_SIZE, MASK_SIZE, THREE.RGBAFormat, THREE.UnsignedByteType);
     texture.magFilter = texture.minFilter = THREE.LinearFilter;
     texture.needsUpdate = true;
     masks.set(type, texture);
@@ -137,7 +172,7 @@ function shadowMask(type: AircraftType): THREE.DataTexture {
 let blank: THREE.DataTexture | null = null;
 function blankMask(): THREE.DataTexture {
   if (!blank) {
-    blank = new THREE.DataTexture(new Uint8Array([0]), 1, 1, THREE.RedFormat, THREE.UnsignedByteType);
+    blank = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1, THREE.RGBAFormat, THREE.UnsignedByteType);
     blank.needsUpdate = true;
   }
   return blank;
@@ -154,6 +189,7 @@ export function planeShadowUniforms(): Record<string, THREE.IUniform> {
     casterRight: vectors(),
     casterForward: vectors(),
     casterLight: vectors(),
+    casterBlur: { value: casterSlots.map(() => 0) },
   };
 }
 
@@ -163,6 +199,7 @@ export function setPlaneShadowUniforms(u: Record<string, THREE.IUniform>, caster
   const rights = u.casterRight!.value as THREE.Vector4[];
   const forwards = u.casterForward!.value as THREE.Vector4[];
   const lights = u.casterLight!.value as THREE.Vector4[];
+  const blurs = u.casterBlur!.value as number[];
   for (const i of casterSlots) {
     const c = casters[i];
     const up = c ? normalize(c.ground) : sun;
@@ -171,6 +208,8 @@ export function setPlaneShadowUniforms(u: Record<string, THREE.IUniform>, caster
     lights[i]!.w = strength;
     u[`shadowMask${i}`]!.value = c && strength > 0 ? shadowMask(c.type) : blankMask();
     if (!c || strength <= 0) continue;
+    // Softer the higher it flies: 0 picks the sharpest level, 2 the softest.
+    blurs[i] = 2 * Math.min(1, Math.max(0, c.aloft));
     const right = normalize(cross(up, normalize(c.heading)));
     const forward = cross(right, up);
     // Its parked height (as drawn) plus SHADOW_HEIGHT lengths at cruise.
@@ -207,6 +246,12 @@ uniform vec4 casterUp[${MAX_CASTERS}];      // xyz: up at the aircraft; w: its s
 uniform vec4 casterRight[${MAX_CASTERS}];   // xyz: toward its right wingtip; w: its length
 uniform vec4 casterForward[${MAX_CASTERS}]; // xyz: toward its nose, level; w: cosine of its shadow's reach from below it
 uniform vec4 casterLight[${MAX_CASTERS}];   // xyz: toward the light the shadow is cast by; w: strength (0: none)
+uniform float casterBlur[${MAX_CASTERS}];   // 0: the sharpest level (on the ground) to 2: the softest (at cruise)
+
+// The silhouette at softness b, between the three levels packed into the mask's red, green and blue.
+float casterCover(vec3 levels, float b) {
+  return b < 1.0 ? mix(levels.r, levels.g, b) : mix(levels.g, levels.b, b - 1.0);
+}
 
 // Where the ground point n falls on aircraft i's silhouette (xy), and how strongly its shadow shows (z; 0: none).
 vec3 casterUv(int i, vec3 n) {
@@ -222,7 +267,7 @@ vec3 casterUv(int i, vec3 n) {
 
 float planeShadow(vec3 n) {
   float shade = 0.0;
-${casterSlots.map((i) => `  vec3 c${i} = casterUv(${i}, n);\n  if (c${i}.z > 0.0) shade += c${i}.z * textureLod(shadowMask${i}, c${i}.xy, 0.0).r;`).join('\n')}
+${casterSlots.map((i) => `  vec3 c${i} = casterUv(${i}, n);\n  if (c${i}.z > 0.0) shade += c${i}.z * casterCover(textureLod(shadowMask${i}, c${i}.xy, 0.0).rgb, casterBlur[${i}]);`).join('\n')}
   return 1.0 - min(shade, 1.0);
 }
 `;

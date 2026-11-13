@@ -108,28 +108,4 @@ describe('airport labels', () => {
     expect(evaluate(crossing, crossing.legs[0]!.flightEnd).labels.map((l) => l.code)).toEqual(['WLG']);
   });
 
-  it('mark airports with a tower and stations that only surface legs touch with a dot', () => {
-    const tl = buildTimeline(
-      normalize(
-        spec([
-          leg('akl-wlg', 'AKL', 'WLG', '2027-02-10T08:00:00+13:00', '2027-02-10T09:05:00+13:00'),
-          surface('wlg-pcn', 'WLG', 'PCN', '2027-02-10T11:00:00+13:00', '2027-02-10T14:30:00+13:00', 'ferry'),
-        ]),
-      ),
-    );
-    const seen = new Map<string, boolean>();
-    for (let f = 0; f < tl.durationInFrames; f++) for (const l of evaluate(tl, f / tl.fps).labels) seen.set(l.code, l.airport);
-    expect(Object.fromEntries(seen)).toEqual({ AKL: true, WLG: true, PCN: false });
-  });
-
-  it('pulse at each arrival for 1.7 s', () => {
-    const tl = buildTimeline(normalize(README));
-    const arrival = tl.legs[0]!.flightEnd;
-    expect(evaluate(tl, arrival - 0.01).pulses).toEqual([]);
-    const pulse = evaluate(tl, arrival + 0.5).pulses;
-    expect(pulse).toHaveLength(1);
-    expect(pulse[0]!.age).toBeCloseTo(0.5, 9);
-    expect(Math.hypot(pulse[0]!.x, pulse[0]!.y)).toBeLessThan(1);
-    expect(evaluate(tl, arrival + 1.71).pulses).toEqual([]);
-  });
 });

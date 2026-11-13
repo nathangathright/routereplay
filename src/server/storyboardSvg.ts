@@ -10,11 +10,8 @@ import { buildTimeline, evaluate } from '../shared/timeline/evaluate';
 import type { Storyboard } from '../shared/timeline/storyboard';
 import { formatUtc } from '../shared/scene/time';
 
-/** The renderer's route accent (src/app/render/Routes.tsx) and its tower's colours (src/app/render/Tower.tsx). */
-const ACCENT = '#ffa974';
-const GLASS = '#2b465c';
-const GALLERY = '#7f8a99';
-const BEACON = '#ffc76b';
+/** The renderer's accent (ROUTE_COLOR in src/app/render/Routes.tsx). */
+const ACCENT = '#2e8cff';
 const W = 800;
 const H = 400;
 const HEADER = 34;
@@ -109,9 +106,7 @@ export function storyboardSvg(scene: NormalizedSceneV1, board: Storyboard, night
     const dash = r.surface ? ' stroke-dasharray="0.1 5"' : '';
     parts.push(`<polyline points="${points}" fill="none" stroke="${ACCENT}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"${dash}/>`);
   }
-  // A place a flight arrives at or leaves gets the renderer's control tower, seen from above: a dark ring of glass
-  // round its roof and beacon. A station or ferry terminal that only surface legs touch gets its ringed dot.
-  const flown = new Set(scene.legs.filter((l) => l.mode === undefined).flatMap((l) => [l.from, l.to]));
+  // Each place gets the renderer's ringed dot.
   const airports: { code: string; lat: number; lon: number }[] = [];
   routes.forEach((r, i) => {
     const leg = scene.legs[i]!;
@@ -128,11 +123,8 @@ export function storyboardSvg(scene: NormalizedSceneV1, board: Storyboard, night
     const cx = f1(x(a.lon));
     const cy = f1(y(a.lat));
     parts.push(
-      flown.has(a.code)
-        ? `<circle cx="${cx}" cy="${cy}" r="6" fill="${GLASS}" stroke="${GALLERY}" stroke-width="1.5"/>` +
-            `<circle cx="${cx}" cy="${cy}" r="3.6" fill="${ACCENT}"/><circle cx="${cx}" cy="${cy}" r="1.1" fill="${BEACON}"/>`
-        : `<circle cx="${cx}" cy="${cy}" r="5.5" fill="none" stroke="${ACCENT}" stroke-opacity="0.65" stroke-width="1.5"/>` +
-            `<circle cx="${cx}" cy="${cy}" r="2.6" fill="${ACCENT}"/>`,
+      `<circle cx="${cx}" cy="${cy}" r="5.5" fill="none" stroke="${ACCENT}" stroke-opacity="0.65" stroke-width="1.5"/>` +
+        `<circle cx="${cx}" cy="${cy}" r="2.6" fill="${ACCENT}"/>`,
     );
     codes.push(`<text x="${f1(x(a.lon) + 11)}" y="${f1(y(a.lat) - 11)}" class="a">${esc(a.code)}</text>`);
   }
@@ -156,8 +148,7 @@ export function storyboardSvg(scene: NormalizedSceneV1, board: Storyboard, night
   const title = scene.title ?? `${scene.legs[0]!.from} to ${scene.legs[scene.legs.length - 1]!.to}`;
   // The footer is full, so the key for dotted routes goes up here.
   const dotted = routes.some((r) => r.surface) ? ' · dotted: train, bus, car, or ferry' : '';
-  const stations = airports.some((a) => !flown.has(a.code)) ? ' · ringed dots: stations' : '';
-  const header = `${esc(title)} · ${board.keyframes.length} keyframes over ${board.durationSeconds} s${dotted}${stations}`;
+  const header = `${esc(title)} · ${board.keyframes.length} keyframes over ${board.durationSeconds} s${dotted}`;
   const legend =
     `Numbered circles: keyframes in order (light: aircraft in daylight, dark: at night). ` +
     `Shaded side: night at ${f1(nightAtSeconds)} s (${formatUtc(Math.round(nightUtc / 60_000) * 60_000)}). No coastlines.`;

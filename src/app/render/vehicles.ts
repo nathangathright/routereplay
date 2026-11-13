@@ -17,7 +17,7 @@ const COLOR = {
   /** The aircraft's paint (Aircraft.tsx), so the fleet matches. */
   white: '#f3f5f8',
   grey: '#9aa4b2',
-  gold: '#ffc76b',
+  blue: '#2e8cff',
   glass: '#1a2330',
   dark: '#3a4250',
   red: '#d9473a',
@@ -241,7 +241,7 @@ function car(): VehicleModel {
 
 /**
  * A coach, 3.3 times as long as it is wide: a long flat white roof over a dark band of windows that wraps
- * round a deep windscreen, with a gold air-conditioning pod. Window lights along both sides after dark.
+ * round a deep windscreen, with a blue air-conditioning pod. Window lights along both sides after dark.
  */
 function bus(): VehicleModel {
   const L = 0.052;
@@ -260,14 +260,14 @@ function bus(): VehicleModel {
     ...windows(z(0.08), z(0.88), 1.02 * hw, 0.19 * L, 5, 0.0065),
   ];
   return {
-    bodies: [body([[lower, 'white'], [band, 'glass'], [roof, 'white'], [pod, 'gold']], lamps, L)],
+    bodies: [body([[lower, 'white'], [band, 'glass'], [roof, 'white'], [pod, 'blue']], lamps, L)],
     gap: 0,
     width: W,
   };
 }
 
 /**
- * A short passenger train: a locomotive with a sloping gold nose and dark windscreen, and three white cars with
+ * A short passenger train: a locomotive with a sloping blue nose and dark windscreen, and three white cars with
  * a grey roof ridge, joined by dark gangways. Each car is its own body, placed on the route behind the one in
  * front, so the train bends with the line. A headlight and lit windows after dark.
  */
@@ -283,7 +283,7 @@ function train(): VehicleModel {
     plan(lz(0), lz(nose), hw, 0.3 * hw, 0).map(([z, w]) => ({ z, hw: w, top: 0.94 * w, y0: 0.035 * LL, y1: 0.21 * LL })),
     0.04 * LL,
   );
-  // The nose narrows and slopes down to the coupler; gold, with the windscreen across its upper slope.
+  // The nose narrows and slopes down to the coupler; blue, with the windscreen across its upper slope.
   const noseAt = (t: number): Station => ({
     z: lz(nose + t * (1 - nose)),
     hw: hw * (1 - 0.45 * t * t),
@@ -296,9 +296,9 @@ function train(): VehicleModel {
   const loco = body(
     [
       [main, 'white'],
-      [span(0, 0.3), 'gold'],
+      [span(0, 0.3), 'blue'],
       [span(0.3, 0.65), 'glass'],
-      [span(0.65, 1), 'gold'],
+      [span(0.65, 1), 'blue'],
       [roofBox(0.12, 0.32), 'grey'],
       [roofBox(0.4, 0.58), 'grey'],
     ],
@@ -330,7 +330,7 @@ function train(): VehicleModel {
 
 /**
  * A ro-ro ferry, 3.8 times as long as it is wide: a navy hull with a pointed bow, a grey open deck fore and aft,
- * a white deckhouse with a rounded front, a bridge deck whose dark windows face forward, and a gold funnel.
+ * a white deckhouse with a rounded front, a bridge deck whose dark windows face forward, and a blue funnel.
  * Navigation lights (red to port, green to starboard, white mast and stern) and deck lights after dark. Its
  * wake is drawn by Vehicle.tsx along the route behind it.
  */
@@ -371,7 +371,7 @@ function ferry(): VehicleModel {
           [house, 'white'],
           [bridge, 'glass'],
           [bridgeRoof, 'white'],
-          [funnel, 'gold'],
+          [funnel, 'blue'],
         ],
         lamps,
         L,

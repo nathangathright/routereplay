@@ -58,7 +58,7 @@ function buildPlane(type: AircraftType): Plane {
   // Hashed alpha dissolves one type into the next at a connection without sorting the model's own faces.
   const paint = (color: string, roughness: number, metalness: number) =>
     new THREE.MeshStandardMaterial({ color, roughness, metalness, alphaHash: true });
-  const materials = [paint('#f3f5f8', 0.45, 0.15), paint('#9aa4b2', 0.5, 0.3), paint('#ffc76b', 0.5, 0.1)];
+  const materials = [paint('#f3f5f8', 0.45, 0.15), paint('#9aa4b2', 0.5, 0.3), paint('#2e8cff', 0.5, 0.1)];
   // Spinning propellers read as a faint disc.
   const prop = new THREE.MeshBasicMaterial({
     color: '#1b1f26',

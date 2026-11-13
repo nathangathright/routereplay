@@ -49,7 +49,7 @@ const WAKE_ROWS = 14;
 const WAKE_LENGTH = 1.4;
 /**
  * Across the wake: offsets in half widths, and foam strength. Two bright arms spreading in a V, with churned
- * water between them; the route's gold trail runs down the middle.
+ * water between them; the route's trail runs down the middle.
  */
 const WAKE_PROFILE: [number, number][] = [
   [-1, 0],

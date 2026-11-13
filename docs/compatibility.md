@@ -5,7 +5,7 @@
 | Field | Meaning | Current |
 | --- | --- | --- |
 | `schemaVersion` | Authoring contract (`/schemas/scene-v1.json`) | 1 |
-| `compatibility.rendererVersion` | Semver of the timeline and scene code | 2.3.0 |
+| `compatibility.rendererVersion` | Semver of the timeline and scene code | 2.4.0 |
 | `compatibility.assetManifestVersion` | Directory under `/assets/` holding textures and font when the record was saved | 2026-11-12 |
 | `compatibility.airportDataVersion` | Airport table used to normalize the record | `2026-11-11.<hash>` |
 
@@ -27,6 +27,8 @@ Renderer 2.1 added train, bus, car, and ferry legs (`legs[].mode` in place of `a
 Renderer 2.2 (November 12, 2026) draws airport labels and route lines as the offline renderer does ([decisions.md](decisions.md#airport-labels-and-route-lines-the-offline-renderers)). Labels now appear when their airport comes into view, hold a fixed slot until arrival, and recede with the ground, so the golden states' label entries and the storyboard's `labels` changed and both files were regenerated. Nothing else in them changed: camera, aircraft, Sun, trail, and timing are identical, and the fixture record itself was not rewritten. By the rule above this calls for a major version. It was kept minor on purpose: there are no users yet, and a major would make every saved journey unplayable only to keep the old labels. Once there are users, a label change like this one needs the major bump.
 
 Renderer 2.3 (November 13, 2026) draws a control tower at each airport and stops departed labels from growing back ([decisions.md](decisions.md#airport-towers-and-labels-that-stay-gone)). One golden label entry changed (ORD at frame 150 no longer comes back as the camera descends to SFO), so the golden states were regenerated; the storyboard fixture and everything else in the golden states are unchanged. It stays a minor version for the same reason as 2.2.
+
+Renderer 2.4 (November 13, 2026) changes only the picture: airports go back to the ringed dot, the arrival ring is gone, the accent is an electric blue, and the aircraft's shadow softens with height ([decisions.md](decisions.md#no-towers-an-electric-blue-accent-and-shadows-that-soften-with-height)). The golden states and the storyboard fixture are unchanged. `evaluate` no longer returns arrival pulses or marks which labels are airports; neither was in the golden states.
 
 Pixel-identical output across GPUs is not promised. The golden states pin what is drawn, not how a GPU rasterizes it.
 

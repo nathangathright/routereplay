@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type * as THREE from 'three';
 import { type Vec3, cross, dot, latLonToVec, normalize } from '../src/shared/geo/vec';
 import { aircraftRadius } from '../src/app/render/airframe';
-import { type ShadowCaster, planeShadowUniforms, setPlaneShadowUniforms, silhouette } from '../src/app/render/planeShadow';
+import { type ShadowCaster, planeShadowUniforms, setPlaneShadowUniforms, shadowLevels, silhouette } from '../src/app/render/planeShadow';
 
 const DEG = Math.PI / 180;
 
@@ -40,6 +40,22 @@ describe('aircraft shadow', () => {
     }
     expect(covered).toBeGreaterThan(500);
     expect(asymmetry / covered).toBeLessThan(0.02);
+  });
+
+  it('softens with height: crisp on the ground, most diffuse at cruise', () => {
+    const blur = (aloft: number) => (setUp(45 * DEG, { aloft }).u.casterBlur!.value as number[])[0];
+    expect(blur(0)).toBe(0);
+    expect(blur(0.5)).toBeCloseTo(1, 9);
+    expect(blur(1)).toBe(2);
+    // The softer levels spread the same shape wider and fainter.
+    const rgba = shadowLevels('A320');
+    const channel = (k: number) => Array.from({ length: rgba.length / 4 }, (_, i) => rgba[4 * i + k]!);
+    const [sharp, soft, softest] = [0, 1, 2].map(channel);
+    const spread = (c: number[]) => c.filter((v) => v > 8).length;
+    expect(Math.max(...softest!)).toBeLessThan(Math.max(...sharp!));
+    expect(spread(sharp!)).toBeLessThan(spread(soft!));
+    expect(spread(soft!)).toBeLessThan(spread(softest!));
+    expect(channel(0)).toEqual(Array.from(silhouette('A320')));
   });
 
   it('is gone at night, fades in with the Sun, and follows the dissolve weight', () => {

@@ -1,21 +1,17 @@
 import { useThree } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { type Vec3, smoothstep } from '../../shared/geo/vec';
-import type { LabelState, Pulse } from '../../shared/timeline/evaluate';
-import { FLAP_DURATION, FLAP_STAGGER, PANEL_H, PANEL_W, PULSE_SECONDS } from '../../shared/timeline/labels';
+import type { LabelState } from '../../shared/timeline/evaluate';
+import { FLAP_DURATION, FLAP_STAGGER, PANEL_H, PANEL_W } from '../../shared/timeline/labels';
 import { LABEL_FONT_FAMILY } from './assets';
-import { Tower } from './Tower';
 
 /*
  * Airport labels as the offline renderer draws them (routereplay `scene_overlays.py`): split-flap panels of three
- * cards that turn over from blank when a label appears, and a ring that grows from an airport on arrival. Sizes are
- * pixels of a 1080-pixel short side (see src/shared/timeline/labels.ts), scaled to the screen's. Panels are drawn
- * over everything; the rings are drawn over the ground, clouds, and route but under the aircraft, as the offline
- * renderer restores the aircraft over them.
- *
- * Where the offline renderer marks the airport with a ringed dot and a leader line to its panel, an airport gets a
- * small control tower (Tower.tsx) and no line. A station or ferry terminal that no flight touches keeps the dot.
+ * cards that turn over from blank when a label appears, and a ringed dot on the airport. Sizes are pixels of a
+ * 1080-pixel short side (see src/shared/timeline/labels.ts), scaled to the screen's. Panels are drawn over
+ * everything; the dots are drawn over the ground, clouds, and route but under the aircraft, as the offline renderer
+ * restores the aircraft over them. Unlike the offline renderer, there is no leader line from dot to panel and no
+ * ring growing from the airport on arrival.
  */
 
 const CARD_W = 66;
@@ -28,8 +24,8 @@ const FLAP_END = FLAP_DURATION + 2 * FLAP_STAGGER;
 /** Barlow Condensed SemiBold at this size and width matches the offline renderer's DIN Condensed Bold at 100 px. */
 const FLAP_FONT = `600 103px ${LABEL_FONT_FAMILY}, sans-serif`;
 const FLAP_FONT_WIDTH = 0.88;
-/** The accent once the aircraft has arrived; a pale blue-grey before. */
-const REACHED = 'rgb(255, 169, 116)';
+/** The accent (ROUTE_COLOR in Routes.tsx) once the aircraft has arrived; a pale blue-grey before. */
+const REACHED = 'rgb(46, 140, 255)';
 const AHEAD = 'rgb(171, 200, 206)';
 /** An airport's marker shows this far inside the globe's limb (the offline renderer's visibility margin). */
 const MIN_MARGIN = 0.06;
@@ -312,7 +308,7 @@ interface VisitDrawing {
 
 const quad = new THREE.PlaneGeometry(1, 1);
 
-export function Labels({ labels, pulses, sun }: { labels: LabelState[]; pulses: Pulse[]; sun: Vec3 }) {
+export function Labels({ labels }: { labels: LabelState[] }) {
   const gl = useThree((s) => s.gl);
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   useThree((s) => s.size);
@@ -321,7 +317,6 @@ export function Labels({ labels, pulses, sun }: { labels: LabelState[]; pulses: 
     [],
   );
   const visits = useMemo(() => new Map<number, VisitDrawing>(), []);
-  const pulseMaterials = useMemo<THREE.ShaderMaterial[]>(() => [], []);
   useEffect(
     () => () => {
       for (const v of visits.values()) {
@@ -329,9 +324,8 @@ export function Labels({ labels, pulses, sun }: { labels: LabelState[]; pulses: 
         v.panel.dispose();
         v.marker.dispose();
       }
-      for (const m of pulseMaterials) m.dispose();
     },
-    [visits, pulseMaterials],
+    [visits],
   );
 
   const buffer = gl.getDrawingBufferSize(shared.buffer.value);
@@ -357,13 +351,8 @@ export function Labels({ labels, pulses, sun }: { labels: LabelState[]; pulses: 
       v = { flap: new FlapTexture(), panel: panelMaterial(shared), marker: shapeMaterial(shared) };
       visits.set(l.index, v);
     }
-    if (l.marker && l.airport) {
-      // Dissolve in as the label appears and out as it goes, and near the globe's limb.
-      const opacity = Math.min(l.opacity, smoothstep(0, 0.3, l.age)) * smoothstep(0.02, 0.08, l.marker.margin);
-      if (opacity > 0.002)
-        meshes.push(<Tower key={`t${l.index}`} position={l.position} sun={sun} reached={l.marker.reached} opacity={opacity} time={l.age} />);
-    } else if (l.marker && l.marker.margin >= MIN_MARGIN) {
-      // A station or ferry terminal: the offline renderer's ringed dot, which a waiting train or ferry covers.
+    if (l.marker && l.marker.margin >= MIN_MARGIN) {
+      // The offline renderer's ringed dot, which a waiting aircraft, train or ferry covers.
       ringed(v.marker, l.marker.x, l.marker.y, l.marker.reached ? REACHED : AHEAD);
       v.marker.uniforms.fillRadius!.value = 6.5 * k;
       v.marker.uniforms.ringRadius!.value = 12.5 * k;
@@ -385,17 +374,6 @@ export function Labels({ labels, pulses, sun }: { labels: LabelState[]; pulses: 
       meshes.push(<mesh key={`p${l.index}`} geometry={quad} material={p} renderOrder={20} frustumCulled={false} />);
     }
   }
-  pulses.forEach((pulse, i) => {
-    let m = pulseMaterials[i];
-    if (!m) pulseMaterials.push((m = shapeMaterial(shared)));
-    const r = 14 + 29 * pulse.age;
-    ringed(m, pulse.x, pulse.y, REACHED);
-    m.uniforms.ringRadius!.value = (r - 1) * k;
-    m.uniforms.ringHalf!.value = 1.5 * k;
-    m.uniforms.ringAlpha!.value = (180 / 255) * (1 - pulse.age / PULSE_SECONDS);
-    m.uniforms.extent!.value = (r + 1) * k + 1;
-    meshes.push(<mesh key={`r${i}`} geometry={quad} material={m} renderOrder={7} frustumCulled={false} />);
-  });
   return <group>{meshes}</group>;
 }
 

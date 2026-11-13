@@ -25,7 +25,7 @@ import {
 import type { AircraftType } from '../scene/aircraft';
 import { type AspectRatio, HOLD_MINUTES, SURFACE_MODES, type SurfaceMode } from '../scene/constants';
 import { exposureProfile, meterGlobe } from './exposure';
-import { type LabelState, type Pulse, labelsAt } from './labels';
+import { type LabelState, labelsAt } from './labels';
 import type { NormalizedSceneV1 } from '../scene/types';
 
 /** `flight` and `surface` are a leg in motion: flown, or travelled by train, bus, car, or ferry. */
@@ -92,7 +92,7 @@ export interface CameraState {
   fovDeg: number;
 }
 
-export type { LabelState, Pulse } from './labels';
+export type { LabelState } from './labels';
 export { smootherstep };
 
 export interface SceneState {
@@ -122,7 +122,6 @@ export interface SceneState {
   /** Airport labels in the offline renderer's layout, for this frame shape (see labels.ts). */
   labels: LabelState[];
   /** Rings growing from airports the aircraft has just reached. */
-  pulses: Pulse[];
 }
 
 const NORTH: Vec3 = [0, 1, 0];
@@ -388,7 +387,7 @@ export function evaluate(tl: Timeline, tIn: number, aspect: number = DEFAULT_ASP
   });
   const camera = evaluateCamera(k, aspect);
   const shape = Number.isFinite(aspect) && aspect > 0 ? aspect : DEFAULT_ASPECT;
-  const { labels, pulses } = labelsAt(tl, t, shape, camera, (when) => evaluateCamera(kinematics(tl, when), shape), trail);
+  const labels = labelsAt(tl, t, shape, camera, (when) => evaluateCamera(kinematics(tl, when), shape), trail);
   return {
     t,
     phase: k.seg.kind,
@@ -400,7 +399,6 @@ export function evaluate(tl: Timeline, tIn: number, aspect: number = DEFAULT_ASP
     sun: sunDirection(k.physicalUtcMs),
     camera,
     labels,
-    pulses,
   };
 }
 

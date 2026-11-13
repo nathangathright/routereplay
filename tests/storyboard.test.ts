@@ -58,10 +58,10 @@ describe('storyboards', () => {
     expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"')).toBe(true);
     // Each leg is a line over its glow.
     expect(svg.match(/<polyline /g)).toHaveLength(4);
-    // Airports a flight touches are drawn as the renderer's control tower from above (roof, glass, beacon).
-    expect(svg.match(/r="3.6" fill="#ffa974"/g)).toHaveLength(3);
-    // Routes take the renderer's accent, not the old gold.
-    expect(svg).not.toContain('stroke="#ffc76b"');
+    // Airports are the renderer's ringed dots, in its electric-blue accent.
+    expect(svg.match(/r="2.6" fill="#2e8cff"/g)).toHaveLength(3);
+    // Routes take the accent, not the old gold or peach.
+    expect(svg).not.toMatch(/#ffc76b|#ffa974/);
     for (const code of ['ORD', 'SFO', 'AKL']) expect(svg).toContain(`>${code}</text>`);
     for (let i = 1; i <= 8; i++) expect(svg).toContain(`>${i}</text>`);
     expect(svg).toContain('fill-opacity="0.62"');

@@ -6,7 +6,7 @@ export const SCHEMA_VERSION = 1 as const;
 export const SUPPORTED_SCHEMA_VERSIONS = [1] as const;
 
 /** Renderer semantic version pinned into every normalized record and publication. */
-export const RENDERER_VERSION = '2.3.0';
+export const RENDERER_VERSION = '2.4.0';
 /** Version of the static asset bundle (textures, fonts) under /assets. */
 export const ASSET_MANIFEST_VERSION = '2026-11-12';
 

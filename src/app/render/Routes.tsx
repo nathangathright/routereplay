@@ -11,8 +11,8 @@ import { type Timeline, displayAltitude } from '../../shared/timeline/evaluate';
  * every zoom. Train, bus, car, and ferry legs draw the line as dots, as storyboard sketches do.
  */
 
-/** The offline renderer's accent, (255, 169, 116). */
-const ROUTE_COLOR = '#ffa974';
+/** The accent, an electric blue (46, 140, 255); the offline renderer's is a peach, (255, 169, 116). */
+const ROUTE_COLOR = '#2e8cff';
 const CORE_HALF = 2.5;
 const GLOW_HALF = 8;
 const GLOW_SIGMA = 11;

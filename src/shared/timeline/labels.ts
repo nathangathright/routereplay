@@ -27,8 +27,6 @@ export const PANEL_H = 120;
 /** Seconds since a label appeared until its last card has turned (three 0.52 s flips, 0.11 s apart). */
 export const FLAP_DURATION = 0.52;
 export const FLAP_STAGGER = 0.11;
-/** How long an arrival pulse lasts, in presentation seconds. */
-export const PULSE_SECONDS = 1.7;
 /** A retiring label fades out over this long. */
 const RETIRE_SECONDS = 0.3;
 
@@ -70,15 +68,6 @@ export interface LabelState {
    * the aircraft has arrived there.
    */
   marker: { x: number; y: number; margin: number; reached: boolean } | null;
-  /** True when a flight arrives at or leaves this place somewhere in the journey; false for a station or terminal. */
-  airport: boolean;
-}
-
-/** A ring that grows from an airport as the aircraft lands there. */
-export interface Pulse {
-  x: number;
-  y: number;
-  age: number;
 }
 
 interface View {
@@ -136,7 +125,6 @@ interface Visit {
   /** From `heldFrom` on, the panel keeps the size it had shrunk to, `held`, while it fades out instead of growing. */
   heldFrom: number;
   held: number;
-  airport: boolean;
 }
 
 interface Layout {
@@ -256,7 +244,6 @@ function buildLayout(tl: Timeline, aspect: number, cameraAt: CameraAt): Layout {
       deadline: true,
       heldFrom: Infinity,
       held: Infinity,
-      airport: legs.some((l) => l.mode === null && (l.from === code || l.to === code)),
     };
   });
 
@@ -304,7 +291,7 @@ function layoutFor(tl: Timeline, aspect: number, cameraAt: CameraAt): Layout {
 }
 
 /**
- * The labels, airport markers, and arrival pulses at presentation time `t` for a frame `aspect` (width ÷ height)
+ * The labels and airport markers at presentation time `t` for a frame `aspect` (width ÷ height)
  * wide. `camera` is the camera at `t`; `cameraAt` evaluates it at other times, for the layout computed once per
  * timeline and frame shape; `trail` is each leg's flown fraction.
  */
@@ -315,7 +302,7 @@ export function labelsAt(
   camera: CameraState,
   cameraAt: CameraAt,
   trail: readonly number[],
-): { labels: LabelState[]; pulses: Pulse[] } {
+): LabelState[] {
   const layout = layoutFor(tl, aspect, cameraAt);
   const v = viewOf(camera);
   const labels: LabelState[] = [];
@@ -339,15 +326,7 @@ export function labelsAt(
       panel,
       opacity,
       marker: p.margin >= 0 ? { x: p.x, y: p.y, margin: p.margin, reached } : null,
-      airport: visit.airport,
     });
   });
-  const pulses: Pulse[] = [];
-  tl.legs.forEach((leg, k) => {
-    const age = t - leg.flightEnd;
-    if (age < 0 || age >= PULSE_SECONDS) return;
-    const p = project(v, tl.occurrences[k + 1]!.position);
-    if (p.margin > 0) pulses.push({ x: p.x, y: p.y, age });
-  });
-  return { labels, pulses };
+  return labels;
 }

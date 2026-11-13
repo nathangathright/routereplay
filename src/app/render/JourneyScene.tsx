@@ -123,7 +123,7 @@ export function JourneyScene({
           />
         ),
       )}
-      <Labels labels={state.labels} pulses={state.pulses} sun={sun} />
+      <Labels labels={state.labels} />
     </>
   );
 }
