@@ -29,6 +29,23 @@ Standard falls back to the 4096 day texture and water mask on devices whose larg
 
 The landing page does not download Remotion: the player pages are code-split. Muted export does not load the audio encoder chunks (aac, mp3, flac; 470 KiB gzip).
 
+**Night detail** (November 12, 2026): journeys also download full-resolution city-light tiles around their airports ([assets.md](assets.md#static-assets-publicassets2026-11-12)), in the order the camera reaches them. Playback starts once the first frame's tiles are in (34–45 in the journeys below); the rest arrive while it plays. Export waits for all of them. The homepage downloads none. From each journey's plan and the tile files:
+
+| Journey | Tiles | Standard | Low | Before the first frame: tiles, standard / low |
+| --- | --- | --- | --- | --- |
+| JFK → BOS | 43 | 838 KiB | 335 KiB | 34, 779 / 311 KiB |
+| LHR → AMS | 60 | 1,329 KiB | 532 KiB | 43, 1,123 / 446 KiB |
+| HND → ITM | 43 | 478 KiB | 189 KiB | 34, 285 / 112 KiB |
+| DEL → BOM | 53 | 1,302 KiB | 503 KiB | 38, 1,202 / 462 KiB |
+| DEL → HND | 99 | 1,831 KiB | 714 KiB | 38, 1,202 / 462 KiB |
+| ORD → SFO → AKL (the example) | 110 | 1,285 KiB | 528 KiB | 45, 1,059 / 430 KiB |
+
+In Chrome against the local dev server, the first four journeys downloaded exactly these bytes at standard, as did JFK → BOS and DEL → BOM at low. Planning takes 1–2 ms.
+
+An airport takes about 40–60 tiles: 0.3–1.3 MiB at standard (Tokyo's is light, Europe, India, and the US north-east heavy), and about 40 % of that at low. Nearby airports share tiles. A journey loads at most 128 tiles, in the order first needed, so a long trip keeps its first airports sharp and draws later ones from the global map.
+
+In Chrome's phone emulation (390×844, low quality, Fast 4G), JFK → BOS showed its first frame after 3.23 s instead of 2.86 s (median of three cold loads each), for the 311 KiB of tiles it needs first.
+
 **Clouds** add about 240 KB per model step (cloud water plus 700 hPa wind, as GRIB2), cached for a year in the browser and at the edge: about 0.5–0.7 MB when the homepage opens, then about 10 KB/s while it stays on screen, and about 1 MB for a short journey (24 steps, about 5.8 MB, at most). These figures are from November 12, 2026 and were not part of the earlier device measurements below.
 
 **Relief** (November 12, 2026) is heavy: on standard its 1,871 KiB is more than the day texture and roughly doubles the set, and on low its 393 KiB adds 55–68 %. It was not part of the device measurements above; [assets.md](assets.md) explains the size.
@@ -54,6 +71,7 @@ The textures are the dominant allocation. RGBA8 plus mipmaps is about 1.33 × wi
 - Standard: an 8192×4096 day texture (171 MiB) and a 3600×1800 night texture (33 MiB), about 204 MiB. Where the largest texture is under 8192, the 4096 day texture keeps it to about 76 MiB.
 - The water mask has the day texture's size but keeps one channel (`RedFormat`), a quarter of RGBA: 11 MiB at 4096×2048 and 43 MiB at 8192×4096.
 - The relief map is uploaded as two channels (RG8): 24 MiB standard (4320×2160), 6 MiB low (2160×1080).
+- Night-detail tiles share one texture array, one channel (R8) with mipmaps: 0.47 MiB per tile at standard (608×608), 0.12 MiB at low (304×304). An airport's 40–60 tiles take 19–28 MiB at standard and 5–7 MiB at low; the 128-tile cap is 60 MiB and 15 MiB. three.js also keeps a copy of the array in JavaScript memory, three quarters of those figures. Journeys allocate exactly the tiles they plan; the homepage allocates none.
 - The homepage shows the low set first. Two seconds after the standard set is on screen it frees the low set's GPU copies.
 - Framebuffers at 1280×720 with DPR 2 add about 30 MiB.
 - During export, a second WebGL context temporarily holds a standard set as well.

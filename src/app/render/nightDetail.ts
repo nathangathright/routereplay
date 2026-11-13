@@ -158,29 +158,34 @@ export function nightDetailUniforms(): Record<string, THREE.IUniform> {
     nightTiles: { value: none.tiles },
     nightIndex: { value: none.index },
     nightLayout: { value: none.layout },
-    detailFade: { value: new THREE.Vector2(...DETAIL_FADE) },
+    detailFade: { value: new THREE.Vector3(...DETAIL_FADE, 0) },
   };
 }
 
-export function setNightDetailUniforms(u: Record<string, THREE.IUniform>, detail: NightDetailTextures | null): void {
+/** `nightWidth`: texels around the global night map, whose resolution the detail blurs to as it fades out. */
+export function setNightDetailUniforms(u: Record<string, THREE.IUniform>, detail: NightDetailTextures | null, nightWidth: number): void {
   const d = detail ?? noNightDetail();
   u.nightTiles!.value = d.tiles;
   u.nightIndex!.value = d.index;
   u.nightLayout!.value = d.layout;
+  (u.detailFade!.value as THREE.Vector3).z = Math.max(0, Math.log2((DETAIL_COLUMNS * d.layout.x) / nightWidth));
 }
 
 /**
  * nightLevel(uv, global, spread): the city light level at a ground point with globe texture coordinates uv,
  * from the global night map's `global` level, swapped for the tile's where the cell is covered and the ground
  * looks close enough (spread: the camera's distance over the cosine of the viewing angle, Earth radii).
- * Derivatives come first, outside any branch.
+ *
+ * Fading out, at the edge of the covered cells or as the ground recedes, the tile first blurs toward the global
+ * map's resolution (mip level detailFade.z) and only then gives way to it: a crossfade between a sharp
+ * image and a blurry one shows both at once. Derivatives come first, outside any branch.
  */
 export const NIGHT_DETAIL_GLSL = /* glsl */ `
 precision highp sampler2DArray;
 uniform sampler2DArray nightTiles;
 uniform sampler2D nightIndex;
 uniform vec2 nightLayout;
-uniform vec2 detailFade;
+uniform vec3 detailFade;
 
 float nightLevel(vec2 uv, float global, float spread) {
   const vec2 CELLS = vec2(${DETAIL_COLUMNS.toFixed(1)}, ${DETAIL_ROWS.toFixed(1)});
@@ -188,15 +193,18 @@ float nightLevel(vec2 uv, float global, float spread) {
   float size = nightLayout.x + 2.0 * nightLayout.y;
   vec2 dx = dFdx(cells) * (nightLayout.x / size);
   vec2 dy = dFdy(cells) * (nightLayout.x / size);
-  float weight = smoothstep(0.5, 1.0, texture2D(nightIndex, uv).g) * (1.0 - smoothstep(detailFade.x, detailFade.y, spread));
-  if (weight <= 0.0) return global;
+  float amount = smoothstep(0.5, 1.0, texture2D(nightIndex, uv).g) * (1.0 - smoothstep(detailFade.x, detailFade.y, spread));
+  if (amount <= 0.0) return global;
   ivec2 texel = min(ivec2(uv * CELLS * ${INDEX_SUBDIVISION.toFixed(1)}), ivec2(CELLS * ${INDEX_SUBDIVISION.toFixed(1)}) - 1);
   float layer = floor(texelFetch(nightIndex, texel, 0).r * 255.0 + 0.5);
   float detail = 0.0;
   if (layer < ${DARK.toFixed(1)}) {
     vec2 local = (nightLayout.y + fract(cells) * nightLayout.x) / size;
-    detail = textureGrad(nightTiles, vec3(local, layer), dx, dy).r;
+    // Raise the mip level from the one the GPU would pick toward the global map's.
+    float lod = 0.5 * log2(max(dot(dx, dx), dot(dy, dy)) * size * size);
+    float blur = exp2(max(detailFade.z - lod, 0.0) * (1.0 - amount));
+    detail = textureGrad(nightTiles, vec3(local, layer), dx * blur, dy * blur).r;
   }
-  return mix(global, detail, weight);
+  return mix(global, detail, smoothstep(0.0, 0.5, amount));
 }
 `;

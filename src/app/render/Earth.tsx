@@ -268,7 +268,7 @@ export function Earth({
   );
   setLightUniforms(material.uniforms, lights);
   setCloudUniforms(material.uniforms, clouds);
-  setNightDetailUniforms(material.uniforms, detail);
+  setNightDetailUniforms(material.uniforms, detail, (textures.night.image as HTMLImageElement).width);
   return (
     <mesh material={material} renderOrder={0}>
       <sphereGeometry args={[1, segments, Math.round(segments / 2)]} />

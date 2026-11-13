@@ -31,11 +31,11 @@ export const DETAIL_TILE: Record<Quality, { cell: number; gutter: number }> = {
  * short side (70° across it), as if the point were at the frame's centre. Straight below the camera that is the
  * true pixel size; off to the side it is the camera's distance divided by the cosine of the viewing angle, and
  * ignores the frame, so the detailed area is a circle whatever the frame's shape. At the closest airport framing
- * (1.35 km per pixel at the centre) the detail is whole for 1,400 km around and gone by 1,550 km, the left and
- * right edges of a 16:9 frame. As the camera climbs it lasts at the centre until pixels are 6 km across, where
- * the global night map is magnified only about 2×.
+ * (1.35 km per pixel at the centre) the detail is whole for 1,210 km around and gone by 1,540 km, the left and
+ * right edges of a 16:9 frame; in between it blurs into the global map. As the camera climbs it lasts at the
+ * centre until pixels are 4 km across and is gone by 6 km, where the global night map is magnified only 2×.
  */
-export const DETAIL_FADE_KM_PER_PX = [5, 6] as const;
+export const DETAIL_FADE_KM_PER_PX = [4, 6] as const;
 /** The same, as the camera's distance divided by the cosine of the viewing angle, in Earth radii (the shader's unit). */
 export const DETAIL_FADE = DETAIL_FADE_KM_PER_PX.map((k) => (k * FOCAL_PX) / EARTH_RADIUS_KM) as [number, number];
 

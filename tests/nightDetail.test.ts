@@ -90,8 +90,11 @@ describe('detail radius', () => {
     const tl = jfkBos();
     const camera = cameraPositionAt(tl, 0);
     const radius = detailRadius(camera)!;
-    expect(radius * EARTH_RADIUS_KM).toBeGreaterThan(1500);
-    expect(radius * EARTH_RADIUS_KM).toBeLessThan(1600);
+    expect(Math.round((radius * EARTH_RADIUS_KM) / 10) * 10).toBe(1540);
+    // The detail is whole out to where the spread reaches the fade's start.
+    let inner = 0;
+    while (spread(length(camera), inner + 1e-5) < DETAIL_FADE[0]) inner += 1e-5;
+    expect(Math.round((inner * EARTH_RADIUS_KM) / 10) * 10).toBe(1210);
     // Where the detail ends, the camera's distance over the cosine of the viewing angle is the fade's end.
     expect(spread(length(camera), radius)).toBeCloseTo(DETAIL_FADE[1], 9);
     expect(spread(length(camera), 0)).toBeLessThan(DETAIL_FADE[0]);
