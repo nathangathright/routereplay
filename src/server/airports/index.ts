@@ -1,27 +1,28 @@
 import type { Airport } from '../../shared/scene/types';
-import data from './airports.json';
+import { AIRPORT_DATA_VERSION, AIRPORT_LINES } from '../generated/airports';
 
-type Row = [string, string, string, string, number, number, string];
+export { AIRPORT_DATA_VERSION };
 
-let index: Map<string, Airport> | null = null;
-
-function build(): Map<string, Airport> {
-  const m = new Map<string, Airport>();
-  for (const r of data.rows as unknown as Row[]) {
-    const [code, name, city, country, lat, lon, timeZone] = r;
-    m.set(code, { code, name, city, country, lat, lon, timeZone });
-  }
-  return m;
-}
-
-export const AIRPORT_DATA_VERSION: string = data.version;
-
+/**
+ * Finds an airport by binary search over the table's text (generated from airports.json, one line per airport
+ * in code order). As one string the table costs nothing to load and gives the garbage collector nothing to trace;
+ * as thousands of objects it cost the first save in each Worker isolate several milliseconds of CPU.
+ */
 export function lookupAirport(code: string): Airport | undefined {
-  index ??= build();
-  return index.get(code);
-}
-
-export function airportCount(): number {
-  index ??= build();
-  return index.size;
+  const text = AIRPORT_LINES;
+  let lo = 0; // always the start of a line
+  let hi = text.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    const start = text.lastIndexOf('\n', mid - 1) + 1;
+    const end = text.indexOf('\n', start);
+    const key = text.slice(start, start + 3);
+    if (key === code) {
+      const [, name, city, country, lat, lon, timeZone] = text.slice(start, end).split('\t') as string[];
+      return { code, name: name!, city: city!, country: country!, lat: Number(lat), lon: Number(lon), timeZone: timeZone! };
+    }
+    if (key < code) lo = end + 1;
+    else hi = start;
+  }
+  return undefined;
 }

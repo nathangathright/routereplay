@@ -4,6 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { ASSET_MANIFEST_VERSION } from '../src/shared/scene/constants';
 import { EXAMPLE_SCENE } from '../src/shared/scene/examples';
 import { type Env, handle } from '../src/server/index';
+import { lookupAirport } from '../src/server/airports';
 import { DOCS_VERSION, WORKFLOW_MD } from '../src/server/generated/content';
 import { clone } from './helpers';
 import { ACTIVITY_TTL_MS, type Activity, type ViewerReport, activityEvent, currentActivity, latestViewer } from '../src/server/liveState';
@@ -642,6 +643,19 @@ describe('airport lookup', () => {
     expect(twice.json.resolution.matches.map((m: any) => m.offset)).toEqual(['-05:00', '-06:00']);
     expect((await call('/api/v1/airports/CHI')).status).toBe(404);
     expect((await call('/api/v1/airports/ORD?local=tomorrow')).status).toBe(400);
+  });
+
+  it('finds every airport in the table, and nothing else', () => {
+    const table = JSON.parse(readFileSync(new URL('../src/server/airports/airports.json', import.meta.url).pathname, 'utf8')) as {
+      rows: [string, string, string, string, number, number, string][];
+    };
+    for (const [code, name, city, country, lat, lon, timeZone] of table.rows) {
+      expect(lookupAirport(code)).toEqual({ code, name, city, country, lat, lon, timeZone });
+    }
+    const codes = new Set(table.rows.map((r) => r[0]));
+    for (const code of ['AAB', 'ZZZ', 'AA', 'AAAA', 'aaa', '']) {
+      if (!codes.has(code)) expect(lookupAirport(code)).toBeUndefined();
+    }
   });
 });
 
