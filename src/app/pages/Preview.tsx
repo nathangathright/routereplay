@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiFailure, type SceneView, getScene, publishScene, requestStats, startSession } from '../api';
 import type { JourneyPlayerHandle } from '../components/JourneyPlayer';
-import { JourneyStage, ShareButton, journeyTitle } from '../components/JourneyStage';
+import { journeyTitle } from '../../shared/scene/title';
+import { JourneyStage, ShareButton } from '../components/JourneyStage';
 import { registerWebMcpTools, webMcpAvailable } from '../webmcp';
 
 type LoadState =

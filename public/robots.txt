@@ -1,5 +1,6 @@
 # Everything may be fetched. Agents' fetchers obey this file, and they need the API and watch pages.
-# Draft previews carry a noindex meta tag instead.
+# Watch pages, draft previews, and API responses are kept out of search results with noindex (a meta tag
+# and an X-Robots-Tag header) instead: blocking them here would also stop chat apps from showing link previews.
 User-agent: *
 Allow: /
 

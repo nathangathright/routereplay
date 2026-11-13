@@ -13,20 +13,6 @@ const loading = (
   </div>
 );
 
-function NotFound() {
-  return (
-    <div className="center-state">
-      <div>
-        <h1>Page not found</h1>
-        <p>This address doesn’t match a Route Replay page.</p>
-        <a className="btn" href="/">
-          Route Replay home
-        </a>
-      </div>
-    </div>
-  );
-}
-
 function App() {
   const path = location.pathname.replace(/\/+$/, '') || '/';
   const draft = /^\/s\/([a-z0-9]{16})$/.exec(path);
@@ -43,8 +29,8 @@ function App() {
         <Watch publicationId={watch[1]!} />
       </Suspense>
     );
-  if (path === '/') return <Landing />;
-  return <NotFound />;
+  // Only / gets here: unknown paths are answered with public/404.html (wrangler.toml not_found_handling).
+  return <Landing />;
 }
 
 createRoot(document.getElementById('root')!).render(

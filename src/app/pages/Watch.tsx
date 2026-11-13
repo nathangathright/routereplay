@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ApiFailure, type PublicationView, getPublication } from '../api';
-import { Icon, JourneyStage, ShareButton, journeyTitle } from '../components/JourneyStage';
+import { journeyTitle } from '../../shared/scene/title';
+import { Icon, JourneyStage, ShareButton } from '../components/JourneyStage';
 
 type State = { kind: 'loading' } | { kind: 'ready'; pub: PublicationView } | { kind: 'deleted' } | { kind: 'missing' } | { kind: 'error'; message: string };
 

@@ -442,6 +442,101 @@ describe('publication', () => {
   });
 });
 
+describe('link previews', () => {
+  const html = { accept: 'text/html' };
+  const meta = (text: string, key: string) =>
+    [...text.matchAll(new RegExp(`<meta (?:name|property)="${key}" content="([^"]*)">`, 'g'))].map((m) => m[1]);
+
+  async function published(spec: unknown = EXAMPLE_SCENE) {
+    const r = await create(spec);
+    expect(r.status).toBe(201);
+    const pub = await call(`/api/v1/scenes/${r.json.id}/publications`, { token: r.json.credentials.owner, body: { revision: 1 } });
+    expect(pub.status).toBe(201);
+    return { id: r.json.id as string, owner: r.json.credentials.owner as string, pubId: pub.json.id as string };
+  }
+
+  it('gives watch pages the journey title and route for chat previews, but keeps them out of search', async () => {
+    const { pubId } = await published();
+    const page = await call(`/w/${pubId}`, { headers: html });
+    expect(page.status).toBe(200);
+    expect(page.text.match(/<title>/g)).toHaveLength(1);
+    expect(page.text).toContain('<title>Chicago to Auckland (synthetic example) · Route Replay</title>');
+    expect(meta(page.text, 'og:title')).toEqual(['Chicago to Auckland (synthetic example)']);
+    expect(meta(page.text, 'og:description')).toEqual([expect.stringMatching(/^Chicago → San Francisco → Auckland · [\d,]+ km, replayed on a 3D Earth$/)]);
+    expect(meta(page.text, 'description')).toEqual(meta(page.text, 'og:description'));
+    expect(meta(page.text, 'og:url')).toEqual([`${ORIGIN}/w/${pubId}`]);
+    expect(meta(page.text, 'og:image')).toEqual([`${ORIGIN}/share/journey.jpg`]);
+    expect(meta(page.text, 'twitter:card')).toEqual(['summary_large_image']);
+    expect(meta(page.text, 'robots')).toEqual(['noindex']);
+    expect(page.res.headers.get('x-robots-tag')).toBe('noindex');
+    // Revalidated on every view, like the snapshot, so deletion takes effect at once.
+    expect(page.res.headers.get('cache-control')).toBe('public, no-cache');
+    // Previews never carry dates.
+    expect(page.text).not.toContain('2031');
+  });
+
+  it('replaces the homepage tags in the real app shell', async () => {
+    const shell = readFileSync(new URL('../index.html', import.meta.url).pathname, 'utf8');
+    env.ASSETS = { fetch: async () => new Response(shell, { headers: { 'content-type': 'text/html' } }) };
+    const { pubId } = await published();
+    const page = await call(`/w/${pubId}`, { headers: html });
+    expect(page.text.match(/<title>/g)).toHaveLength(1);
+    expect(meta(page.text, 'og:title')).toEqual(['Chicago to Auckland (synthetic example)']);
+    expect(meta(page.text, 'og:url')).toEqual([`${ORIGIN}/w/${pubId}`]);
+    expect(page.text).not.toContain('rel="canonical"');
+    expect(page.text).not.toContain('share:start');
+    expect(page.text).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png" />');
+    expect(page.text).toContain('<script type="module"');
+  });
+
+  it('escapes creator-supplied titles', async () => {
+    const { pubId } = await published({ ...clone(EXAMPLE_SCENE), title: `Tom & "Jerry" <b>go</b> 'west'` });
+    const page = await call(`/w/${pubId}`, { headers: html });
+    expect(page.text).toContain('<title>Tom &amp; &quot;Jerry&quot; &lt;b&gt;go&lt;/b&gt; &#39;west&#39; · Route Replay</title>');
+    expect(meta(page.text, 'og:title')).toEqual(['Tom &amp; &quot;Jerry&quot; &lt;b&gt;go&lt;/b&gt; &#39;west&#39;']);
+    expect(page.text).not.toContain('<b>go');
+  });
+
+  it('answers missing and deleted journeys with 404 and 410 and no journey details', async () => {
+    const missing = await call('/w/zzzzzzzzzzzz', { headers: html });
+    expect(missing.status).toBe(404);
+    expect(missing.text).toContain('<title>Journey not found · Route Replay</title>');
+    expect(meta(missing.text, 'robots')).toEqual(['noindex']);
+    expect(meta(missing.text, 'og:url')).toEqual([]);
+
+    const { id, owner, pubId } = await published();
+    expect((await call(`/api/v1/scenes/${id}`, { method: 'DELETE', token: owner })).status).toBe(200);
+    const deleted = await call(`/w/${pubId}`, { headers: html });
+    expect(deleted.status).toBe(410);
+    expect(deleted.text).toContain('<title>Journey deleted · Route Replay</title>');
+    expect(deleted.text).not.toMatch(/Chicago|Auckland/);
+    expect(deleted.text).not.toContain(`/api/v1/publications/${pubId}`);
+  });
+
+  it('gives draft previews a generic card', async () => {
+    const { id } = await published();
+    const page = await call(`/s/${id}`, { headers: html });
+    expect(page.status).toBe(200);
+    expect(meta(page.text, 'robots')).toEqual(['noindex, nofollow']);
+    expect(page.res.headers.get('x-robots-tag')).toBe('noindex, nofollow');
+    expect(meta(page.text, 'og:title')).toEqual(['Route Replay']);
+    expect(meta(page.text, 'og:url')).toEqual([]);
+    expect(page.text).not.toMatch(/Chicago|Auckland/);
+  });
+
+  it('keeps snapshots and storyboards out of search results', async () => {
+    const { pubId } = await published();
+    for (const path of [`/api/v1/publications/${pubId}`, `/api/v1/publications/${pubId}/storyboard`, `/api/v1/publications/${pubId}/storyboard.svg`]) {
+      const r = await call(path);
+      expect(r.status).toBe(200);
+      expect(r.res.headers.get('x-robots-tag')).toBe('noindex');
+    }
+    const asJson = await call(`/w/${pubId}`, { headers: { accept: 'application/json' } });
+    expect(asJson.json.id).toBe(pubId);
+    expect(asJson.res.headers.get('x-robots-tag')).toBe('noindex');
+  });
+});
+
 describe('deletion', () => {
   it('only the owner can delete; watch links then report deletion', async () => {
     const { id, edit, owner } = await created();
@@ -579,7 +674,7 @@ describe('agent documents', () => {
   });
 
   it('no longer serves an installable skill', async () => {
-    // The paths fall through to static assets (the app shell), like any unknown page.
+    // The paths fall through to static assets (the 404 page in production), like any unknown page.
     for (const path of ['/skills/routereplay-web.zip', '/skills/routereplay-web/SKILL.md']) {
       const r = await call(path);
       expect(r.res.headers.get('content-type')).toMatch(/text\/html/);

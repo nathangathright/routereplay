@@ -42,10 +42,6 @@ export const Icon = {
   ),
 };
 
-export function journeyTitle(scene: NormalizedSceneV1): string {
-  return scene.title ?? `${scene.legs[0]!.from} to ${scene.legs[scene.legs.length - 1]!.to}`;
-}
-
 /** Share a watch link with the system share sheet, or copy it where there is none. */
 export function ShareButton({ url, title, copied: copiedOutside = false }: { url: string; title: string; copied?: boolean }) {
   const [copied, setCopied] = useState(false);

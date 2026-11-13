@@ -29,6 +29,10 @@ The pages carry no credit line beyond the homepage's info icon.
 
 **Which directory loads.** Pages load the current `ASSET_MANIFEST_VERSION`, not the version a record pinned: the shaders are tuned for the current textures, and one maintainer supports one renderer at a time. The pinned version records what the journey was saved with. Old directories stay deployed so a page still running an earlier build keeps finding its files, and the published fixture's directory is checked to exist.
 
+## Link-preview images (`public/share/`)
+
+`home.jpg` (the homepage's tagline over the globe) and `journey.jpg` (the globe alone, used for every watch page) are 1200×630 screenshots of the homepage, made with `node scripts/browser/share-cards.mjs`. They show the static assets above, so they carry the same credits. `apple-touch-icon.png` is `favicon.svg` rendered at 180×180 on the page background. Chat apps cache preview images by URL, so give a replacement image a new file name and update `index.html` and `src/server/share.ts` to match.
+
 ## Weather (`/api/v1/weather/gfs/{cycle}/{hour}`)
 
 | Source | License | Use |

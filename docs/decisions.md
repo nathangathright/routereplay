@@ -148,6 +148,16 @@ Layover warnings now measure rate, not length: `compressed_connection` fires whe
 - The watch page keeps only a "make your own" button, share, export, and a play/pause button that appears on tap. The title, route summary, and data notes remain for screen readers and in the page title.
 - The draft page has the same stage (November 12, 2026). Its top left shows the title and "Draft · Edited 5m ago" instead of the + button. Its top right shows Publish, with no confirmation step, in place of Share. Once the shown revision has a watch link, Share takes its place again. Export is unchanged. "Your agent is working" floats at the bottom. The list of earlier watch links and the quality menu are gone; agents still list publications through the API. A publication now changes the draft's ETag, so an open draft notices when the agent publishes.
 
+## Watch pages: out of search, previewed in chats
+
+*Decided November 12, 2026.* Watch pages stay out of search results but carry a full link preview, so a link pasted into a group chat shows the journey.
+
+- **Not indexed.** A journey is someone's itinerary, often a future trip, so an indexed watch page would announce when they're away. Watch pages, draft previews, and every `/api/*` response (snapshots and storyboards included) send `noindex` as a meta tag or an `X-Robots-Tag` header. `robots.txt` still allows everything: chat apps' preview fetchers obey it but ignore `noindex`.
+- **Google's video results were out of reach anyway.** They need a video file or an embeddable player that Google can fetch, and the watch page draws on a canvas. Key moments also need videos of at least 30 seconds; journeys run about 15–25.
+- **What the preview says.** The Worker writes the page's title, description, Open Graph, and Twitter card tags (`src/server/share.ts`) in place of the homepage's, which sit between the `share:start` and `share:end` comments in `index.html`. The title is the journey's (`journeyTitle` in `src/shared/scene/title.ts`, which the pages use too). The description lists the stops by city and the total distance. It doesn't count legs, so it stays right once legs can travel by land or sea. Dates are left out because chat apps keep their copy of a preview after the owner deletes the journey. Draft previews get the homepage card.
+- **One image for every journey.** `public/share/journey.jpg` is the homepage globe without text, made by `scripts/browser/share-cards.mjs`. A picture of each journey's route would have to be rendered outside the Worker: on the Workers Free plan, rasterizing an image there exceeds the CPU limit. One way is for the draft page, which is usually open when a journey is published, to render a still and upload it to R2.
+- **Status codes.** A missing journey's page returns 404 and a deleted one's 410, both `noindex` and without journey details. Watch pages revalidate on every view (`public, no-cache`), like the snapshot, so deletion takes effect at once. Any other unknown path gets `public/404.html` with a 404 (`not_found_handling = "404-page"`) instead of the app shell with a 200, so the app no longer has a not-found view of its own.
+
 ## Asset set
 
 - **Day:** NASA Blue Marble Next Generation with topography and bathymetry, 3600×1800.
