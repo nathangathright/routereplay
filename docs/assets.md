@@ -70,7 +70,7 @@ The pages carry no credit line beyond the homepage's info icon.
 
 ## Link-preview images (`public/share/`)
 
-`home.jpg` (the homepage's tagline over the globe) and `journey.jpg` (the globe alone, used for every watch page) are 1200×630 screenshots of the homepage, made with `node scripts/browser/share-cards.mjs`. They show the static assets above, so they carry the same credits. `apple-touch-icon.png` is `favicon.svg` rendered at 180×180 on the page background. Chat apps cache preview images by URL, so give a replacement image a new file name and update `index.html` and `src/server/share.ts` to match.
+`home-<date>.jpg` (the homepage's tagline over the globe) and `journey-<date>.jpg` (the globe alone, used for every watch page) are 1200×630 screenshots of the homepage, made with `node scripts/browser/share-cards.mjs`. They show the static assets above, so they carry the same credits. `apple-touch-icon.png` is `favicon.svg` rendered at 180×180 on the page background. Chat apps cache preview images by URL, so give a replacement image a new file name and update `index.html` and `src/server/share.ts` to match.
 
 ## Weather (`/api/v1/weather/gfs/{cycle}/{hour}`)
 

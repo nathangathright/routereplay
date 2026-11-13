@@ -22,16 +22,19 @@ interface AgentActivity {
   until: number;
 }
 
-const handshakes = new Map<string, Promise<void>>();
+const handshakes = new Map<string, Promise<string | null>>();
 
-/** Move the credential from the URL fragment into an HttpOnly session, removing it from history first. */
-function handshake(sceneId: string): Promise<void> {
+/**
+ * Move the credential from the URL fragment into an HttpOnly session, removing it from history first.
+ * Resolves to the credential it used, if any, so the page can offer it back once (see `privateLink`).
+ */
+function handshake(sceneId: string): Promise<string | null> {
   let p = handshakes.get(sceneId);
   if (!p) {
     const m = /[#&]k=([^&]+)/.exec(location.hash);
     const token = m ? decodeURIComponent(m[1]!) : null;
     if (token) history.replaceState(history.state, '', location.pathname + location.search);
-    p = token ? startSession(sceneId, token).then(() => undefined) : Promise.resolve();
+    p = token ? startSession(sceneId, token).then(() => token) : Promise.resolve(null);
     handshakes.set(sceneId, p);
   }
   return p;
@@ -81,6 +84,11 @@ export function Preview({ sceneId }: { sceneId: string }) {
   const [publishing, setPublishing] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  // A draft made from the homepage chat arrives with its owner credential, and the session cookie it becomes is
+  // the person's only key: it lasts 7 days, in this browser. Offer the private link once so they can keep it.
+  // (Agent-made drafts arrive with an edit credential; the agent keeps the owner one and can share the link again.)
+  const [privateLink, setPrivateLink] = useState<string | null>(null);
+  const [privateLinkCopy, setPrivateLinkCopy] = useState<'idle' | 'copied' | 'failed'>('idle');
   const viewRef = useRef<SceneView | null>(null);
   const etag = useRef<string | null>(null);
   const player = useRef<JourneyPlayerHandle>(null);
@@ -114,10 +122,13 @@ export function Preview({ sceneId }: { sceneId: string }) {
     let alive = true;
     (async () => {
       try {
-        await handshake(sceneId);
+        const token = await handshake(sceneId);
         const r = await getScene(sceneId);
         if (!alive) return;
         adopt(r.body!, r.etag);
+        if (token && r.body!.capabilities.role === 'owner') {
+          setPrivateLink(`${location.origin}/s/${sceneId}#k=${encodeURIComponent(token)}`);
+        }
         setLoad({ kind: 'ready' });
       } catch (e) {
         if (!alive) return;
@@ -247,7 +258,10 @@ export function Preview({ sceneId }: { sceneId: string }) {
   if (load.kind === 'expired' || load.kind === 'missing' || load.kind === 'error') {
     const text =
       load.kind === 'expired'
-        ? { h: 'This preview session has ended', p: 'Ask your agent for the preview link again. If the edit link was replaced, the old one no longer works.' }
+        ? {
+            h: 'This preview session has ended',
+            p: 'Open the private link you saved, or ask your agent for the preview link again. If the link was replaced, the old one no longer works.',
+          }
         : load.kind === 'missing'
           ? { h: 'This draft isn’t available', p: 'The link may be mistyped, the draft may have been deleted, or its edit link was replaced. Ask your agent for a current link.' }
           : { h: 'Something went wrong', p: load.message };
@@ -299,6 +313,17 @@ export function Preview({ sceneId }: { sceneId: string }) {
     }
   }
 
+  async function copyPrivateLink() {
+    if (!privateLink) return;
+    try {
+      await navigator.clipboard.writeText(privateLink);
+      setPrivateLinkCopy('copied');
+    } catch {
+      // Clipboard blocked: show the link itself, selected, to copy by hand.
+      setPrivateLinkCopy('failed');
+    }
+  }
+
   const title = journeyTitle(view.normalized);
   // Newest first, so this is the latest watch link of what the creator sees.
   const published = view.publications.find((p) => p.revision === view.revision);
@@ -328,6 +353,33 @@ export function Preview({ sceneId }: { sceneId: string }) {
         <p className="stage-toast error" role="alert">
           {failure}
         </p>
+      ) : privateLink ? (
+        <section className="stage-toast keep-link" aria-label="Your private link">
+          <p>
+            <strong>Save your private link</strong> to open this draft later or on another device. Anyone with it can edit,
+            publish or delete the draft.
+          </p>
+          {privateLinkCopy === 'failed' && (
+            <input
+              className="keep-link-url"
+              readOnly
+              value={privateLink}
+              aria-label="Private link"
+              autoFocus
+              onFocus={(e) => e.currentTarget.select()}
+            />
+          )}
+          <div className="keep-link-actions">
+            <button className="btn small primary" onClick={copyPrivateLink}>
+              {privateLinkCopy === 'copied' ? 'Copied' : 'Copy link'}
+            </button>
+            <button className="icon-btn small" onClick={() => setPrivateLink(null)} aria-label="Dismiss" title="Dismiss">
+              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+                <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+        </section>
       ) : (
         activity && (
           <p className="stage-toast" role="status">

@@ -7,12 +7,12 @@ import type { NormalizedSceneV1 } from '../shared/scene/types';
 
 export const SITE_NAME = 'Route Replay';
 export const SITE_DESCRIPTION =
-  'Ask your own agent to turn a flight itinerary into an animated journey on a 3D Earth, then share it.';
+  'Describe your flights, trains and ferries, or hand them to your own AI agent, and watch your trip unfold on a 3D Earth in that day’s sunlight. Then share it.';
 
 /** Static images in public/share, made by scripts/browser/share-cards.mjs. Rename them when replacing: chats cache by URL. */
 export const SHARE_IMAGES = {
-  home: { path: '/share/home.jpg', alt: '“Replay your journey across the Earth.” above the Earth from space, half in daylight and half at night.' },
-  journey: { path: '/share/journey.jpg', alt: 'The Earth from space, half in daylight and half at night.' },
+  home: { path: '/share/home-2026-11-13.jpg', alt: '“Your trip, seen from space.” above the Earth: North America at night, with dawn at its edge.' },
+  journey: { path: '/share/journey-2026-11-13.jpg', alt: 'The Earth from space: North America at night, with dawn at its edge.' },
 } as const;
 const IMAGE_SIZE = { width: 1200, height: 630 };
 

@@ -466,7 +466,7 @@ describe('link previews', () => {
     expect(meta(page.text, 'og:description')).toEqual([expect.stringMatching(/^Chicago → San Francisco → Auckland · [\d,]+ km, replayed on a 3D Earth$/)]);
     expect(meta(page.text, 'description')).toEqual(meta(page.text, 'og:description'));
     expect(meta(page.text, 'og:url')).toEqual([`${ORIGIN}/w/${pubId}`]);
-    expect(meta(page.text, 'og:image')).toEqual([`${ORIGIN}/share/journey.jpg`]);
+    expect(meta(page.text, 'og:image')).toEqual([`${ORIGIN}/share/journey-2026-11-13.jpg`]);
     expect(meta(page.text, 'twitter:card')).toEqual(['summary_large_image']);
     expect(meta(page.text, 'robots')).toEqual(['noindex']);
     expect(page.res.headers.get('x-robots-tag')).toBe('noindex');

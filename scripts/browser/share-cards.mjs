@@ -4,10 +4,10 @@
  *
  *   node scripts/browser/share-cards.mjs [--origin https://routereplay.video] [--out public/share]
  *
- * Writes 1200×630 JPEGs: home.jpg (tagline over the globe) and journey.jpg (the globe alone, used
+ * Writes 1200×630 JPEGs: home-<date>.jpg (tagline over the globe) and journey-<date>.jpg (the globe alone, used
  * for every watch page so it doesn't compete with the journey's title in the preview). The globe
- * is lit for the moment of capture. Chat apps cache images by URL, so rename the files (and the
- * references in index.html and src/server/share.ts) when replacing them.
+ * is lit for the moment of capture. Chat apps cache images by URL, so each capture is named for its date;
+ * point index.html and src/server/share.ts at the new names and delete the old files.
  */
 import { mkdir } from 'node:fs/promises';
 import puppeteer from 'puppeteer-core';
@@ -19,14 +19,15 @@ const arg = (name, fallback) => {
 const origin = arg('origin', 'https://routereplay.video');
 const out = arg('out', 'public/share');
 const executablePath = arg('executable', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
+const date = new Date().toISOString().slice(0, 10);
 const W = 1200;
 const H = 630;
 
 // Hidden before first paint: the globe draws the prompt button itself (SunlitButton) and keeps the
 // last place it measured, so hiding the button after load leaves an empty pill on the Earth.
 const cards = [
-  { file: 'home.jpg', css: '.hero p, .hero-actions, .acknowledgments-link { display: none !important; }' },
-  { file: 'journey.jpg', css: '.landing-content, .acknowledgments-link { display: none !important; }' },
+  { file: `home-${date}.jpg`, css: '.hero p, .hero-actions, .acknowledgments-link { display: none !important; }' },
+  { file: `journey-${date}.jpg`, css: '.landing-content, .acknowledgments-link { display: none !important; }' },
 ];
 
 await mkdir(out, { recursive: true });

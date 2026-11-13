@@ -50,10 +50,10 @@ export function Landing() {
       <div className="landing-canvas">{webgl && <IdleEarth quality={quality} horizon={horizon} sunlitTarget={promptButton} />}</div>
       <div className="landing-content">
         <section className="hero" ref={hero}>
-          <h1>Replay your journey across the Earth.</h1>
+          <h1>Your trip, seen from space.</h1>
           <p>
-            Your own agent turns an itinerary into an animated flight path with dated sunlight. Watch it, revise it by asking, and share a
-            link.
+            Describe your flights, trains and ferries here, or hand them to your own AI agent. Watch the journey unfold in that day’s
+            sunlight, then share a link.
           </p>
           <div className="hero-actions">
             <button ref={getStarted} className="get-started" onClick={() => setChatOpen(true)} aria-haspopup="dialog">
