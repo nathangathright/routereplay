@@ -18,11 +18,13 @@ Short operational notes for one maintainer.
 ```sh
 npm install
 npm test                       # unit + API integration tests (local D1 via Miniflare)
-npm run dev:worker             # build, apply local D1 migrations, run the Worker (assets, API, Durable Object) on http://127.0.0.1:8788
-BASE_URL=http://127.0.0.1:8788 npm run smoke   # end-to-end HTTP checks against the running server
+npm run dev:worker             # build, apply local D1 migrations, run the Worker (assets, API, Durable Object) at https://routereplay.localhost
+npm run smoke                  # end-to-end HTTP checks against the running local Worker
 ```
 
-`npm run dev` serves the frontend with hot reload on port 5173 and proxies the API and the live-update WebSocket to `dev:worker` on 8788.
+`npm run dev` serves the frontend with hot reload at https://vite.routereplay.localhost and proxies the API and the live-update WebSocket to `dev:worker`.
+
+Both run through [portless](https://github.com/vercel-labs/portless) (a pinned dev dependency, matching the proxy version you run), which assigns a free port and serves it at a stable `.localhost` name over HTTPS. `dev:worker` sets `PUBLIC_ORIGIN` to that address (`PORTLESS_URL`), so generated links point at it. In a git worktree the names gain the branch as a subdomain, and `portless get routereplay` prints the right address for the current checkout. The Vite proxy rewrites `Origin` to the Worker's address, because the Worker accepts cookie-authenticated writes and live sockets only from its own origin. `npm run smoke` uses Node's `--use-system-ca` to trust portless's certificate. If an address won't load, run `npx portless doctor`.
 
 A watch page opened with `?measure` (for example `/w/{id}?measure`) shows a device measurement panel on the device itself, uploading nothing. It records load and first-frame times, transfer, the rendered frame rate during 6 s of playback, GPU details, and a full local export. Use it for phone budget checks.
 

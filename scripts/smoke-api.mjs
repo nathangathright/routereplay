@@ -3,11 +3,13 @@
  * End-to-end HTTP smoke test against a running Route Replay (local or deployed).
  * Creates a synthetic draft, revises it, publishes it, checks public isolation, then deletes it.
  *
- * Usage: BASE_URL=http://127.0.0.1:8788 node scripts/smoke-api.mjs
+ * Usage: npm run smoke (the local Worker from `npm run dev:worker`), or BASE_URL=https://routereplay.video npm run smoke.
+ * `npm run smoke` runs Node with --use-system-ca so it trusts portless's local certificate.
  */
+import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 
-const BASE = (process.env.BASE_URL ?? 'http://127.0.0.1:8788').replace(/\/$/, '');
+const BASE = (process.env.BASE_URL ?? execFileSync('portless', ['get', 'routereplay'], { encoding: 'utf8' }).trim()).replace(/\/$/, '');
 const spec = {
   schemaVersion: 1,
   title: 'Smoke test (synthetic)',

@@ -17,12 +17,14 @@ A free web app where people use their own agent to create a journey, watch it pl
 ```sh
 npm install
 npm test                 # unit, warning-corpus, storyboard, API (local D1), compatibility, and header tests
-npm run dev:worker       # build + local D1 migrations + Worker (assets, API, live updates) on http://127.0.0.1:8788
-npm run smoke            # end-to-end HTTP checks (BASE_URL=https://routereplay.video for production)
-npm run dev              # Vite hot reload on :5173, proxying the API and WebSocket to :8788
+npm run dev:worker       # build + local D1 migrations + Worker (assets, API, live updates) at https://routereplay.localhost
+npm run smoke            # end-to-end HTTP checks against that Worker (BASE_URL=https://routereplay.video for production)
+npm run dev              # Vite hot reload at https://vite.routereplay.localhost, proxying the API and WebSocket to the Worker
 npm run deploy           # build, test, and deploy the Worker
 npm run typecheck
 ```
+
+Local servers run through [portless](https://github.com/vercel-labs/portless), which gives them stable `.localhost` addresses instead of ports. In a git worktree they get the branch as a subdomain, such as `https://<branch>.routereplay.localhost`, so several checkouts can run at once. portless needs Node 24, and its first run installs a local certificate authority (it may ask for `sudo`).
 
 Asset rebuilds, which download sources into `.cache/`, are `npm run assets:airports` and `npm run assets:textures` (needs Pillow).
 

@@ -6,20 +6,20 @@
   "type": "module",
   "license": "MIT",
   "engines": {
-    "node": ">=20.19"
+    "node": ">=24"
   },
   "scripts": {
     "gen": "node scripts/generate.mjs",
-    "dev": "npm run gen && vite",
+    "dev": "npm run gen && portless run --name vite.routereplay vite",
     "build": "npm run typecheck && vite build",
     "typecheck": "npm run gen && tsc -p tsconfig.app.json && tsc -p tsconfig.worker.json",
     "test": "npm run gen && vitest run",
     "db:migrate:local": "wrangler d1 migrations apply routereplay --local",
-    "smoke": "node scripts/smoke-api.mjs",
+    "smoke": "node --use-system-ca scripts/smoke-api.mjs",
     "assets:airports": "node scripts/build-airports.mjs",
     "assets:textures": "python3 -I scripts/build-textures.py",
     "usage": "node scripts/usage-report.mjs",
-    "dev:worker": "npm run build && npm run db:migrate:local && wrangler dev --port 8788 --var PUBLIC_ORIGIN:http://127.0.0.1:8788",
+    "dev:worker": "npm run build && npm run db:migrate:local && portless run --name routereplay sh -c 'exec wrangler dev --port \"$PORT\" --ip \"$HOST\" --var \"PUBLIC_ORIGIN:$PORTLESS_URL\"'",
     "deploy": "npm run build && npm test && wrangler deploy"
   },
   "dependencies": {
@@ -42,10 +42,14 @@
     "@vitejs/plugin-react": "5.2.0",
     "ajv": "8.20.0",
     "miniflare": "5.20261110.0-beta",
+    "portless": "0.15.3",
     "puppeteer-core": "25.17.0",
     "typescript": "5.9.3",
     "vite": "7.3.8",
     "vitest": "4.1.12",
     "wrangler": "4.160.0"
+  },
+  "allowScripts": {
+    "workerd@1.20261110.1": true
   }
 }
