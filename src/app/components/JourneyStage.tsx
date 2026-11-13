@@ -228,6 +228,16 @@ const Stage = forwardRef<JourneyPlayerHandle, StageProps>(function Stage({ scene
         </button>
       )}
 
+      {/* Ground legs follow routes made from OpenStreetMap data, whose licence asks for a visible credit. */}
+      {scene.legs.some((l) => l.path) && (
+        <p className="stage-credit">
+          Map data ©{' '}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
+            OpenStreetMap contributors
+          </a>
+        </p>
+      )}
+
       {children}
 
       {contextLost && (
