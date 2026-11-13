@@ -153,6 +153,16 @@ describe('create and read', () => {
     expect(other.status).toBe(200);
   });
 
+  it('changes the ETag when a revision is published', async () => {
+    const { id, edit, owner } = await created();
+    const first = await call(`/api/v1/scenes/${id}`, { token: edit });
+    const pub = await call(`/api/v1/scenes/${id}/publications`, { token: owner, body: { revision: 1 } });
+    expect(pub.status).toBe(201);
+    const after = await call(`/api/v1/scenes/${id}`, { token: edit, headers: { 'if-none-match': first.res.headers.get('etag')! } });
+    expect(after.status).toBe(200);
+    expect(after.json.publications.map((p: { id: string }) => p.id)).toEqual([pub.json.id]);
+  });
+
   it('returns validation issues without saving', async () => {
     const bad = clone(EXAMPLE_SCENE) as any;
     bad.legs[0].departure = '2031-01-05T10:00:00';

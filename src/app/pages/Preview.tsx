@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiFailure, type SceneView, getScene, publishScene, requestStats, startSession } from '../api';
 import type { JourneyPlayerHandle } from '../components/JourneyPlayer';
-import { JourneyView } from '../components/JourneyView';
+import { JourneyStage, ShareButton, journeyTitle } from '../components/JourneyStage';
 import { registerWebMcpTools, webMcpAvailable } from '../webmcp';
 
 type LoadState =
@@ -36,13 +36,40 @@ function handshake(sceneId: string): Promise<void> {
   return p;
 }
 
-function relativeTime(iso: string): string {
-  const s = Math.round((Date.now() - Date.parse(iso)) / 1000);
-  if (s < 10) return 'just now';
-  if (s < 60) return `${s} s ago`;
-  if (s < 3600) return `${Math.round(s / 60)} min ago`;
-  return new Date(iso).toLocaleString();
+const AGO_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ['year', 365 * 86_400],
+  ['month', 30 * 86_400],
+  ['week', 7 * 86_400],
+  ['day', 86_400],
+  ['hour', 3_600],
+  ['minute', 60],
+];
+
+/** "5m ago", "2d ago"; "now" within the first minute. */
+function ago(iso: string, now: number): string {
+  const seconds = Math.max(0, (now - Date.parse(iso)) / 1000);
+  for (const [unit, size] of AGO_UNITS) {
+    if (seconds >= size) return new Intl.RelativeTimeFormat(undefined, { style: 'narrow' }).format(-Math.floor(seconds / size), unit);
+  }
+  return new Intl.RelativeTimeFormat(undefined, { style: 'narrow', numeric: 'auto' }).format(0, 'second');
 }
+
+/** Its own clock, so the scene doesn't re-render as the label ages. */
+function EditedAgo({ iso }: { iso: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 15_000);
+    return () => clearInterval(t);
+  }, [iso]);
+  return (
+    <time dateTime={iso} title={new Date(iso).toLocaleString()}>
+      {ago(iso, now)}
+    </time>
+  );
+}
+
+const FAILURE_SHOW_MS = 6000;
 
 export function Preview({ sceneId }: { sceneId: string }) {
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' });
@@ -51,7 +78,8 @@ export function Preview({ sceneId }: { sceneId: string }) {
   const [activity, setActivity] = useState<AgentActivity | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
-  const [, setTick] = useState(0);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
   const viewRef = useRef<SceneView | null>(null);
   const etag = useRef<string | null>(null);
   const player = useRef<JourneyPlayerHandle>(null);
@@ -199,18 +227,19 @@ export function Preview({ sceneId }: { sceneId: string }) {
   }, [load.kind, role, sceneId, adopt]);
 
   useEffect(() => {
-    const t = setInterval(() => setTick((x) => x + 1), 15_000);
-    return () => clearInterval(t);
-  }, []);
+    if (!failure) return;
+    const t = setTimeout(() => setFailure(null), FAILURE_SHOW_MS);
+    return () => clearTimeout(t);
+  }, [failure]);
 
   useEffect(() => {
-    if (view) document.title = `${view.normalized.title ?? 'Journey'} · Route Replay preview`;
+    if (view) document.title = `${journeyTitle(view.normalized)} · Draft · Route Replay`;
   }, [view]);
 
   if (load.kind === 'loading') {
     return (
       <div className="center-state" aria-busy="true">
-        <p>Opening your private preview…</p>
+        <p>Opening your draft…</p>
       </div>
     );
   }
@@ -235,99 +264,92 @@ export function Preview({ sceneId }: { sceneId: string }) {
   }
   if (!view) return null;
 
+  /** Publish what the creator is looking at, then offer the new link through Share. No confirmation step. */
   async function publish() {
-    if (!view) return;
-    if (!confirm(`Publish revision ${view.revision} as a public watch link? Anyone with the link can watch it.`)) return;
+    const current = viewRef.current;
+    if (!current || publishing) return;
     setPublishing(true);
+    setFailure(null);
     try {
-      const r = await publishScene(sceneId, view.revision);
-      setNotice(`Published. Watch link: ${r.body!.watchUrl}`);
+      const { id, revision, createdAt, watchUrl } = (await publishScene(sceneId, current.revision)).body!;
+      const latest = viewRef.current;
+      // Show Share at once; the live socket's refetch brings the same publication.
+      if (latest && !latest.publications.some((p) => p.id === id)) {
+        adopt({ ...latest, publications: [{ id, revision, createdAt, watchUrl }, ...latest.publications] }, etag.current);
+      }
+      let copied = false;
+      try {
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(watchUrl);
+          copied = true;
+        }
+      } catch {
+        // Some browsers only allow copying straight after a tap; Share still copies.
+      }
+      setNotice(copied ? 'Published. Watch link copied.' : 'Published.');
+      if (copied) {
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+      }
     } catch (e) {
-      setNotice(e instanceof Error ? `Publishing failed: ${e.message}` : 'Publishing failed.');
+      setFailure(e instanceof Error ? `Publishing failed: ${e.message}` : 'Publishing failed.');
     } finally {
       setPublishing(false);
     }
   }
 
-  const n = view.normalized;
+  const title = journeyTitle(view.normalized);
+  // Newest first, so this is the latest watch link of what the creator sees.
+  const published = view.publications.find((p) => p.revision === view.revision);
+  const action = published ? (
+    <ShareButton url={published.watchUrl} title={title} copied={linkCopied} />
+  ) : view.capabilities.publish ? (
+    <button className="pill-btn" onClick={publish} disabled={publishing}>
+      {publishing ? 'Publishing…' : 'Publish'}
+    </button>
+  ) : null;
+
   return (
-    <main className="page">
-      <header className="topbar">
-        <a className="brand" href="/">
-          <span className="brand-mark" aria-hidden="true" />
-          Route Replay
-        </a>
-        <span className="badge" title="Only people with the private link can open this draft">
-          Private draft
-        </span>
-      </header>
-      <div className="title-row">
-        <h1>{n.title ?? `${n.legs[0]!.from} to ${n.legs[n.legs.length - 1]!.to}`}</h1>
-        <div className="row">
-          <span className={`badge ${connected ? 'live' : ''}`} aria-live="polite">
-            <span className="dot" aria-hidden="true" />
-            {connected ? 'Live' : 'Reconnecting…'} · revision {view.revision} · {relativeTime(view.updatedAt)}
-          </span>
+    <JourneyStage
+      ref={player}
+      scene={view.normalized}
+      corner={
+        <div className="draft-heading">
+          <h1>{title}</h1>
+          <p>
+            Draft · Edited <EditedAgo iso={view.updatedAt} />
+          </p>
         </div>
-      </div>
-      {activity && (
-        <p className="agent-activity" role="status">
-          <span className="spinner" aria-hidden="true" />
-          <span>
-            Your agent is working{activity.message ? ': ' : '.'}
-            {activity.message}
-          </span>
+      }
+      action={action}
+    >
+      {failure ? (
+        <p className="stage-toast error" role="alert">
+          {failure}
         </p>
+      ) : (
+        activity && (
+          <p className="stage-toast" role="status">
+            <span className="spinner" aria-hidden="true" />
+            <span>
+              Your agent is working{activity.message ? ': ' : '.'}
+              {activity.message}
+            </span>
+          </p>
+        )
       )}
-      <JourneyView
-        ref={player}
-        scene={n}
-        actions={
-          view.capabilities.publish ? (
-            <button className="btn small primary" onClick={publish} disabled={publishing}>
-              {publishing ? 'Publishing…' : 'Publish watch link'}
-            </button>
-          ) : (
-            <span className="note">Ask your agent to make changes or publish a watch link.</span>
-          )
-        }
-      />
-      <p className="status-line" role="status">
+      <p className="visually-hidden" role="status">
         {notice}
       </p>
-      {view.publications.length > 0 && (
-        <section className="panel" aria-labelledby="pubs-title">
-          <h2 id="pubs-title">Watch links</h2>
-          <ul className="pubs">
-            {view.publications.map((p) => (
-              <li key={p.id}>
-                <span>
-                  Revision {p.revision} · <code>{p.watchUrl}</code>
-                </span>
-                <span className="row">
-                  <button className="btn small" onClick={() => navigator.clipboard?.writeText(p.watchUrl)}>
-                    Copy
-                  </button>
-                  <a className="btn small" href={p.watchUrl} target="_blank" rel="noreferrer">
-                    Open
-                  </a>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="note">Watch links are snapshots. Later revisions don’t change them; publish again for a new link.</p>
-        </section>
-      )}
       {debug && (
-        <section className="panel">
-          <h2>Diagnostics</h2>
-          <p className="note">
-            API requests: {requestStats.total} ({requestStats.notModified} not modified) in{' '}
-            {Math.round((Date.now() - requestStats.since) / 1000)} s · WebMCP: {webMcpAvailable() ? 'available' : 'unavailable'} · role{' '}
-            {view.capabilities.role}
+        <div className="watch-measure">
+          <p className="panel note">
+            {connected ? 'Live' : 'Reconnecting'} · revision {view.revision} · API requests: {requestStats.total} (
+            {requestStats.notModified} not modified) in {Math.round((Date.now() - requestStats.since) / 1000)} s · WebMCP:{' '}
+            {webMcpAvailable() ? 'available' : 'unavailable'} · role {view.capabilities.role}
           </p>
-        </section>
+        </div>
       )}
-    </main>
+    </JourneyStage>
   );
 }

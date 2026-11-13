@@ -163,8 +163,8 @@ vec4 bspline(float t) {
   return vec4(x, y, z, 6.0 - x - y - z) / 6.0;
 }
 
-float smoothSample(sampler2D tex, vec2 uv) {
-  const vec2 size = vec2(360.0, 181.0);
+// The same at mip level lod, which is size texels.
+vec4 cubicSample(sampler2D tex, vec2 uv, vec2 size, float lod) {
   vec2 p = uv * size - 0.5;
   vec2 f = fract(p);
   p -= f;
@@ -173,13 +173,17 @@ float smoothSample(sampler2D tex, vec2 uv) {
   vec4 c = p.xxyy + vec2(-0.5, 1.5).xyxy;
   vec4 s = vec4(wx.xz + wx.yw, wy.xz + wy.yw);
   vec4 o = (c + vec4(wx.yw, wy.yw) / s) / size.xxyy;
-  float a = texture2D(tex, o.xz).r;
-  float b = texture2D(tex, o.yz).r;
-  float d = texture2D(tex, o.xw).r;
-  float e = texture2D(tex, o.yw).r;
+  vec4 a = textureLod(tex, o.xz, lod);
+  vec4 b = textureLod(tex, o.yz, lod);
+  vec4 d = textureLod(tex, o.xw, lod);
+  vec4 e = textureLod(tex, o.yw, lod);
   float sx = s.x / (s.x + s.y);
   float sy = s.z / (s.z + s.w);
   return mix(mix(e, d, sx), mix(b, a, sx), sy);
+}
+
+float smoothSample(sampler2D tex, vec2 uv) {
+  return cubicSample(tex, uv, vec2(360.0, 181.0), 0.0).r;
 }
 
 // Model cloud opacity at n, carried by the wind between the two fields. 'smoothly' picks cubic sampling.
@@ -290,11 +294,13 @@ void main() {
   if (moonlight > 0.0) color += moonlight * deckSunlight(n, moonDir) * deckLight(n, moonDir, water) * reflectance;
 
   // City light scattered up through the cloud from below (routereplay cityglow.py): spread a little, and
-  // strongest through moderate cloud; thick cloud swallows it.
+  // strongest through moderate cloud; thick cloud swallows it. The spread is the lights map two mip levels
+  // down, sampled cubically: bilinear sampling there turns every town into a soft square.
   vec2 uv = vec2(atan(-n.z, n.x) / (2.0 * PI) + 0.5, asin(clamp(n.y, -1.0, 1.0)) / PI + 0.5);
   float tau = -log(1.0 - min(alpha, 0.98));
   float penetration = 0.7 * exp(-tau) + 0.3 * exp(-0.4 * tau);
-  color += cityLights(n, textureLod(nightMap, uv, 2.0).rgb) * 0.5 * penetration;
+  vec3 spread = cubicSample(nightMap, uv, vec2(textureSize(nightMap, 2)), 2.0).rgb;
+  color += cityLights(n, spread) * 0.5 * penetration;
 
   gl_FragColor = vec4(color, alpha);
   #include <tonemapping_fragment>

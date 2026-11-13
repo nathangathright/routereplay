@@ -92,8 +92,10 @@ function links(origin: string, id: string) {
 
 const watchUrl = (origin: string, pubId: string) => `${origin}/w/${pubId}`;
 
-async function sceneView(db: D1Database, origin: string, row: store.SceneRow, role: Role) {
-  const pubs = await store.listPublications(db, row.id);
+type PublicationRows = Awaited<ReturnType<typeof store.listPublications>>;
+
+async function sceneView(db: D1Database, origin: string, row: store.SceneRow, role: Role, pubs?: PublicationRows) {
+  pubs ??= await store.listPublications(db, row.id);
   return {
     id: row.id,
     revision: row.revision,
@@ -280,10 +282,12 @@ async function readScene(request: Request, env: Env, id: string, origin: string,
   // The page's own reads skip this, so refreshing the preview costs no Durable Object request.
   const live = auth.via === 'bearer' ? await liveContext(env, auth.row, now) : null;
   const liveTag = live ? `-${(await sha256Hex(JSON.stringify(live))).slice(0, 12)}` : '';
-  const etag = `"${auth.row.id}-r${auth.row.revision}-${auth.role}${liveTag}"`;
+  // Publishing adds a watch link without a new revision, so the count is part of the ETag.
+  const pubs = await store.listPublications(env.DB, auth.row.id);
+  const etag = `"${auth.row.id}-r${auth.row.revision}-p${pubs.length}-${auth.role}${liveTag}"`;
   const headers = { etag, 'cache-control': 'private, no-cache', vary: 'authorization, cookie' };
   if (etagMatches(request.headers.get('if-none-match'), etag)) return new Response(null, { status: 304, headers });
-  const view = await sceneView(env.DB, origin, auth.row, auth.role);
+  const view = await sceneView(env.DB, origin, auth.row, auth.role, pubs);
   const next = [
     `To change the journey, edit spec (not normalized) and PUT it with expectedRevision ${auth.row.revision}.`,
     `GET ${view.links.self}/storyboard shows what each moment of the animation looks like.`,

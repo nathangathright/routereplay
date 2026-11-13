@@ -13,7 +13,7 @@ Gzip sizes from `dist/` (Cloudflare serves Brotli where supported, which is smal
 | Page | JavaScript + CSS | Font | Textures | First-view total |
 | --- | --- | --- | --- | --- |
 | Landing | 318 KiB (`index` 316 + CSS 2) | — | 584–717 KiB low (this month's 4096 day texture, night, water mask), then 1.8–2.2 MiB more for standard on capable devices | ~0.9–1.0 MiB (low) |
-| Watch or preview | 318 + 133 (`JourneyView`: Remotion and the player) + 1–5 (page) | 115 KiB | 584–717 KiB low / 1.8–2.2 MiB standard | ~1.1–1.3 MiB low / ~2.4–2.8 MiB standard |
+| Watch or preview | 318 + 133 (`JourneyStage`: Remotion and the player) + 1–5 (page) | 115 KiB | 584–717 KiB low / 1.8–2.2 MiB standard | ~1.1–1.3 MiB low / ~2.4–2.8 MiB standard |
 | Export (on demand) | +117 KiB (`@remotion/web-renderer` + mediabunny core) | — | standard set | Loaded only when Export is pressed |
 
 Real iPhone, cold load over Wi-Fi: **919 KiB**, first journey frame at **981 ms**. Emulated phone (Fast 4G, 4× CPU): a cold load transferred **916 KiB**: JS 317 + 120 + 2, font 59, low textures 415, snapshot and HTML 2. The globe appeared **2.6 s** after navigation.
