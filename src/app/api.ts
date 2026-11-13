@@ -110,6 +110,11 @@ export function getPublication(id: string) {
   return request<PublicationView>(`/api/v1/publications/${id}`);
 }
 
+/** Delete a draft and all its watch links (owner only). */
+export function deleteScene(sceneId: string) {
+  return request<{ deleted: boolean; publicationsDeleted: number }>(`/api/v1/scenes/${sceneId}`, { method: 'DELETE' });
+}
+
 export function signOut(sceneId: string) {
   return request<{ signedOut: boolean }>(`/api/v1/scenes/${sceneId}/session`, { method: 'DELETE' });
 }
@@ -123,17 +128,25 @@ export interface ComposeLimits {
   reached?: 'client' | 'everyone';
 }
 
+/** What one leg (or the whole trip) still needs; see Question in src/server/compose/resolve.ts. */
 export interface ComposeQuestion {
-  path: string;
-  field: string;
+  leg?: number;
+  about?: string;
+  needs: string[];
+  /** Needs answered by picking one option, such as an airport: `need` is the index in `needs`. */
+  choices?: { need: number; options: string[] }[];
   question: string;
-  options?: string[];
+  fields: string[];
+  /** Part of it can be looked up (schedules, timetables, where a place is). */
+  lookup: boolean;
 }
 
 export interface ComposeLeg {
   route: string;
   when: string;
   by: string;
+  /** The aircraft wasn't named: a typical one for the distance. */
+  typical?: true;
 }
 
 export interface ComposeReply {

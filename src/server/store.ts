@@ -31,6 +31,8 @@ export interface SessionRow {
 
 export const REVISIONS_KEPT = 50;
 export const DRAFT_RETENTION_DAYS = 180;
+/** How long a browser session made from a draft credential lasts. */
+export const SESSION_DAYS = 7;
 
 export async function getScene(db: D1Database, id: string): Promise<SceneRow | null> {
   return db.prepare('SELECT * FROM scenes WHERE id = ?').bind(id).first<SceneRow>();

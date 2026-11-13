@@ -1,7 +1,7 @@
 /** Request entry point shared by the Worker and the tests. */
 import { type Ctx, type Env, originOf, readPublication, routeApi } from './api';
 import { redact } from './crypto';
-import { acknowledgments, agentDocs, llmsTxt, schemaJson } from './docs';
+import { acknowledgments, agentDocs, faq, llmsTxt, schemaJson } from './docs';
 import { ApiError, errorResponse } from './http';
 import { HTML_SECURITY_HEADERS } from './security';
 import { SHARE_IMAGES, SITE_DESCRIPTION, SITE_NAME, type PageMeta, escapeHtml, journeyDescription, metaTags, withMeta } from './share';
@@ -145,6 +145,7 @@ export async function handle(request: Request, env: Env, ctx: Ctx = {}): Promise
       return text(agentDocs(origin), 'text/markdown');
     }
     if (path === '/acknowledgments') return text(acknowledgments(origin), 'text/plain');
+    if (path === '/faq') return text(faq(origin), 'text/plain');
     if (path === '/llms.txt') return text(llmsTxt(origin), 'text/plain');
     if (path === '/schemas/scene-v1.json') {
       return text(schemaJson(origin), 'application/schema+json', 'public, max-age=3600');

@@ -38,6 +38,21 @@ const MIN_SPACING_COS = Math.cos(12 * DEG);
 const HOUR = 3_600_000;
 /** Weather steps every 6 simulated hours (one download per 24 s on screen), carried by the wind in between. */
 const CLOUD_STEP_HOURS = 6;
+/** Centred (beside the chat), the whole globe fills this share of the frame's shorter side. */
+const CENTRED_FILL = 0.8;
+/** How quickly the camera moves between the hero framing and the centred one (per second, exponential). */
+const FRAMING_RATE = 3.2;
+
+/** The camera distance at which the whole globe fills CENTRED_FILL of the frame's shorter side. */
+function centredDistance(aspect: number): number {
+  const halfV = (CAMERA_FOV * Math.PI) / 360;
+  const halfH = Math.atan(Math.tan(halfV) * aspect);
+  return 1 / Math.sin(CENTRED_FILL * Math.min(halfV, halfH));
+}
+
+const mix = (a: number, b: number, t: number) => a + (b - a) * t;
+/** Smoothstep, so the move starts and ends gently. */
+const ease = (t: number) => t * t * (3 - 2 * t);
 
 /**
  * How far below the camera's line of sight to place the globe so the planet's top edge
@@ -98,17 +113,23 @@ const toThree = (v: Vec3) => new THREE.Vector3(v[0], v[1], v[2]);
 function LiveEarth({
   textures,
   horizon,
+  centred,
   view,
   animate,
   sunlitTarget,
+  sunlitFade,
 }: {
   textures: EarthTextures;
   horizon: number;
+  centred: boolean;
   view: MutableRefObject<View>;
   animate: boolean;
   sunlitTarget?: RefObject<HTMLElement | null>;
+  sunlitFade?: RefObject<HTMLElement | null>;
 }) {
-  const { camera, gl } = useThree();
+  const { camera, gl, size } = useThree();
+  // 0 with the hero (the globe rising from the bottom), 1 beside the chat (the whole globe in the middle).
+  const framing = useRef(centred ? 1 : 0);
   const globe = useRef<THREE.Group>(null);
   // The camera's exposure, metered on the globe in view and adapting as a camera does (Reinhard tone mapping).
   const exposure = useRef(0);
@@ -126,9 +147,12 @@ function LiveEarth({
   const nextSpawn = useRef(-1);
   const nextId = useRef(0);
   const [, setFrame] = useState(0);
-  const drop = globeDrop(horizon);
-  const centreLatitude = useMemo(() => viewLatitude(horizon, drop), [horizon, drop]);
-  const reach = Math.hypot(CAMERA_DISTANCE, drop) - 1;
+  const heroDrop = globeDrop(horizon);
+  const heroLatitude = useMemo(() => viewLatitude(horizon, heroDrop), [horizon, heroDrop]);
+  const f = ease(framing.current);
+  const distance = mix(CAMERA_DISTANCE, centredDistance(size.width / Math.max(1, size.height)), f);
+  const drop = mix(heroDrop, 0, f);
+  const reach = Math.hypot(distance, drop) - 1;
   const tools = useMemo(() => ({ ray: new THREE.Raycaster(), sphere: new THREE.Sphere(), ndc: new THREE.Vector2() }), []);
   // Sunlight on the planes points at the Earth's center, which is only the world origin before the globe is moved.
   const lightTarget = useMemo(() => new THREE.Object3D(), []);
@@ -138,13 +162,25 @@ function LiveEarth({
     if (!g) return;
     const dt = Math.min(delta, 0.1);
     const v = view.current;
+    // Move the camera between the two framings; without motion it simply cuts.
+    const goal = centred ? 1 : 0;
+    framing.current = animate ? mix(framing.current, goal, 1 - Math.exp(-FRAMING_RATE * dt)) : goal;
+    if (Math.abs(goal - framing.current) < 0.001) framing.current = goal;
+    const k = ease(framing.current);
+    const dist = mix(CAMERA_DISTANCE, centredDistance(size.width / Math.max(1, size.height)), k);
+    const lift = mix(heroDrop, 0, k);
+    const centreLatitude = mix(heroLatitude, 0, k);
+    if (camera.position.z !== dist) {
+      camera.position.set(0, 0, dist);
+      camera.updateMatrixWorld();
+    }
     if (!v.dragging && (v.vLat || v.vLon)) {
       // A flick keeps turning the globe briefly, then the camera settles over the new place.
       v.lon += v.vLon * dt;
       v.lat = clampLat(v.lat + v.vLat * dt);
-      const k = Math.exp(-4 * dt);
-      v.vLon *= k;
-      v.vLat *= k;
+      const decay = Math.exp(-4 * dt);
+      v.vLon *= decay;
+      v.vLat *= decay;
       if (Math.abs(v.vLon) + Math.abs(v.vLat) < 0.002) v.vLon = v.vLat = 0;
       else if (!animate) invalidate();
     }
@@ -177,7 +213,7 @@ function LiveEarth({
     // Clouds fade in when they first arrive; without motion they simply appear.
     if (cloudSteps.current.size) cloudFade.current = animate ? Math.min(1, cloudFade.current + dt / 1.5) : 1;
 
-    g.position.set(0, -drop, 0);
+    g.position.set(0, -lift, 0);
     g.rotation.set(v.lat - centreLatitude, -Math.PI / 2 - v.lon, 0);
     g.updateMatrixWorld(true);
     const cameraLocal = g.worldToLocal(camera.position.clone());
@@ -202,10 +238,13 @@ function LiveEarth({
     const spawn = (inView: boolean): Flight | null => {
       tools.sphere.set(g.getWorldPosition(new THREE.Vector3()), 1);
       const horizonNdc = 1 - 2 * horizon;
-      // Aim through the lower three-quarters of the visible Earth, away from the horizon.
+      // With the hero, aim through the lower three-quarters of the visible Earth, away from the horizon; centred,
+      // through the middle of the disc, away from its edge.
       const top = horizonNdc - 0.25 * (horizonNdc + 1);
+      const disc = (0.6 * Math.tan(Math.asin(1 / dist))) / Math.tan((CAMERA_FOV * Math.PI) / 360);
       for (let attempt = 0; attempt < 12; attempt++) {
-        tools.ndc.set(Math.random() * 1.5 - 0.75, -0.9 + Math.random() * Math.max(0.1, top + 0.9));
+        if (k > 0.5) tools.ndc.set(((Math.random() * 2 - 1) * disc * size.height) / Math.max(1, size.width), (Math.random() * 2 - 1) * disc);
+        else tools.ndc.set(Math.random() * 1.5 - 0.75, -0.9 + Math.random() * Math.max(0.1, top + 0.9));
         tools.ray.setFromCamera(tools.ndc, camera);
         const hit = tools.ray.ray.intersectSphere(tools.sphere, new THREE.Vector3());
         if (!hit) continue;
@@ -305,23 +344,32 @@ function LiveEarth({
           />
         ))}
       </group>
-      {sunlitTarget && <SunlitButton target={sunlitTarget} globe={globe} sun={sun} utcMs={utc} sunVisible={sunVisible.current} />}
+      {sunlitTarget && <SunlitButton target={sunlitTarget} fade={sunlitFade} globe={globe} sun={sun} utcMs={utc} sunVisible={sunVisible.current} />}
     </>
   );
 }
 
 /**
- * `horizon`: where Earth's top edge should sit, as a fraction of the frame height from the top.
- * `sunlitTarget`: a button over the globe to paint as an object lit by the scene (SunlitButton).
+ * `horizon`: where Earth's top edge should sit, as a fraction of the frame height from the top, with the hero.
+ * `centred`: frame the whole globe in the middle instead (beside the chat); the camera moves between the two.
+ * `sunlitTarget`: a button over the globe to paint as an object lit by the scene (SunlitButton), fading with the
+ * opacity of `sunlitFade`.
+ * `wheelArea`: where a two-finger trackpad drag turns the globe (the whole window when absent).
  */
 export function IdleEarth({
   quality,
   horizon,
+  centred = false,
   sunlitTarget,
+  sunlitFade,
+  wheelArea,
 }: {
   quality: Quality;
   horizon: number;
+  centred?: boolean;
   sunlitTarget?: RefObject<HTMLElement | null>;
+  sunlitFade?: RefObject<HTMLElement | null>;
+  wheelArea?: RefObject<HTMLElement | null>;
 }) {
   const [textures, setTextures] = useState<EarthTextures | null>(null);
   useEffect(() => {
@@ -408,7 +456,7 @@ export function IdleEarth({
   };
 
   // A two-finger trackpad drag arrives as wheel events, not pointer events. It moves the view like a drag
-  // anywhere on the page, which never scrolls (.landing in styles.css). The system sends its own momentum
+  // anywhere over the globe and its hero, which never scroll (.landing in styles.css). The system sends its own momentum
   // afterwards, so there is no flick. A pinch (ctrlKey) stays the browser's zoom. Handling the event also keeps
   // a sideways swipe from going back in history.
   useEffect(() => {
@@ -428,9 +476,10 @@ export function IdleEarth({
       v.lat = clampLat(v.lat - dy * perPx);
       invalidate();
     };
-    window.addEventListener('wheel', onWheel, { passive: false });
-    return () => window.removeEventListener('wheel', onWheel);
-  }, []);
+    const area: HTMLElement | Window = wheelArea?.current ?? window;
+    area.addEventListener('wheel', onWheel as EventListener, { passive: false });
+    return () => area.removeEventListener('wheel', onWheel as EventListener);
+  }, [wheelArea]);
 
   return (
     <div
@@ -445,11 +494,24 @@ export function IdleEarth({
         dpr={[1, quality === 'standard' ? 2 : 1]}
         camera={{ fov: CAMERA_FOV, near: 0.1, far: 200, position: [0, 0, CAMERA_DISTANCE] }}
         frameloop={reduceMotion || !visible ? 'demand' : 'always'}
+        // Follow the stage as the chat rail slides open: R3F's default waits for resizing to stop, which leaves the
+        // globe off centre during the slide. The page never scrolls, so there's no scroll to track either.
+        resize={{ scroll: false, debounce: 0 }}
         gl={{ antialias: true, toneMapping: THREE.ReinhardToneMapping }}
         aria-hidden="true"
       >
         <color attach="background" args={['#02040a']} />
-        {textures && <LiveEarth textures={textures} horizon={horizon} view={view} animate={!reduceMotion} sunlitTarget={sunlitTarget} />}
+        {textures && (
+          <LiveEarth
+            textures={textures}
+            horizon={horizon}
+            centred={centred}
+            view={view}
+            animate={!reduceMotion}
+            sunlitTarget={sunlitTarget}
+            sunlitFade={sunlitFade}
+          />
+        )}
       </Canvas>
     </div>
   );

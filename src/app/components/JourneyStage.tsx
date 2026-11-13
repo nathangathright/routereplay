@@ -81,6 +81,8 @@ interface StageProps {
   corner: ReactNode;
   /** Top right, before Export. */
   action?: ReactNode;
+  /** The Export button and drawer; the draft page exports from its chat instead. */
+  exportable?: boolean;
   /** Further overlays, such as status lines. */
   children?: ReactNode;
 }
@@ -90,7 +92,7 @@ interface StageProps {
  * corner (top left), its action and Export (top right), and a play/pause button in the middle that appears
  * when the visitor taps the scene.
  */
-export const JourneyStage = forwardRef<JourneyPlayerHandle, StageProps>(function JourneyStage({ scene, corner, action, children }, ref) {
+export const JourneyStage = forwardRef<JourneyPlayerHandle, StageProps>(function JourneyStage({ scene, corner, action, exportable = true, children }, ref) {
   const compat = compatibility(scene);
   if (!compat.ok) {
     return (
@@ -107,13 +109,13 @@ export const JourneyStage = forwardRef<JourneyPlayerHandle, StageProps>(function
     );
   }
   return (
-    <Stage ref={ref} scene={scene} corner={corner} action={action}>
+    <Stage ref={ref} scene={scene} corner={corner} action={action} exportable={exportable}>
       {children}
     </Stage>
   );
 });
 
-const Stage = forwardRef<JourneyPlayerHandle, StageProps>(function Stage({ scene, corner, action, children }, ref) {
+const Stage = forwardRef<JourneyPlayerHandle, StageProps>(function Stage({ scene, corner, action, exportable = true, children }, ref) {
   const player = useRef<JourneyPlayerHandle | null>(null);
   const [webgl] = useState(webglAvailable);
   const [autoPlay] = useState(() => !reducedMotion());
@@ -209,7 +211,7 @@ const Stage = forwardRef<JourneyPlayerHandle, StageProps>(function Stage({ scene
 
       <div className="watch-actions">
         {action}
-        {webgl && (
+        {webgl && exportable && (
           <button ref={exportButton} className="icon-btn" onClick={() => setExporting(true)} aria-label="Export video" title="Export video">
             {Icon.download}
           </button>
@@ -258,7 +260,7 @@ const Stage = forwardRef<JourneyPlayerHandle, StageProps>(function Stage({ scene
         </div>
       )}
 
-      {webgl && (
+      {webgl && exportable && (
         <ExportDrawer
           scene={scene}
           open={exporting}

@@ -56,7 +56,7 @@ export interface Ctx {
 }
 
 export type Role = 'owner' | 'edit';
-const SESSION_TTL_MS = 7 * 86_400_000;
+const SESSION_TTL_MS = store.SESSION_DAYS * 86_400_000;
 export const sessionCookieName = (sceneId: string) => `rr_s_${sceneId}`;
 const SCENE_ID_RE = /^[a-z0-9]{16}$/;
 const PUB_ID_RE = /^[a-z0-9]{12}$/;

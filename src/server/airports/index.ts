@@ -31,12 +31,12 @@ let lowerLines: string | undefined;
 const isWordChar = (c: number) => (c >= 97 && c <= 122) || (c >= 48 && c <= 57);
 
 /**
- * Airports whose name or city contains `word` (lowercase letters and digits) as a whole word. Searches a lower-cased
- * copy of the table text, made once per isolate, with indexOf: a regular expression over the table took 1–2 ms per
- * search.
+ * Airports whose name or city contains `word` (lowercase letters and digits, accents removed) as a whole word.
+ * Searches a lower-cased, accent-free copy of the table text ("cancun" finds Cancún), made once per isolate in about
+ * 2 ms, with indexOf: a regular expression over the table took 1–2 ms per search.
  */
 export function searchAirports(word: string): Airport[] {
-  const text = (lowerLines ??= AIRPORT_LINES.toLowerCase());
+  const text = (lowerLines ??= AIRPORT_LINES.replace(/[^\x00-\x7f]+/g, (m) => m.normalize('NFD').replace(/[\u0300-\u036f]/g, '')).toLowerCase());
   const out: Airport[] = [];
   let lastLine = -1;
   for (let i = text.indexOf(word); i >= 0; i = text.indexOf(word, i + word.length)) {

@@ -19,6 +19,7 @@ run_worker_first = [
   "/agent-docs",
   "/agent-docs.md",
   "/acknowledgments",
+  "/faq",
   "/llms.txt",
   "/schemas/*",
   "/s/*",

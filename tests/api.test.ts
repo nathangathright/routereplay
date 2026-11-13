@@ -687,6 +687,17 @@ describe('agent documents', () => {
     for (const name of Object.keys(pkg.dependencies)) expect(credited).toContain(names[name] ?? name);
   });
 
+  it('serves the FAQ as plain text, with the chat\'s privacy explanation and the numbers filled in', async () => {
+    const r = await call('/faq');
+    expect(r.status).toBe(200);
+    expect(r.res.headers.get('content-type')).toMatch(/^text\/plain/);
+    expect(r.text).not.toMatch(/\{\{[A-Z_]+\}\}/);
+    expect(r.text).toContain('Neither Cloudflare nor Route Replay\n  keeps the text or uses it to train models');
+    expect(r.text).toContain(`${ORIGIN}/acknowledgments`);
+    expect(r.text).toMatch(/for 7 days/);
+    expect(r.text).toMatch(/for 180 days is deleted/);
+  });
+
   it('no longer serves an installable skill', async () => {
     // The paths fall through to static assets (the 404 page in production), like any unknown page.
     for (const path of ['/skills/routereplay-web.zip', '/skills/routereplay-web/SKILL.md']) {

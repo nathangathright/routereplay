@@ -134,7 +134,8 @@ Free-tier references, to recheck periodically:
 | Agent sets activity (`POST …/activity`) | 1 | 1, plus one Durable Object storage write | ~1 / 0 |
 | Open the homepage chat (`GET /api/v1/compose`) | 1 | 0 | 2 / 0 |
 | Each homepage chat message (`POST /api/v1/compose`) | 1, plus a Workers AI call of about 9 neurons (up to ~20 for a long confirmation email) | 0 | ~2 / 2 (rate-limit counters) |
-| Create draft from the chat | as "Agent creates a draft", then "Open a preview" | | |
+| Chat makes the draft (when the journey is complete) | as "Agent creates a draft", then "Open a preview" | | |
+| Each later change from the chat | 1 compose message (above) + 1 PUT; the open socket refetches once | 1 (notify) | ~4 / ~4 |
 
 A preview open for an hour with no changes went from 450–1,200 Worker requests (polling) to none. On November 11, 2026, a local browser check made 4 requests in 33 seconds including one pushed revision; polling would have made about 11. Agent activity, not open previews, now drives usage. Over-quota requests fail with Cloudflare errors, and the API never partially writes a scene: replacement is one atomic batch.
 

@@ -7,9 +7,11 @@
  *
  * Expected leg fields: from/to as an IATA code, or {near: code, km} for a train, bus, car or ferry stand-in;
  * dep/arr as local "YYYY-MM-DDTHH:MM", optionally with the offset; aircraft (ICAO) or mode. null means the
- * field must stay empty (unknown, or not computable without an answer).
+ * field must stay empty (unknown, or not computable without an answer). TYPICAL means the text names no aircraft
+ * (or one Route Replay doesn't draw), so the leg must carry a typical one marked as assumed.
  */
 const near = (code, km = 60) => ({ near: code, km });
+export const TYPICAL = 'typical';
 
 export const CASES = [
   {
@@ -27,10 +29,10 @@ export const CASES = [
     style: 'terse',
     text: 'Fri 3pm MEL to SFO to ORD',
     legs: [
-      { from: 'MEL', to: 'SFO', dep: null, arr: null, aircraft: null },
-      { from: 'SFO', to: 'ORD', dep: null, arr: null, aircraft: null },
+      { from: 'MEL', to: 'SFO', dep: null, arr: null, aircraft: TYPICAL },
+      { from: 'SFO', to: 'ORD', dep: null, arr: null, aircraft: TYPICAL },
     ],
-    ask: ['0.departure', '0.arrival', '0.aircraft', '1.departure', '1.arrival', '1.aircraft'],
+    ask: ['0.departure', '0.arrival', '1.departure', '1.arrival'],
   },
   {
     id: 'booking-dateline',
@@ -115,8 +117,8 @@ Fare: NZD 2,345.00  Taxes: NZD 312.40`,
     id: 'missing-aircraft',
     style: 'prose',
     text: 'SQ 890 from Singapore to Hong Kong on 19 July 2027, departs 08:15, arrives 12:10.',
-    legs: [{ from: 'SIN', to: 'HKG', dep: '2027-07-19T08:15+08:00', arr: '2027-07-19T12:10+08:00', aircraft: null }],
-    ask: ['0.aircraft'],
+    legs: [{ from: 'SIN', to: 'HKG', dep: '2027-07-19T08:15+08:00', arr: '2027-07-19T12:10+08:00', aircraft: TYPICAL }],
+    ask: [],
   },
   {
     id: 'missing-times',
@@ -268,9 +270,27 @@ Questions? Reply to this email.`,
     text: 'LHR to DXB on 1 Feb 2027 09:40 → 20:35 on an A380, then DXB to SYD same night 21:15 → 17:30 next day on a Boeing 777.',
     legs: [
       { from: 'LHR', to: 'DXB', dep: '2027-02-01T09:40+00:00', arr: '2027-02-01T20:35+04:00', aircraft: 'A388' },
-      { from: 'DXB', to: 'SYD', dep: '2027-02-01T21:15+04:00', arr: '2027-02-02T17:30+11:00', aircraft: null },
+      { from: 'DXB', to: 'SYD', dep: '2027-02-01T21:15+04:00', arr: '2027-02-02T17:30+11:00', aircraft: TYPICAL },
     ],
-    ask: ['1.aircraft'],
+    ask: [],
+  },
+  {
+    id: 'notes-no-times',
+    style: 'notes',
+    // How people jot a trip down: flight numbers and some dates, no times or aircraft, places by name.
+    text: `AA 100 JFK → LHR Jun 12, 2027
+Eurostar London to Paris
+TGV to Nice
+Ferry to Corsica
+XK 774 AJA → ORY Jun 25, 2027`,
+    legs: [
+      { from: 'JFK', to: 'LHR', dep: null, arr: null, aircraft: TYPICAL },
+      { from: near('LHR'), to: near('ORY'), dep: null, arr: null, mode: 'train' },
+      { from: near('ORY'), to: 'NCE', dep: null, arr: null, mode: 'train' },
+      { from: 'NCE', to: near('AJA', 200), dep: null, arr: null, mode: 'ferry' },
+      { from: 'AJA', to: 'ORY', dep: null, arr: null, aircraft: TYPICAL },
+    ],
+    ask: ['0.departure', '0.arrival', '1.departure', '1.arrival', '2.departure', '2.arrival', '3.departure', '3.arrival', '4.departure', '4.arrival'],
   },
 ];
 
@@ -358,9 +378,9 @@ export const HOLDOUT = [
     text: 'Lisbon–Porto by train, 2 May 2027 07:39–10:35. Then Porto to Paris Orly 2 May 2027, 18:05 → 21:30.',
     legs: [
       { from: near('LIS'), to: 'OPO', dep: '2027-05-02T07:39+01:00', arr: '2027-05-02T10:35+01:00', mode: 'train' },
-      { from: 'OPO', to: 'ORY', dep: '2027-05-02T18:05+01:00', arr: '2027-05-02T21:30+02:00', aircraft: null },
+      { from: 'OPO', to: 'ORY', dep: '2027-05-02T18:05+01:00', arr: '2027-05-02T21:30+02:00', aircraft: TYPICAL },
     ],
-    ask: ['1.aircraft'],
+    ask: [],
   },
   {
     id: 'ho-dst-autumn',
@@ -380,7 +400,7 @@ export const HOLDOUT = [
     id: 'ho-unsupported-aircraft',
     style: 'prose',
     text: 'Rex flight Sydney to Dubbo, 2027-04-20 14:00–15:15, Saab 340.',
-    legs: [{ from: 'SYD', to: 'DBO', dep: '2027-04-20T14:00+10:00', arr: '2027-04-20T15:15+10:00', aircraft: null }],
-    ask: ['0.aircraft'],
+    legs: [{ from: 'SYD', to: 'DBO', dep: '2027-04-20T14:00+10:00', arr: '2027-04-20T15:15+10:00', aircraft: TYPICAL }],
+    ask: [],
   },
 ];

@@ -95,7 +95,7 @@ describe('compose', () => {
     const first = await compose([{ role: 'user', content: 'London to New York on 3 May 2027, 11:00 to 13:55, Boeing 777-300ER.' }]);
     expect(first.json.status).toBe('needs_info');
     const questions = first.json.questions.map((q: { question: string }) => q.question);
-    expect(questions.join(' ')).toMatch(/Which airport in London/);
+    expect(questions.join(' ')).toMatch(/which London airport: Heathrow \(LHR\)/);
 
     answers.push({ legs: [flight({ from: 'Heathrow', fromCode: 'LHR', to: 'JFK', toCode: 'JFK', departDate: '2027-05-03', departTime: '11:00', arriveTime: '13:55', aircraft: 'Boeing 777-300ER' })] });
     const second = await compose([
@@ -107,7 +107,7 @@ describe('compose', () => {
     expect(second.json.spec.legs[0]).toMatchObject({ from: 'LHR', to: 'JFK', aircraft: 'B77W' });
     expect(second.json.limits.remaining).toBe(18);
     // The conversation reaches the model as a transcript.
-    expect(seen[1]!.input.messages[1]!.content).toMatch(/^Traveller: London to New York[\s\S]*\n\nRoute Replay: Which airport in London[\s\S]*\n\nTraveller: Heathrow to JFK$/);
+    expect(seen[1]!.input.messages[1]!.content).toMatch(/^Traveller: London to New York[\s\S]*\n\nRoute Replay: Flight, London → New York, Mon 3 May 2027: which London airport[\s\S]*\n\nTraveller: Heathrow to JFK$/);
   });
 
   it("checks guards against the traveller's words only", async () => {
@@ -119,7 +119,7 @@ describe('compose', () => {
       { role: 'user', content: 'not sure' },
     ]);
     expect(r.json.status).toBe('needs_info');
-    expect(r.json.questions[0]).toMatchObject({ path: '/legs/0/from' });
+    expect(r.json.questions[0]).toMatchObject({ fields: ['0.from'] });
   });
 
   it("stops at the client's hourly limit with a clear state, and keeps saying so", async () => {

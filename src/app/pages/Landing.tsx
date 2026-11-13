@@ -1,36 +1,30 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ComposeChat } from '../components/ComposeChat';
-import { CopyPromptButton } from '../components/CopyPrompt';
+import { type RefObject, useLayoutEffect, useRef, useState } from 'react';
 import { IdleEarth } from '../render/IdleEarth';
 import { initialQuality, webglAvailable } from '../device';
 
-export function Landing() {
+/**
+ * The homepage's stage: the live Earth with the hero over it. Get started opens the chat beside it; the hero then
+ * fades and the camera moves to put the whole globe in the middle of the space left, still turning under a drag.
+ */
+export function LandingStage({
+  chatOpen,
+  onGetStarted,
+  getStarted,
+}: {
+  chatOpen: boolean;
+  onGetStarted: () => void;
+  getStarted: RefObject<HTMLButtonElement | null>;
+}) {
   const [webgl] = useState(webglAvailable);
   const [quality] = useState(initialQuality);
   const page = useRef<HTMLElement>(null);
   const hero = useRef<HTMLElement>(null);
-  // The globe paints this button as an object lit by its Sun (SunlitButton).
-  const promptButton = useRef<HTMLButtonElement>(null);
-  const getStarted = useRef<HTMLButtonElement>(null);
   const [horizon, setHorizon] = useState(0.5);
-  const [chatOpen, setChatOpen] = useState(false);
-
-  useEffect(() => {
-    document.title = 'Route Replay: your journeys on a 3D Earth';
-  }, []);
-
-  // Back to Get started when the chat closes. This runs after the drawer's own effect has closed the dialog, which
-  // otherwise returns focus to whatever had it before.
-  const chatWasOpen = useRef(false);
-  useEffect(() => {
-    if (chatOpen) chatWasOpen.current = true;
-    else if (chatWasOpen.current) getStarted.current?.focus();
-  }, [chatOpen]);
 
   // Place Earth's top edge so the space between the hero and Earth equals the space above the hero.
   useLayoutEffect(() => {
     const measure = () => {
-      if (!page.current || !hero.current) return;
+      if (!page.current || !hero.current || chatOpen) return;
       const p = page.current.getBoundingClientRect();
       const h = hero.current.getBoundingClientRect();
       if (p.height <= 0) return;
@@ -43,23 +37,25 @@ export function Landing() {
     if (hero.current) ro.observe(hero.current);
     void document.fonts?.ready.then(measure);
     return () => ro.disconnect();
-  }, []);
+  }, [chatOpen]);
 
   return (
-    <main className="landing" ref={page}>
-      <div className="landing-canvas">{webgl && <IdleEarth quality={quality} horizon={horizon} sunlitTarget={promptButton} />}</div>
+    <main className="landing" ref={page} data-chat={chatOpen ? 'open' : 'closed'}>
+      <div className="landing-canvas">
+        {webgl && <IdleEarth quality={quality} horizon={horizon} centred={chatOpen} sunlitTarget={getStarted} sunlitFade={hero} wheelArea={page} />}
+      </div>
       <div className="landing-content">
-        <section className="hero" ref={hero}>
+        <section className="hero" ref={hero} aria-hidden={chatOpen || undefined} inert={chatOpen || undefined}>
           <h1>Your trip, seen from space.</h1>
           <p>
-            Describe your flights, trains and ferries here, or hand them to your own AI agent. Watch the journey unfold in that day’s
-            sunlight, then share a link.
+            Describe your flights, trains and ferries here, or hand them to your own AI agent. Watch the journey unfold in that day’s sunlight,
+            then share a link.
           </p>
           <div className="hero-actions">
-            <button ref={getStarted} className="get-started" onClick={() => setChatOpen(true)} aria-haspopup="dialog">
+            {/* The globe paints this button as an object lit by its Sun (SunlitButton). */}
+            <button ref={getStarted} className="hero-cta" onClick={onGetStarted} aria-controls="chat-panel" aria-expanded={chatOpen}>
               Get started
             </button>
-            <CopyPromptButton buttonRef={promptButton} />
           </div>
         </section>
       </div>
@@ -77,7 +73,6 @@ export function Landing() {
           <circle cx="8" cy="4.75" r="0.95" fill="currentColor" />
         </svg>
       </a>
-      <ComposeChat open={chatOpen} onClose={() => setChatOpen(false)} />
     </main>
   );
 }

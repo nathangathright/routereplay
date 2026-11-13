@@ -1,10 +1,9 @@
 import { StrictMode, Suspense, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Landing } from './pages/Landing';
-import './styles.css';
+import { Studio } from './Studio';
+import './index.css';
 
-// Player pages carry Remotion; the landing page does not need it.
-const Preview = lazy(() => import('./pages/Preview').then((m) => ({ default: m.Preview })));
+// The watch page carries Remotion; the homepage does not need it.
 const Watch = lazy(() => import('./pages/Watch').then((m) => ({ default: m.Watch })));
 
 const loading = (
@@ -15,13 +14,6 @@ const loading = (
 
 function App() {
   const path = location.pathname.replace(/\/+$/, '') || '/';
-  const draft = /^\/s\/([a-z0-9]{16})$/.exec(path);
-  if (draft)
-    return (
-      <Suspense fallback={loading}>
-        <Preview sceneId={draft[1]!} />
-      </Suspense>
-    );
   const watch = /^\/w\/([a-z0-9]{12})$/.exec(path);
   if (watch)
     return (
@@ -29,8 +21,10 @@ function App() {
         <Watch publicationId={watch[1]!} />
       </Suspense>
     );
-  // Only / gets here: unknown paths are answered with public/404.html (wrangler.toml not_found_handling).
-  return <Landing />;
+  // The homepage and drafts share one workspace, so a chat can become its draft without reloading. Only / and
+  // /s/<id> get here: unknown paths are answered with public/404.html (wrangler.toml not_found_handling).
+  const draft = /^\/s\/([a-z0-9]{16})$/.exec(path);
+  return <Studio initialSceneId={draft ? draft[1]! : null} />;
 }
 
 createRoot(document.getElementById('root')!).render(

@@ -6,12 +6,12 @@
   --border: rgba(255, 255, 255, 0.12);
   --border-strong: rgba(255, 255, 255, 0.24);
   --text: #eef2f8;
-  --muted: #a3afc1;
-  --accent: #ffc76b;
-  --accent-ink: #1d1404;
+  --text-muted: #a3afc1;
+  --amber: #ffc76b;
+  --amber-ink: #1d1404;
   --danger: #ff8a7a;
   --ok: #8ee0b0;
-  --radius: 14px;
+  --radius-panel: 14px;
   --font: 'Avenir Next', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
@@ -33,7 +33,7 @@ body {
 }
 
 a {
-  color: var(--accent);
+  color: var(--amber);
 }
 
 button {
@@ -77,7 +77,7 @@ button {
 a:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
 
@@ -87,9 +87,9 @@ select:focus-visible {
 }
 
 .btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
+  background: var(--amber);
+  border-color: var(--amber);
+  color: var(--amber-ink);
 }
 
 .btn.primary:hover {
@@ -103,11 +103,173 @@ select:focus-visible {
 }
 
 /*
- * Landing: centered hero over a starfield, with Earth rising from the bottom half. It is exactly the viewport and
- * never scrolls: vertical gestures turn the globe instead (IdleEarth.tsx).
+ * The workspace for the homepage and drafts (Studio.tsx): the chat and the stage beside it. On desktop the chat is a
+ * left rail that slides open and squeezes the stage; on phones it is a drawer from the bottom, collapsible to its
+ * title bar, and the stage shrinks to the space above it. The page itself never scrolls.
+ */
+.studio {
+  --rail-width: clamp(340px, 30vw, 420px);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--bg);
+}
+
+.studio-chat {
+  position: relative;
+  z-index: 3;
+  flex: none;
+  width: 0;
+  overflow: hidden;
+  background: var(--sidebar);
+  border-right: 1px solid transparent;
+  transition:
+    width 450ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 450ms ease;
+}
+
+.studio[data-chat='closed'] .studio-chat {
+  border-right-width: 0;
+}
+
+.studio[data-chat='open'] .studio-chat {
+  width: var(--rail-width);
+  border-right-color: var(--sidebar-border);
+}
+
+/* The panel keeps its width while the rail slides, so its text doesn't reflow. */
+.studio-chat > .chat-panel {
+  width: var(--rail-width);
+}
+
+.studio-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* A new draft fades in over the homepage globe. */
+.studio-draft {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--bg);
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+
+.studio-draft[data-shown='true'] {
+  opacity: 1;
+}
+
+.studio-show-chat {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  z-index: 3;
+}
+
+.studio[data-chat='closed'] .draft-heading {
+  left: calc(max(16px, env(safe-area-inset-left)) + 52px);
+}
+
+/* The watch page's stage, inside the workspace rather than the whole window. */
+.studio-stage .watch,
+.studio-stage .stage-state {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+}
+
+.chat-panel-head {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-chat,
+  .studio-stage,
+  .studio-draft {
+    transition: none;
+  }
+}
+
+/* Phones and narrow windows: the chat is a drawer from the bottom. */
+@media (max-width: 899px) {
+  .studio {
+    --drawer-collapsed: calc(56px + env(safe-area-inset-bottom));
+    --drawer-expanded: min(max(56svh, 380px), calc(100svh - 140px));
+    --drawer: 0px;
+    display: block;
+  }
+
+  .studio[data-chat='open'] {
+    --drawer: var(--drawer-collapsed);
+  }
+
+  .studio[data-chat='open'][data-drawer='expanded'] {
+    --drawer: var(--drawer-expanded);
+  }
+
+  .studio-stage {
+    position: absolute;
+    inset: 0 0 var(--drawer) 0;
+    transition: bottom 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .studio-chat,
+  .studio[data-chat='open'] .studio-chat {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--keyboard, 0px);
+    width: auto;
+    height: max(var(--drawer), var(--drawer-collapsed));
+    max-height: calc(var(--visible-height, 100svh) - 12px);
+    border: 0;
+    border-top: 1px solid var(--sidebar-border);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
+    transform: translateY(calc(100% + 24px));
+    transition:
+      transform 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      height 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .studio[data-chat='open'] .studio-chat {
+    transform: none;
+  }
+
+  .studio-chat > .chat-panel {
+    width: auto;
+  }
+
+  .chat-panel[data-expanded='false'] .chat-panel-head {
+    cursor: pointer;
+  }
+
+  /* The drawer's handle, centred above its title. */
+  .chat-grabber {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.22);
+    transform: translateX(-50%);
+  }
+}
+
+/*
+ * Landing: centered hero over a starfield, with Earth rising from the bottom half. It fills the stage and never
+ * scrolls: vertical gestures turn the globe instead (IdleEarth.tsx). With the chat open, the hero fades away and the
+ * whole globe moves to the middle.
  */
 .landing {
-  position: fixed;
+  position: absolute;
   inset: 0;
   overflow: hidden;
   overscroll-behavior: none;
@@ -151,6 +313,31 @@ select:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition:
+    opacity 400ms ease,
+    transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.landing[data-chat='open'] .hero {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.98);
+  visibility: hidden;
+  transition:
+    opacity 300ms ease,
+    transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0s linear 500ms;
+}
+
+.landing[data-chat='open'] .acknowledgments-link {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero,
+  .landing[data-chat='open'] .hero {
+    transform: none;
+    transition: none;
+  }
 }
 
 .hero h1 {
@@ -180,39 +367,7 @@ select:focus-visible {
   margin-top: 32px;
 }
 
-/* Opens the homepage chat: a glass pill beside the sunlit Copy agent prompt button. */
-.get-started {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 52px;
-  padding: 0 26px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 999px;
-  background: rgba(10, 14, 24, 0.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 120ms ease, transform 120ms ease;
-}
-
-.get-started:hover {
-  background: rgba(30, 38, 56, 0.6);
-}
-
-.get-started:active {
-  transform: scale(0.98);
-}
-
-.get-started:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
-.copy-prompt {
+.hero-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -228,11 +383,11 @@ select:focus-visible {
   transition: background 120ms ease, transform 120ms ease;
 }
 
-.copy-prompt:hover {
+.hero-cta:hover {
   background: #ffffff;
 }
 
-.copy-prompt:active {
+.hero-cta:active {
   transform: scale(0.98);
 }
 
@@ -240,22 +395,22 @@ select:focus-visible {
  * While the landing globe paints the button as a sunlit object (SunlitButton), its body is drawn in WebGL beneath
  * the transparent DOM button, and the label turns light or dark with the light on its face.
  */
-.copy-prompt[data-sunlit='true'],
-.copy-prompt[data-sunlit='true']:hover {
+.hero-cta[data-sunlit='true'],
+.hero-cta[data-sunlit='true']:hover {
   background: transparent;
   transition: color 200ms ease, transform 120ms ease;
 }
 
-.copy-prompt[data-sunlit='true'][data-tone='dark'] {
+.hero-cta[data-sunlit='true'][data-tone='dark'] {
   color: var(--bg);
 }
 
-.copy-prompt[data-sunlit='true'][data-tone='light'] {
+.hero-cta[data-sunlit='true'][data-tone='light'] {
   color: #ffffff;
 }
 
-.copy-prompt:focus-visible {
-  outline: 2px solid var(--accent);
+.hero-cta:focus-visible {
+  outline: 2px solid var(--amber);
   outline-offset: 3px;
 }
 
@@ -278,323 +433,6 @@ select:focus-visible {
   color: var(--text);
 }
 
-/* Both labels share one grid cell, so the button keeps its width when the label changes. */
-.copy-prompt-states {
-  display: grid;
-}
-
-.copy-prompt-state {
-  grid-area: 1 / 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: opacity 150ms ease;
-}
-
-.copy-prompt-state + .copy-prompt-state,
-.copy-prompt[data-copied='true'] .copy-prompt-state:first-child {
-  opacity: 0;
-}
-
-.copy-prompt[data-copied='true'] .copy-prompt-state + .copy-prompt-state {
-  opacity: 1;
-}
-
-/*
- * Homepage chat: a half-height bottom drawer over the turning globe. On a phone, ComposeChat.tsx keeps it above the
- * on-screen keyboard (--keyboard) and inside the visible area (--visible-height), from window.visualViewport.
- */
-/* Both classes, to win over .drawer's inset, width and max-height defined further down. */
-.drawer.chat-drawer {
-  bottom: var(--keyboard, 0px);
-  width: min(560px, 100%);
-  height: min(max(50svh, 380px), calc(var(--visible-height, 100svh) - 12px));
-  max-height: none;
-}
-
-.drawer.chat-drawer::backdrop {
-  background: rgba(2, 4, 10, 0.35);
-}
-
-.chat-sheet {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  height: 100%;
-}
-
-.chat-head {
-  padding: 12px 12px 10px 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.chat-head h2:focus {
-  outline: none;
-}
-
-.chat-head-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.chat-text-btn {
-  min-height: 36px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 18px;
-  background: transparent;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.chat-text-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text);
-}
-
-.chat-text-btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.chat-thread {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.chat-msg {
-  max-width: 88%;
-  font-size: 15px;
-  line-height: 1.45;
-}
-
-.chat-msg p {
-  margin: 0;
-}
-
-.chat-msg.assistant {
-  align-self: flex-start;
-  display: grid;
-  gap: 8px;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 16px 16px 16px 4px;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.chat-msg.notice {
-  border-color: rgba(255, 138, 122, 0.45);
-}
-
-.chat-msg.pending {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--muted);
-}
-
-.chat-msg.user {
-  align-self: flex-end;
-  display: grid;
-  justify-items: end;
-  gap: 4px;
-}
-
-.chat-text {
-  padding: 10px 14px;
-  border-radius: 16px 16px 4px 16px;
-  background: var(--text);
-  color: var(--bg);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-/* "17 messages remaining" under each of the visitor's messages. */
-.chat-meta {
-  padding-right: 4px;
-  font-size: 12px;
-  color: rgba(163, 175, 193, 0.7);
-}
-
-.chat-fine {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.chat-list {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding-left: 18px;
-}
-
-.chat-options {
-  display: block;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.chat-legs {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.chat-legs li {
-  display: grid;
-  gap: 1px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  font-size: 14px;
-}
-
-.chat-legs strong {
-  font-weight: 600;
-}
-
-.chat-legs span {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.chat-action {
-  justify-self: start;
-  min-height: 44px;
-  padding: 0 20px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--text);
-  color: var(--bg);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 120ms ease, transform 120ms ease;
-}
-
-.chat-action:hover {
-  background: #ffffff;
-}
-
-.chat-action:active {
-  transform: scale(0.98);
-}
-
-.chat-action:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.chat-action:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
-/* The agent-prompt button, smaller, in the message that says the limit is reached. */
-.copy-prompt.chat-copy {
-  justify-self: start;
-  min-height: 44px;
-  padding: 0 20px;
-  font-size: 14px;
-}
-
-.chat-msg .spinner {
-  flex: none;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 199, 107, 0.3);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.9s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chat-msg .spinner {
-    animation: none;
-    border-color: var(--accent);
-  }
-}
-
-.chat-compose {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 8px;
-  padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--border);
-}
-
-.chat-compose textarea {
-  min-height: 44px;
-  max-height: 160px;
-  padding: 11px 16px;
-  border: 1px solid var(--border-strong);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
-  /* 16px keeps iOS from zooming in on focus. */
-  font: inherit;
-  font-size: 16px;
-  line-height: 1.35;
-  resize: none;
-}
-
-.chat-compose textarea::placeholder {
-  color: rgba(163, 175, 193, 0.75);
-}
-
-.chat-compose textarea:disabled {
-  opacity: 0.6;
-}
-
-.chat-send {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: var(--text);
-  color: var(--bg);
-  cursor: pointer;
-  transition: opacity 120ms ease, transform 120ms ease;
-}
-
-.chat-send:active {
-  transform: scale(0.95);
-}
-
-.chat-send:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.chat-send:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.chat-left {
-  grid-column: 1 / -1;
-  margin: 0;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.chat-left.over {
-  color: var(--danger);
-}
-
 .row {
   display: flex;
   flex-wrap: wrap;
@@ -608,12 +446,11 @@ select:focus-visible {
 
 .note {
   font-size: 14px;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 /* Round icon buttons that float over a scene. */
-.icon-btn,
-.pill-btn {
+.icon-btn {
   display: grid;
   place-items: center;
   width: 44px;
@@ -630,24 +467,20 @@ select:focus-visible {
   transition: background 120ms ease, transform 120ms ease;
 }
 
-.icon-btn:hover,
-.pill-btn:hover {
+.icon-btn:hover {
   background: rgba(30, 38, 56, 0.7);
 }
 
-.icon-btn:active,
-.pill-btn:active {
+.icon-btn:active {
   transform: scale(0.95);
 }
 
-.icon-btn:focus-visible,
-.pill-btn:focus-visible {
-  outline: 2px solid var(--accent);
+.icon-btn:focus-visible {
+  outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
 
-.icon-btn:disabled,
-.pill-btn:disabled {
+.icon-btn:disabled {
   opacity: 0.4;
   cursor: default;
 }
@@ -718,7 +551,7 @@ select:focus-visible {
 }
 
 .watch-play:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--amber);
   outline-offset: 3px;
 }
 
@@ -730,23 +563,13 @@ select:focus-visible {
   max-width: min(420px, calc(100% - 32px));
 }
 
-.pill-btn {
-  width: auto;
-  padding: 0 18px;
-  border-radius: 22px;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-/* Draft: the title and its status where the watch page has its + button. */
+/* Draft: the title and its status where the watch page has its + button; its actions are in the chat. */
 .draft-heading {
   position: absolute;
   top: max(16px, env(safe-area-inset-top));
   left: max(16px, env(safe-area-inset-left));
   z-index: 2;
-  /* Leave room for Publish and Export on the right. */
-  max-width: calc(100% - 210px);
+  max-width: calc(100% - 32px);
   padding-top: 2px;
   /* Legible over bright snow, cloud and desert as well as night. */
   text-shadow:
@@ -774,7 +597,7 @@ select:focus-visible {
   color: rgba(238, 242, 248, 0.85);
 }
 
-/* Draft: the agent's activity, or a failure, floating at the bottom. */
+/* Draft: the agent's activity, floating at the bottom. */
 /* The map-data credit for journeys with routed ground legs: small, bottom right, readable over any ground. */
 .stage-credit {
   position: absolute;
@@ -815,42 +638,6 @@ select:focus-visible {
   color: var(--text);
   font-size: 14px;
   overflow-wrap: anywhere;
-}
-
-.stage-toast.error {
-  border-color: rgba(255, 138, 122, 0.55);
-}
-
-/* Draft made from the homepage chat: offer its private link once. */
-.stage-toast.keep-link {
-  flex-wrap: wrap;
-  width: min(560px, calc(100% - 32px));
-  padding: 12px 12px 12px 16px;
-  line-height: 1.4;
-}
-
-.keep-link p {
-  flex: 1 1 260px;
-  margin: 0;
-}
-
-.keep-link-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.keep-link-url {
-  flex: 1 1 100%;
-  order: 1;
-  min-width: 0;
-  padding: 8px 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.35);
-  color: var(--text);
-  font: 13px ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 /* Bottom drawer (a modal dialog): the sheet rises from the bottom edge. */
@@ -904,6 +691,7 @@ select:focus-visible {
 .drawer-head h2 {
   margin: 0;
   font-size: 18px;
+  font-weight: 700;
 }
 
 .choice {
@@ -918,7 +706,7 @@ select:focus-visible {
   padding: 0;
   font-size: 13px;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .choice-options {
@@ -959,7 +747,7 @@ select:focus-visible {
 .choice-detail {
   font-size: 12px;
   font-weight: 400;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .choice-option input:checked + span {
@@ -968,7 +756,7 @@ select:focus-visible {
 }
 
 .choice-option input:focus-visible + span {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
 
@@ -1010,7 +798,7 @@ select:focus-visible {
 }
 
 .drawer-action:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--amber);
   outline-offset: 3px;
 }
 
@@ -1037,7 +825,7 @@ select:focus-visible {
   height: 14px;
   border-radius: 50%;
   border: 2px solid rgba(255, 199, 107, 0.3);
-  border-top-color: var(--accent);
+  border-top-color: var(--amber);
   animation: spin 0.9s linear infinite;
 }
 
@@ -1050,14 +838,14 @@ select:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .stage-toast .spinner {
     animation: none;
-    border-color: var(--accent);
+    border-color: var(--amber);
   }
 }
 
 .player-shell {
   position: relative;
   margin: 0 auto;
-  border-radius: var(--radius);
+  border-radius: var(--radius-panel);
   overflow: hidden;
   border: 1px solid var(--border);
   background: #000;
@@ -1084,13 +872,14 @@ select:focus-visible {
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-panel);
   padding: 16px;
   margin-top: 14px;
 }
 
 .panel h2 {
   font-size: 17px;
+  font-weight: 700;
   margin: 0 0 10px;
 }
 
@@ -1125,7 +914,7 @@ select:focus-visible {
 }
 
 .leg-detail {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 14px;
 }
 
@@ -1146,7 +935,7 @@ select:focus-visible {
 
 .progress > div {
   height: 100%;
-  background: var(--accent);
+  background: var(--amber);
   transition: width 200ms linear;
 }
 
@@ -1160,11 +949,12 @@ select:focus-visible {
 
 .center-state h1 {
   font-size: 26px;
+  font-weight: 700;
   margin: 0 0 8px;
 }
 
 .center-state p {
-  color: var(--muted);
+  color: var(--text-muted);
   max-width: 48ch;
   margin: 0 auto 16px;
 }

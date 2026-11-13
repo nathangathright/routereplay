@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -25,15 +26,17 @@ function workerProxy(): Record<string, ProxyOptions> {
     '/api': { ...route, ws: true },
     '/agent-docs': route,
     '/acknowledgments': route,
+    '/faq': route,
     '/llms.txt': route,
     '/schemas': route,
   };
 }
 
 export default defineConfig(({ command }) => ({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
+      '@': fileURLToPath(new URL('./src/app', import.meta.url)),
       '@mediabunny/aac-encoder': noAudioEncoders,
       '@mediabunny/flac-encoder': noAudioEncoders,
       '@mediabunny/mp3-encoder': noAudioEncoders,

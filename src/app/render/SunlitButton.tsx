@@ -40,6 +40,7 @@ uniform vec3 uEarthDir;
 uniform vec3 uEarthColor;
 uniform vec2 uTilt;
 uniform float uPress;
+uniform float uAlpha;
 varying vec2 vPx;
 
 const vec3 ALBEDO = vec3(${PAINT_ALBEDO.toFixed(4)});
@@ -88,7 +89,7 @@ void main() {
   color += STARLIGHT * 1.5 * pow(t, 4.0);
   color *= 1.0 - 0.06 * uPress;
 
-  gl_FragColor = vec4(min(color, vec3(1.0)), coverage);
+  gl_FragColor = vec4(min(color, vec3(1.0)), coverage * uAlpha);
   #include <colorspace_fragment>
 }
 `;
@@ -101,16 +102,19 @@ const toVec3 = (v: THREE.Vector3): Vec3 => [v.x, v.y, v.z];
  * its real phase, and blue earthlight from below. The DOM button stays the real control and keeps its label;
  * this draws the body underneath it, and switches the label between dark and light to stay readable.
  *
- * `sun` is in the Earth's frame and `globe` is the group that turns the Earth's frame into the scene.
+ * `sun` is in the Earth's frame and `globe` is the group that turns the Earth's frame into the scene. The body fades
+ * with the CSS opacity of `fade` (the hero around the button), which a transition can't apply to the canvas.
  */
 export function SunlitButton({
   target,
+  fade,
   globe,
   sun,
   utcMs,
   sunVisible,
 }: {
   target: RefObject<HTMLElement | null>;
+  fade?: RefObject<HTMLElement | null>;
   globe: RefObject<THREE.Group | null>;
   sun: Vec3;
   utcMs: number;
@@ -132,6 +136,7 @@ export function SunlitButton({
           uEarthColor: { value: new THREE.Vector3() },
           uTilt: { value: new THREE.Vector2() },
           uPress: { value: 0 },
+          uAlpha: { value: 1 },
         },
         vertexShader: vertex,
         fragmentShader: fragment,
@@ -198,12 +203,16 @@ export function SunlitButton({
   }, [target, invalidate]);
 
   const tmp = useMemo(() => ({ v: new THREE.Vector3(), cam: new THREE.Vector3() }), []);
+  const mesh = useRef<THREE.Mesh>(null);
 
   useFrame((_, delta) => {
     const el = target.current;
     const g = globe.current;
     if (!el || !g) return;
     const u = material.uniforms;
+    const alpha = fade?.current ? Number(getComputedStyle(fade.current).opacity) : 1;
+    u.uAlpha!.value = alpha;
+    if (mesh.current) mesh.current.visible = alpha > 0.001;
 
     // Where the button is, in the canvas's drawing-buffer pixels (origin bottom left).
     const canvas = gl.domElement;
@@ -252,5 +261,5 @@ export function SunlitButton({
     if (el.dataset.sunlit !== 'true') el.dataset.sunlit = 'true';
   });
 
-  return <mesh geometry={geometry} material={material} frustumCulled={false} renderOrder={1000} />;
+  return <mesh ref={mesh} geometry={geometry} material={material} frustumCulled={false} renderOrder={1000} />;
 }

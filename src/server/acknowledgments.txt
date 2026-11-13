@@ -130,6 +130,50 @@ Mediabunny (Mozilla Public License 2.0)
   Source code: https://github.com/Vanilagy/mediabunny
   License: https://mozilla.org/MPL/2.0/
 
+Tailwind CSS (MIT License)
+  Copyright (c) Tailwind Labs, Inc.
+  https://github.com/tailwindlabs/tailwindcss
+
+shadcn/ui and @shadcn/react (MIT License): the chat's components and their
+styles, and its questionnaires
+  Copyright (c) 2023 shadcn
+  https://github.com/shadcn-ui/ui
+
+AI Elements (Apache License 2.0): the chat's conversation, messages,
+questions and message box, adapted for Route Replay
+  Copyright 2023 Vercel, Inc.
+  https://github.com/vercel/ai-elements
+
+Base UI, @base-ui/react (MIT License)
+  Copyright (c) 2019 Material-UI SAS
+  https://github.com/mui/base-ui
+
+Geist (the chat's typeface), through @fontsource-variable/geist
+  Copyright 2024 The Geist Project Authors
+  SIL Open Font License 1.1: https://github.com/vercel/geist-font/blob/main/OFL.txt
+  https://github.com/vercel/geist-font
+
+Lucide icons, from lucide-react (ISC License), with icons from Feather (MIT License)
+  Copyright (c) 2026 Lucide Icons and Contributors
+  Feather: Copyright (c) 2013-present Cole Bemis
+  https://github.com/lucide-icons/lucide
+
+use-stick-to-bottom (MIT License)
+  Copyright (c) 2024 - present StackBlitz
+  https://github.com/samdenty/use-stick-to-bottom
+
+cn (MIT License)
+  Copyright (c) 2026 shadcn
+  https://github.com/shadcn-ui/cn
+
+class-variance-authority (Apache License 2.0)
+  Copyright 2022 Joe Bell
+  https://github.com/joe-bell/cva
+
+tw-animate-css (MIT License)
+  Copyright (c) 2025 Wombosvideo
+  https://github.com/Wombosvideo/tw-animate-css
+
 
 MIT LICENSE
 (applies to each item above marked MIT License)
@@ -152,3 +196,25 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+
+ISC LICENSE
+(applies to Lucide)
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+APACHE LICENSE 2.0
+(applies to AI Elements and class-variance-authority)
+
+Licensed under the Apache License, Version 2.0. You may obtain a copy of
+the License at https://www.apache.org/licenses/LICENSE-2.0

@@ -18,7 +18,7 @@ import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { CASES as TUNING, HOLDOUT } from './cases.mjs';
+import { CASES as TUNING, HOLDOUT, TYPICAL } from './cases.mjs';
 
 const CASES = [...TUNING, ...HOLDOUT];
 
@@ -53,7 +53,7 @@ function score(c, body) {
     const m = /^\/legs\/(\d+)\/(\w+)/.exec(q.path);
     return m ? `${m[1]}.${m[2]}` : q.field;
   };
-  out.asked = [...new Set(body.questions.map(keyOf))];
+  out.asked = [...new Set(body.questions.flatMap((q) => q.fields ?? [keyOf(q)]))];
   out.missedAsks = c.ask.filter((k) => !out.asked.includes(k));
   out.extraAsks = out.asked.filter((k) => !c.ask.includes(k));
   const got = body.spec?.legs ?? [];
@@ -92,11 +92,13 @@ function score(c, body) {
     time('arrival', 'arr');
     if (e.mode) {
       if (g.mode !== e.mode) wrong.push(`mode ${g.mode ?? g.aircraft} != ${e.mode}`);
-    } else if (e.aircraft === null) {
-      if (g.aircraft !== undefined) {
-        wrong.push(`aircraft invented ${g.aircraft}`);
+    } else if (e.aircraft === TYPICAL) {
+      // A typical aircraft, marked as assumed; none yet while the leg's airports are open questions.
+      const assumed = (body.assumed ?? []).includes(`${i}.aircraft`);
+      if (g.aircraft !== undefined && !assumed) {
+        wrong.push(`aircraft ${g.aircraft} not marked typical`);
         out.invented.push(`${i}.aircraft`);
-      }
+      } else if (g.aircraft === undefined && g.from && g.to) wrong.push('no typical aircraft');
     } else if (g.aircraft !== e.aircraft) wrong.push(`aircraft ${g.aircraft ?? g.mode} != ${e.aircraft}`);
     if (wrong.length === 0) out.legsRight++;
     else out.legNotes.push(`leg ${i}: ${wrong.join('; ')}`);

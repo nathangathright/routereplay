@@ -3,7 +3,10 @@
  * The text goes to the extraction model and is then discarded; only rate-limit counters are written.
  *
  *   GET  → { limits }                       how many messages this client has left, without using one
- *   POST { messages: [{ role, content }] }  → { status: 'ready' | 'needs_info', questions, legs, spec, limits, … }
+ *   POST { messages: [{ role, content }] }  → { status: 'ready' | 'needs_info', questions, legs, spec, assumed, limits, … }
+ *
+ * `questions` has one entry per leg that still needs something (plus any about the whole trip), each saying whether
+ * an AI with web search could look it up, so the page can offer to hand the research to the person's own AI.
  *
  * The client keeps the conversation and sends all of it each time; the last message is the person's. Every response,
  * errors included, carries `limits` (as `error.limits` on errors), so the page can show how many messages are left.
@@ -13,8 +16,8 @@ import { type LimitChecks, type LimitCount, countLimits, peekLimits, retryAfterS
 import { ApiError, json, readJsonBody } from '../http';
 import { type ChatMessage, modelInput, travellerText } from './intent';
 import { type ModelEnv, extract } from './models';
-import { type Question, resolveIntent } from './resolve';
-import { summarize } from './summary';
+import { resolveIntent } from './resolve';
+import { summarize } from '../../shared/scene/summary';
 
 export interface ComposeEnv extends ModelEnv {
   DB: D1Database;
@@ -136,15 +139,12 @@ export async function composeOp(request: Request, env: ComposeEnv, client: strin
   if (!intent) throw new ApiError(502, 'extraction_failed', 'I couldn’t read that. Try again, or put it another way.', { limits });
 
   const result = resolveIntent(intent, travellerText(messages), { lookupAirport, searchAirports, airportDataVersion: AIRPORT_DATA_VERSION, now });
-  // A spec with no open questions that still fails validation (usually a misread time or date) asks the person to check.
-  const questions: Question[] = result.questions.length
-    ? result.questions
-    : result.issues.map((i) => ({ path: i.path, field: 'legs', question: `${i.message} Can you check the dates and times?` }));
   return json({
     status: result.complete ? 'ready' : 'needs_info',
-    questions,
-    ...(result.complete ? { legs: summarize(result.spec.legs as Parameters<typeof summarize>[0], result.places, result.airports) } : {}),
+    questions: result.questions,
+    ...(result.complete ? { legs: summarize(result.spec.legs as Parameters<typeof summarize>[0], result.places, result.airports, result.assumed) } : {}),
     spec: result.spec,
+    assumed: result.assumed,
     airports: result.airports,
     issues: result.issues,
     warnings: result.warnings,
