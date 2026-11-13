@@ -141,14 +141,17 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
     };
   }, [desktop, chatOpen]);
 
-  // Keep supporting browsers' theme color in sync with the top edge surface.
+  // Browsers that tint their bars with the theme colour (Chrome on Android, web apps on the home screen) take the colour
+  // behind Safari's status bar: the scene's, or the drawer's once it fills the screen (styles.css).
   useEffect(() => {
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    if (!meta || !studio.current) return;
+    const top = getComputedStyle(document.documentElement).getPropertyValue('--edge-top').trim();
+    if (!meta || !top) return;
     const previous = meta.content;
-    const colors = getComputedStyle(studio.current);
-    meta.content = colors.getPropertyValue(!desktop && chatOpen && expanded ? '--sidebar' : '--bg').trim();
-    return () => { meta.content = previous; };
+    meta.content = top;
+    return () => {
+      meta.content = previous;
+    };
   }, [desktop, chatOpen, expanded]);
 
   // On a phone, while the drawer fills the screen, the scene floats over the chat in a small window (pip.ts).
@@ -213,6 +216,13 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
         />
       )}
       {!desktop && <div ref={setFaqLayer} className="studio-faq" />}
+      {/* What Safari colours its status bar and toolbar from on a phone (styles.css). */}
+      {!desktop && (
+        <>
+          <div className="studio-edge" data-edge="top" aria-hidden="true" />
+          <div className="studio-edge" data-edge="bottom" aria-hidden="true" />
+        </>
+      )}
     </div>
   );
 }

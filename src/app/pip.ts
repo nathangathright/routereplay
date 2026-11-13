@@ -15,6 +15,8 @@ const TITLE_BAR = 56;
 /** The window's longer side, px, at most, and its largest share of the stage. */
 const LONGEST = 260;
 const MAX_SCALE = 0.34;
+/** Its height, px, at least, when the keyboard leaves little room. */
+const MIN_HEIGHT = 80;
 /** Travel that still counts as a tap, px. */
 const TAP_SLOP = 6;
 /** How far a fling carries the window, in ms of its release speed. */
@@ -30,29 +32,44 @@ interface Layout {
   bottom: number;
 }
 
-/** The status bar and notch's height: the page uses `viewport-fit=cover`. */
-function safeTop() {
+/** The status bar's and the notch's room on each side: the page uses `viewport-fit=cover`. */
+function safeArea() {
   const probe = document.createElement('div');
-  probe.style.cssText = 'position:fixed;visibility:hidden;padding-top:env(safe-area-inset-top)';
+  probe.style.cssText =
+    'position:fixed;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)';
   document.body.append(probe);
-  const v = parseFloat(getComputedStyle(probe).paddingTop) || 0;
+  const style = getComputedStyle(probe);
+  const v = {
+    top: parseFloat(style.paddingTop) || 0,
+    left: parseFloat(style.paddingLeft) || 0,
+    right: parseFloat(style.paddingRight) || 0,
+  };
   probe.remove();
   return v;
 }
 
-/** Where the window can sit: between the title bar and the message box, beside either side of the screen. */
+/**
+ * Where the window can sit: between the title bar and the message box, beside either side of the screen. Over the
+ * keyboard there may not be room for its usual size, so it shrinks to fit.
+ */
 function measure(stage: HTMLElement): Layout {
-  // Layout sizes, which ignore the stage's own transform.
-  const scale = Math.min(MAX_SCALE, LONGEST / Math.max(stage.offsetWidth, stage.offsetHeight, 1));
-  const width = stage.offsetWidth * scale;
-  const height = stage.offsetHeight * scale;
+  const safe = safeArea();
   const vv = window.visualViewport;
-  // The keyboard's top edge, or the screen's bottom: the drawer ends there, and its footer sits at its bottom.
+  // What the keyboard leaves visible, which Safari may scroll the page to: the drawer fills it, its title bar at the
+  // top and its footer at the bottom.
+  const visibleTop = vv?.offsetTop ?? 0;
   const visibleBottom = vv ? vv.height + vv.offsetTop : window.innerHeight;
   const footer = document.querySelector<HTMLElement>('#chat-panel [data-chat-footer]');
-  const top = safeTop() + TITLE_BAR + MARGIN;
-  const bottom = Math.max(top, visibleBottom - (footer?.offsetHeight ?? 140) - MARGIN - height);
-  return { scale, width, height, left: MARGIN, right: document.documentElement.clientWidth - MARGIN - width, top, bottom };
+  const top = visibleTop + safe.top + TITLE_BAR + MARGIN;
+  const room = visibleBottom - (footer?.offsetHeight ?? 140) - MARGIN - top;
+  // Layout sizes, which ignore the stage's own transform.
+  const longest = Math.max(stage.offsetWidth, stage.offsetHeight, 1);
+  const scale = Math.min(MAX_SCALE, LONGEST / longest, Math.max(room, MIN_HEIGHT) / Math.max(stage.offsetHeight, 1));
+  const width = stage.offsetWidth * scale;
+  const height = stage.offsetHeight * scale;
+  const bottom = Math.max(top, top + room - height);
+  const clientWidth = document.documentElement.clientWidth;
+  return { scale, width, height, left: safe.left + MARGIN, right: clientWidth - safe.right - MARGIN - width, top, bottom };
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -136,7 +153,7 @@ export function usePip(root: RefObject<HTMLElement | null>, stage: RefObject<HTM
     const s = stage.current;
     if (!d || d.id !== e.pointerId || !s) return;
     const l = measure(s);
-    const x = clamp(e.clientX - d.dx, 0, l.right + MARGIN);
+    const x = clamp(e.clientX - d.dx, l.left - MARGIN, l.right + MARGIN);
     const y = clamp(e.clientY - d.dy, l.top - MARGIN, l.bottom + MARGIN);
     if (!d.moved && Math.hypot(x - d.x, y - d.y) < TAP_SLOP) return;
     if (!d.moved) {
