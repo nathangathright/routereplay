@@ -4,7 +4,7 @@ import { useCurrentFrame } from 'remotion';
 import * as THREE from 'three';
 import { moonPosition } from '../../shared/geo/solar';
 import { length, scale } from '../../shared/geo/vec';
-import { AIRCRAFT_SHORT_SIDE_FRACTION, SURFACE_MARKER, type Timeline, evaluate, exposureAt } from '../../shared/timeline/evaluate';
+import { AIRCRAFT_SHORT_SIDE_FRACTION, type Timeline, evaluate, exposureAt, isSurfaceMode } from '../../shared/timeline/evaluate';
 import { Aircraft } from './Aircraft';
 import type { EarthTextures } from './assets';
 import { type CloudSet, Clouds, cloudFrameAt } from './Clouds';
@@ -14,8 +14,8 @@ import { Labels, labelHeightFor } from './Labels';
 import { skyLights } from './lighting';
 import { Routes } from './Routes';
 import { Stars } from './Stars';
-import { MARKER_SHORT_SIDE_FRACTION, SurfaceMarker } from './SurfaceMarker';
 import { Moon, Sun, sunVisibleFraction } from './SunAndMoon';
+import { Vehicle } from './Vehicle';
 
 export interface SceneStats {
   frame: number;
@@ -100,13 +100,8 @@ export function JourneyScene({
       <Atmosphere sun={sun} segments={Math.max(48, segments / 2)} />
       <Routes timeline={timeline} trail={state.trail} currentLeg={state.legIndex} halfWidth={halfWidth} />
       {state.aircraft.mix.map((m) =>
-        m.type === SURFACE_MARKER ? (
-          <SurfaceMarker
-            key={m.type}
-            ground={state.aircraft.ground}
-            size={MARKER_SHORT_SIDE_FRACTION * shortSide}
-            opacity={m.weight}
-          />
+        isSurfaceMode(m.type) ? (
+          <Vehicle key={m.type} mode={m.type} timeline={timeline} state={state} shortSide={shortSide} opacity={m.weight} />
         ) : (
           <Aircraft
             key={m.type}

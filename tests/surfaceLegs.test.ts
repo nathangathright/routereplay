@@ -6,7 +6,7 @@ import { DEFAULTS } from '../src/shared/scene/constants';
 import { sceneSchemaV1 } from '../src/shared/scene/schema';
 import { validateScene } from '../src/shared/scene/validate';
 import { sceneWarnings } from '../src/shared/scene/warnings';
-import { SURFACE_MARKER, buildTimeline, evaluate } from '../src/shared/timeline/evaluate';
+import { buildTimeline, evaluate } from '../src/shared/timeline/evaluate';
 import { buildStoryboard, keyframeAt } from '../src/shared/timeline/storyboard';
 import { clone, issues, leg, normalize, opts, spec, surface } from './helpers';
 
@@ -149,7 +149,7 @@ describe('surface legs: timeline', () => {
       expect(s.aircraft.altitude).toBe(0);
     }
     expect(at(motion('sfo-akl'), 0.5).aircraft.altitude).toBeGreaterThan(0);
-    // The trail reveals as the marker moves, as a flight's does.
+    // The trail reveals as the train moves, as a flight's does.
     const mid = at(motion('akl-wlg'), 0.5);
     expect(mid.phase).toBe('surface');
     expect(mid.trail[legIndex('akl-wlg')]).toBeCloseTo(0.5, 6);
@@ -157,15 +157,24 @@ describe('surface legs: timeline', () => {
     expect(mid.trail[legIndex('wlg-pcn')]).toBe(0);
   });
 
-  it('draws one marker for every mode, dissolving to and from the aircraft at a connection', () => {
+  it('draws each mode as its own vehicle, dissolving only where the craft changes', () => {
     const mix = (seg: { t0: number; t1: number }, u: number) => at(seg, u).aircraft.mix;
-    for (const id of SURFACE_IDS) expect(mix(motion(id), 0.5)).toEqual([{ type: SURFACE_MARKER, weight: 1 }]);
-    // Landing in Auckland: the 787 gives way to the marker through the middle of the stop.
+    expect(SURFACE_IDS.map((id) => mix(motion(id), 0.5))).toEqual([
+      [{ type: 'train', weight: 1 }],
+      [{ type: 'ferry', weight: 1 }],
+      [{ type: 'bus', weight: 1 }],
+      [{ type: 'bus', weight: 1 }],
+    ]);
+    // Landing in Auckland: the 787 gives way to the train through the middle of the stop.
     const landing = mix(stopAfter('sfo-akl'), 0.5);
-    expect(landing.map((m) => m.type)).toEqual(['B789', SURFACE_MARKER]);
+    expect(landing.map((m) => m.type)).toEqual(['B789', 'train']);
     expect(landing[0]!.weight + landing[1]!.weight).toBe(1);
-    // Train to ferry is the same marker waiting: nothing dissolves.
-    expect(mix(stopAfter('akl-wlg'), 0.5)).toEqual([{ type: SURFACE_MARKER, weight: 1 }]);
+    // Train to ferry in Wellington dissolves the same way.
+    expect(mix(stopAfter('akl-wlg'), 0.5).map((m) => m.type)).toEqual(['train', 'ferry']);
+    expect(mix(stopAfter('akl-wlg'), 0.2)).toEqual([{ type: 'train', weight: 1 }]);
+    expect(mix(stopAfter('akl-wlg'), 0.8)).toEqual([{ type: 'ferry', weight: 1 }]);
+    // The overnight stop in Christchurch is the same bus waiting: nothing dissolves.
+    expect(mix(stopAfter('pcn-chc'), 0.5)).toEqual([{ type: 'bus', weight: 1 }]);
   });
 
   it('keeps the camera close over short ground legs', () => {

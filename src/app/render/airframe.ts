@@ -12,10 +12,10 @@ import { AIRCRAFT_FAMILIES, type AircraftType, type Airframe, type Family, type 
  */
 
 const DEG = Math.PI / 180;
-type V3 = [number, number, number];
+export type V3 = [number, number, number];
 
 /** One closed piece of surface. Winding is fixed when parts are merged, so builders needn't track it. */
-class Part {
+export class Part {
   readonly p: number[] = [];
   readonly i: number[] = [];
   add(v: V3): number {
@@ -37,7 +37,7 @@ class Part {
  * Join rings of equal length into a surface. `wrap`: each ring is a closed loop. Caps close both ends with a
  * fan, wound to agree with the sides.
  */
-function loft(rings: V3[][], wrap: boolean): Part {
+export function loft(rings: V3[][], wrap: boolean): Part {
   const part = new Part();
   const n = rings[0]!.length;
   const ids = rings.map((r) => r.map((v) => part.add(v)));

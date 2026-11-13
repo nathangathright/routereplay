@@ -297,7 +297,7 @@ describe('route lookups', () => {
 });
 
 describe('timeline along a route', () => {
-  it('moves the marker along the looked-up route, not the great circle', async () => {
+  it('moves the vehicle along the looked-up route, not the great circle', async () => {
     const { deps } = fakeDeps((url) => new Response(url.includes('brouter') ? brouter() : osrm(FERRY, 117, 99)));
     const { scene } = await routeSurfaceLegs(nz(), null, deps);
     const tl = buildTimeline(scene);
@@ -312,7 +312,7 @@ describe('timeline along a route', () => {
       expect(dot(p, s.aircraft.ground)).toBeCloseTo(1, 12);
       farthest = Math.max(farthest, centralAngle(s.aircraft.ground, tl.legs[i]!.circle.at(s.legProgress)));
     }
-    // The railway's westward swing takes the marker tens of kilometres off the straight line.
+    // The railway's westward swing takes the train tens of kilometres off the straight line.
     expect(farthest * 6371).toBeGreaterThan(30);
     // It starts and ends at the airports, so the stops before and after stay put.
     expect(centralAngle(tl.legs[i]!.track.a, latLonToVec(akl.lat, akl.lon)) * 6371).toBeLessThan(0.01);

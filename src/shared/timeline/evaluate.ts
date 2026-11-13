@@ -22,17 +22,20 @@ import {
   sub,
 } from '../geo/vec';
 import type { AircraftType } from '../scene/aircraft';
-import { type AspectRatio, HOLD_MINUTES, type SurfaceMode } from '../scene/constants';
+import { type AspectRatio, HOLD_MINUTES, SURFACE_MODES, type SurfaceMode } from '../scene/constants';
 import { exposureProfile, meterGlobe } from './exposure';
 import type { NormalizedSceneV1 } from '../scene/types';
 
 /** `flight` and `surface` are a leg in motion: flown, or travelled by train, bus, car, or ferry. */
 export type Phase = 'start' | 'flight' | 'surface' | 'stop' | 'end';
 
-/** Every surface leg draws this marker, whatever its mode, in place of an aircraft. */
-export const SURFACE_MARKER = 'surface';
-/** What moves along a leg: the flight's aircraft type, or the surface marker. */
-export type Craft = AircraftType | typeof SURFACE_MARKER;
+/**
+ * What moves along a leg: the flight's aircraft type, or a surface leg's mode (each mode draws its own vehicle).
+ * A connection dissolves from one craft to the next only when they differ.
+ */
+export type Craft = AircraftType | SurfaceMode;
+
+export const isSurfaceMode = (craft: Craft): craft is SurfaceMode => (SURFACE_MODES as readonly string[]).includes(craft);
 
 interface Segment {
   kind: Phase;
@@ -47,7 +50,7 @@ interface TimelineLeg {
   from: string;
   to: string;
   craft: Craft;
-  /** Surface legs only: how the leg was travelled. Every mode draws the same marker. */
+  /** Surface legs only: how the leg was travelled, which is also its craft. */
   mode: SurfaceMode | null;
   /** Between the two airports: sets how far the camera pulls back. */
   circle: GreatCircle;
@@ -211,7 +214,7 @@ export function buildTimeline(scene: NormalizedSceneV1): Timeline {
       id: leg.id,
       from: leg.from,
       to: leg.to,
-      craft: surface ? SURFACE_MARKER : leg.aircraft!,
+      craft: surface ? leg.mode! : leg.aircraft!,
       mode: leg.mode ?? null,
       circle,
       track: (surface && leg.path && PathTrack.fromPolyline(leg.path)) || circle,
