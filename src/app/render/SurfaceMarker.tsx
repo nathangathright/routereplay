@@ -53,13 +53,14 @@ export function SurfaceMarker({ ground, size, opacity = 1 }: { ground: Vec3; siz
   material.opacity = opacity;
   const r = 1.002;
   // Above the airport dots (render order 10), so at a stop the marker covers the dot it waits on instead of
-  // merging into it. Airport labels sit higher than the marker's radius, so their text stays clear.
+  // merging into it, but under the label panels (11), as the aircraft is: arriving, the marker can pass beneath
+  // the destination's label, and the code must stay readable.
   return (
     <sprite
       material={material}
       position={[ground[0] * r, ground[1] * r, ground[2] * r]}
       scale={[size, size, 1]}
-      renderOrder={12}
+      renderOrder={10.5}
       frustumCulled={false}
     />
   );
