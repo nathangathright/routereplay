@@ -44,17 +44,28 @@ void main() {
 }
 `;
 
+/** Evenly spaced fractions along a track, plus its corners so a looked-up route keeps its shape. */
+function sampleFractions(angle: number, corners: readonly number[]): number[] {
+  const n = Math.max(48, Math.ceil(angle * 160));
+  const even = Array.from({ length: n + 1 }, (_, i) => i / n);
+  if (corners.length === 0) return even;
+  const all = [...even, ...corners].sort((a, b) => a - b);
+  return all.filter((f, i) => i === 0 || f - all[i - 1]! > 1e-9);
+}
+
 function legGeometry(tl: Timeline, index: number): THREE.BufferGeometry {
   const leg = tl.legs[index]!;
-  const n = Math.max(48, Math.ceil(leg.circle.angle * 160));
+  const track = leg.track;
+  const fractions = sampleFractions(track.angle, track.corners);
+  const n = fractions.length - 1;
   const center = new Float32Array((n + 1) * 2 * 3);
   const side = new Float32Array((n + 1) * 2 * 3);
   const sideSign = new Float32Array((n + 1) * 2);
   const along = new Float32Array((n + 1) * 2);
   for (let i = 0; i <= n; i++) {
-    const f = i / n;
-    const p = leg.circle.at(f);
-    const t = leg.circle.tangent(f);
+    const f = fractions[i]!;
+    const p = track.at(f);
+    const t = track.tangent(f);
     const s = normalize(cross(t, p));
     const c = scale(p, 1.0015 + displayAltitude(leg.cruise, f));
     for (let k = 0; k < 2; k++) {
@@ -118,7 +129,7 @@ export function Routes({
     () =>
       timeline.legs.map((leg, i) => {
         const geometry = legGeometry(timeline, i);
-        const dashes = Math.max(6, Math.round(leg.circle.angle * 90));
+        const dashes = Math.max(6, Math.round(leg.track.angle * 90));
         return {
           geometry,
           flown: routeMaterial(false, ROUTE_COLOR, 0.95, 1),

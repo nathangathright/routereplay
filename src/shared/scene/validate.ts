@@ -10,6 +10,8 @@ import {
   RENDERER_VERSION,
   STYLE_PRESETS,
   SUPPORTED_SCHEMA_VERSIONS,
+  SURFACE_MODES,
+  type SurfaceMode,
   WEATHER_TREATMENTS,
   type WeatherTreatment,
 } from './constants';
@@ -42,7 +44,12 @@ const AIRPORT_RE = /^[A-Z]{3}$/;
 const CONTROL_RE = new RegExp('[\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]');
 
 const TOP_FIELDS = ['schemaVersion', 'title', 'legs', 'presentation', 'environment', 'assets', 'seed'];
-const LEG_FIELDS = ['id', 'from', 'to', 'departure', 'arrival', 'aircraft'];
+const REQUIRED_LEG_FIELDS = ['id', 'from', 'to', 'departure', 'arrival'];
+/** A leg also has exactly one of these: `aircraft` for a flight, `mode` for a train, bus, car, or ferry leg. */
+const LEG_FIELDS = [...REQUIRED_LEG_FIELDS, 'aircraft', 'mode'];
+const MODE_LIST = SURFACE_MODES.map((m) => JSON.stringify(m)).join(', ');
+
+const isSurfaceMode = (v: string): v is SurfaceMode => (SURFACE_MODES as readonly string[]).includes(v);
 const PRESENTATION_FIELDS = [
   'durationSeconds',
   'legWeights',
@@ -215,9 +222,26 @@ function checkLegStructure(c: Collector, leg: unknown, i: number) {
     return;
   }
   checkUnknown(c, leg, LEG_FIELDS, base);
-  for (const field of LEG_FIELDS) {
+  const fields = [...REQUIRED_LEG_FIELDS];
+  if ('aircraft' in leg && 'mode' in leg) {
+    c.add(
+      `${base}/mode`,
+      'conflicting_fields',
+      'A leg has either aircraft (a flight) or mode (a train, bus, car, or ferry leg), not both.',
+      'Remove mode if this leg is a flight, or aircraft if it is not.',
+    );
+  } else if ('mode' in leg) fields.push('mode');
+  else fields.push('aircraft');
+  for (const field of fields) {
     if (!(field in leg)) {
-      c.add(`${base}/${field}`, 'required', `Missing ${field}.`);
+      c.add(
+        `${base}/${field}`,
+        'required',
+        `Missing ${field}.`,
+        field === 'aircraft'
+          ? `Flights need aircraft, an ICAO type designator. A train, bus, car, or ferry leg takes mode instead (${MODE_LIST}).`
+          : undefined,
+      );
       continue;
     }
     const v = leg[field];
@@ -232,6 +256,8 @@ function checkLegStructure(c: Collector, leg: unknown, i: number) {
         c.add(`${base}/id`, 'pattern', `Invalid leg id ${JSON.stringify(v)}.`, 'Use lowercase letters, digits, and inner hyphens, e.g. "ord-sfo".');
     } else if (field === 'aircraft') {
       if (!isAircraftType(v)) c.add(`${base}/aircraft`, 'unsupported_aircraft', `Unsupported aircraft type ${JSON.stringify(v)}.`, aircraftHint(v));
+    } else if (field === 'mode') {
+      if (!isSurfaceMode(v)) c.add(`${base}/mode`, 'unsupported_mode', `Unsupported mode ${JSON.stringify(v)}.`, modeHint(v));
     } else if (field === 'from' || field === 'to') {
       if (!AIRPORT_RE.test(v)) {
         c.add(
@@ -269,6 +295,15 @@ function aircraftHint(v: string): string {
   if (/^[0-9A-Z]{3}$/i.test(v) && /[0-9]/.test(v))
     return `That looks like a 3-character IATA aircraft code; use the 4-character ICAO type designator instead, such as "B738" for a Boeing 737-800. ${supported}`;
   return `${supported} If the aircraft is not listed, choose the closest listed type and tell the creator.`;
+}
+
+/** Points at the likely fix: case, a flight written as a mode, or the closest listed mode. */
+function modeHint(v: string): string {
+  const lower = v.toLowerCase();
+  if (isSurfaceMode(lower)) return `Use lowercase: "${lower}".`;
+  if (/^(flight|fly|plane|air(plane|craft|line)?)$/.test(lower))
+    return 'Flights take aircraft (an ICAO type designator such as "B38M") instead of mode.';
+  return `Supported modes: ${MODE_LIST}. They are all drawn the same way, so choose the closest (a tram or metro is "train", a coach or shuttle is "bus", a boat is "ferry") and tell the creator.`;
 }
 
 function checkLegMap(c: Collector, p: Record<string, unknown>, key: 'legWeights' | 'stopHolds', min: number, max: number) {
@@ -334,7 +369,9 @@ export function validateScene(input: unknown, options: ValidateOptions): Validat
           ptr('legs', i, field),
           'unknown_airport',
           `Unknown airport code "${code}".`,
-          'Use the IATA code of an airport with scheduled passenger service. Check for typos or a city code (e.g. use ORD or MDW, not CHI).',
+          leg.mode !== undefined
+            ? `A ${leg.mode} leg uses the IATA code of the airport nearest its station or terminal to stand for it. Check for typos or a city code.`
+            : 'Use the IATA code of an airport with scheduled passenger service. Check for typos or a city code (e.g. use ORD or MDW, not CHI).',
         );
       else airports[code] = airport;
     }
@@ -385,6 +422,7 @@ export function validateScene(input: unknown, options: ValidateOptions): Validat
       }
     }
     const minutes = (arr.utcMs - dep.utcMs) / 60_000;
+    const maxMinutes = leg.mode !== undefined ? LIMITS.maxSurfaceMinutes : LIMITS.maxFlightMinutes;
     if (minutes <= 0) {
       c.add(
         ptr('legs', i, 'arrival'),
@@ -393,12 +431,16 @@ export function validateScene(input: unknown, options: ValidateOptions): Validat
         'Check the date: flights that cross the date line often arrive on a different calendar day.',
       );
       ok = false;
-    } else if (minutes < LIMITS.minFlightMinutes || minutes > LIMITS.maxFlightMinutes) {
+    } else if (minutes < LIMITS.minFlightMinutes || minutes > maxMinutes) {
       c.add(
         ptr('legs', i, 'arrival'),
         'flight_duration',
-        `Flight time is ${Math.round(minutes)} minutes; supported range is ${LIMITS.minFlightMinutes}–${LIMITS.maxFlightMinutes} minutes.`,
-        'Check the dates and UTC offsets of departure and arrival.',
+        leg.mode !== undefined
+          ? `Travel time is ${Math.round(minutes)} minutes; a ${leg.mode} leg may take ${LIMITS.minFlightMinutes} minutes to ${maxMinutes / (24 * 60)} days.`
+          : `Flight time is ${Math.round(minutes)} minutes; supported range is ${LIMITS.minFlightMinutes}–${maxMinutes} minutes.`,
+        leg.mode !== undefined && minutes > maxMinutes
+          ? 'Check the dates and UTC offsets, or split the journey at a stop.'
+          : 'Check the dates and UTC offsets of departure and arrival.',
       );
       ok = false;
     }
@@ -414,7 +456,7 @@ export function validateScene(input: unknown, options: ValidateOptions): Validat
         ptr('legs', i, 'from'),
         'disconnected_legs',
         `Leg ${i} departs from ${leg.from} but leg ${i - 1} arrives at ${prev.to}.`,
-        'Legs must be connected. Add the missing flight or create a separate scene.',
+        `Legs must be connected. Add the missing flight, or a train, bus, car, or ferry leg (mode instead of aircraft) for travel on the ground between ${prev.to} and ${leg.from}, or create a separate scene.`,
       );
     }
     const a = times[i - 1];
@@ -472,7 +514,12 @@ export function validateScene(input: unknown, options: ValidateOptions): Validat
   });
   const sqrtAngles = angles.map((a) => Math.sqrt(a));
   const meanSqrt = sqrtAngles.reduce((s, x) => s + x, 0) / legs.length;
-  const weights = legs.map((leg, i) => p.legWeights?.[leg.id] ?? sqrtAngles[i]! / meanSqrt);
+  const weights = legs.map((leg, i) => {
+    const explicit = p.legWeights?.[leg.id];
+    if (explicit !== undefined) return explicit;
+    const byDistance = sqrtAngles[i]! / meanSqrt;
+    return leg.mode !== undefined ? Math.max(byDistance, DEFAULTS.minSurfaceWeight) : byDistance;
+  });
   const weightSum = weights.reduce((s, x) => s + x, 0);
   const flightSeconds = weights.map((w) => (flightTotal * w) / weightSum);
   const shortest = Math.min(...flightSeconds);
@@ -511,7 +558,7 @@ export function validateScene(input: unknown, options: ValidateOptions): Validat
       arrivalUtc: formatUtc(t.arr.utcMs),
       departureLocal: formatLocalTimestamp(t.dep.utcMs, t.dep.offsetMinutes),
       arrivalLocal: formatLocalTimestamp(t.arr.utcMs, t.arr.offsetMinutes),
-      aircraft: leg.aircraft as AircraftType,
+      ...(leg.mode !== undefined ? { mode: leg.mode as SurfaceMode } : { aircraft: leg.aircraft as AircraftType }),
       distanceKm: round(angles[i]! * EARTH_RADIUS_KM, 1),
       weight: round(weights[i]!, 6),
       flightSeconds: roundedSeconds[i]!,

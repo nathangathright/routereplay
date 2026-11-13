@@ -6,6 +6,7 @@ import {
   LEG_ID_PATTERN,
   LIMITS,
   STYLE_PRESETS,
+  SURFACE_MODES,
   TIMESTAMP_PATTERN,
   WEATHER_TREATMENTS,
 } from './constants';
@@ -42,7 +43,7 @@ export const sceneSchemaV1 = {
       minItems: 1,
       maxItems: LIMITS.maxLegs,
       description:
-        'Ordered, connected flights. Each leg must depart from the previous leg\'s arrival airport, and may not depart before the previous arrival. Repeated airports are allowed.',
+        'Ordered, connected legs: flights, and the train, bus, car, or ferry legs between them. Each leg must depart from the previous leg\'s arrival airport, and may not depart before the previous arrival. Repeated airports are allowed.',
       items: { $ref: '#/$defs/leg' },
     },
     presentation: {
@@ -58,7 +59,7 @@ export const sceneSchemaV1 = {
         },
         legWeights: {
           type: 'object',
-          description: `Relative share of flight time keyed by leg id. Unlisted legs use a distance-based default (average 1). Increase a weight to slow that leg. Range ${LIMITS.minLegWeight}–${LIMITS.maxLegWeight}.`,
+          description: `Relative share of flight time keyed by leg id. Unlisted legs use a distance-based default (average about 1; at least ${DEFAULTS.minSurfaceWeight} for train, bus, car, and ferry legs). Increase a weight to slow that leg. Range ${LIMITS.minLegWeight}–${LIMITS.maxLegWeight}.`,
           propertyNames: { pattern: LEG_ID_PATTERN },
           additionalProperties: { type: 'number', minimum: LIMITS.minLegWeight, maximum: LIMITS.maxLegWeight },
         },
@@ -111,7 +112,9 @@ export const sceneSchemaV1 = {
     leg: {
       type: 'object',
       additionalProperties: false,
-      required: ['id', 'from', 'to', 'departure', 'arrival', 'aircraft'],
+      required: ['id', 'from', 'to', 'departure', 'arrival'],
+      description: 'A flight (with aircraft) or a train, bus, car, or ferry leg (with mode). Give exactly one of aircraft and mode.',
+      oneOf: [{ required: ['aircraft'] }, { required: ['mode'] }],
       properties: {
         id: {
           type: 'string',
@@ -119,8 +122,13 @@ export const sceneSchemaV1 = {
           maxLength: LIMITS.maxLegIdLength,
           description: 'Stable lowercase id, unique within the scene, such as "ord-sfo" or "leg-2". Keep ids unchanged when revising so pacing settings still apply.',
         },
-        from: { type: 'string', pattern: AIRPORT_CODE_PATTERN, description: 'IATA airport code of departure, e.g. "ORD".' },
-        to: { type: 'string', pattern: AIRPORT_CODE_PATTERN, description: 'IATA airport code of arrival, e.g. "SFO".' },
+        from: {
+          type: 'string',
+          pattern: AIRPORT_CODE_PATTERN,
+          description:
+            'IATA airport code of departure, e.g. "ORD". A train, bus, car, or ferry leg uses the code of the nearest airport to stand for its station or terminal, e.g. "WLG" for Wellington.',
+        },
+        to: { type: 'string', pattern: AIRPORT_CODE_PATTERN, description: 'IATA airport code of arrival, e.g. "SFO". Surface legs follow the same rule as from.' },
         departure: {
           type: 'string',
           pattern: TIMESTAMP_PATTERN,
@@ -135,7 +143,11 @@ export const sceneSchemaV1 = {
         aircraft: {
           enum: [...AIRCRAFT_DESIGNATORS],
           description:
-            'ICAO type designator of the aircraft that flew (or is scheduled to fly) this leg, e.g. "B38M" for a Boeing 737 MAX 8 or "A21N" for an Airbus A321neo. The scene draws that type. Find it in the flight\'s history or the airline\'s schedule. If the type is not listed, choose the closest listed type and tell the creator.',
+            'Flights: ICAO type designator of the aircraft that flew (or is scheduled to fly) this leg, e.g. "B38M" for a Boeing 737 MAX 8 or "A21N" for an Airbus A321neo. The scene draws that type. Find it in the flight\'s history or the airline\'s schedule. If the type is not listed, choose the closest listed type and tell the creator. Omit it on train, bus, car, and ferry legs.',
+        },
+        mode: {
+          enum: [...SURFACE_MODES],
+          description: `Train, bus, car, and ferry legs, in place of aircraft. Every mode is drawn the same way: the aircraft gives way to a marker that moves along the ground. When the journey is saved, the leg is traced along OpenStreetMap's railways (train), roads (bus, car), or ferry lines (ferry) between the two airports; where no route is found it is drawn as a straight line, with a warning. The mode names the leg in the route summary and storyboards. Travel time may be up to ${LIMITS.maxSurfaceMinutes / (24 * 60)} days, so a multi-day trip can be one leg; split it at an overnight stop to show the night there and to bend the route through that place.`,
         },
       },
     },

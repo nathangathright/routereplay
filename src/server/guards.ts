@@ -36,6 +36,17 @@ export async function enforceLimit(db: D1Database, rule: LimitRule, subject: str
   }
 }
 
+/** Like enforceLimit, but reports whether the call fits instead of failing the request. */
+export async function withinLimit(db: D1Database, rule: LimitRule, subject: string, now: number): Promise<boolean> {
+  try {
+    await enforceLimit(db, rule, subject, now);
+    return true;
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 429) return false;
+    throw e;
+  }
+}
+
 export const IDEMPOTENCY_TTL_MS = 24 * 3_600_000;
 const KEY_RE = /^[A-Za-z0-9_.:-]{16,128}$/;
 

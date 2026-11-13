@@ -1,5 +1,5 @@
 import type { AircraftType } from './aircraft';
-import type { StylePreset, WeatherTreatment } from './constants';
+import type { StylePreset, SurfaceMode, WeatherTreatment } from './constants';
 
 /** Authoring spec as an agent submits it (schema version 1). */
 export interface SceneSpecV1 {
@@ -18,8 +18,10 @@ export interface LegSpec {
   to: string;
   departure: string;
   arrival: string;
-  /** ICAO type designator, e.g. "B38M". */
-  aircraft: string;
+  /** Flights: ICAO type designator, e.g. "B38M". A leg has either `aircraft` or `mode`. */
+  aircraft?: string;
+  /** Train, bus, car, and ferry legs: how the leg was travelled, in place of `aircraft`. */
+  mode?: string;
 }
 
 export interface PresentationSpec {
@@ -48,7 +50,16 @@ export interface NormalizedLeg {
   arrivalUtc: string;
   departureLocal: string;
   arrivalLocal: string;
-  aircraft: AircraftType;
+  /** Flights only: the aircraft type drawn. */
+  aircraft?: AircraftType;
+  /** Surface legs only, in place of `aircraft`: drawn as a marker moving along the ground. */
+  mode?: SurfaceMode;
+  /**
+   * Surface legs only: the route followed (railway, road, or ferry line from OpenStreetMap), looked up when the
+   * leg was saved, as an encoded polyline from the departure airport to the arrival airport. Absent: the leg
+   * follows the great circle.
+   */
+  path?: string;
   /** Great-circle distance in kilometers (spherical Earth). */
   distanceKm: number;
   /** Resolved relative share of flight presentation time. */
@@ -102,6 +113,8 @@ export type IssueCode =
   | 'unsupported_version'
   | 'unsupported_preset'
   | 'unsupported_aircraft'
+  | 'unsupported_mode'
+  | 'conflicting_fields'
   | 'pattern'
   | 'too_long'
   | 'too_many'

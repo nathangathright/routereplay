@@ -1,6 +1,6 @@
 /** Agent-facing documents rendered from the single workflow source with the deployment origin. */
 import { AIRCRAFT_DESIGNATORS, AIRCRAFT_TYPES } from '../shared/scene/aircraft';
-import { ASSET_MANIFEST_VERSION, LIMITS, WARNING_THRESHOLDS } from '../shared/scene/constants';
+import { ASSET_MANIFEST_VERSION, DEFAULTS, LIMITS, SURFACE_MODES, WARNING_THRESHOLDS } from '../shared/scene/constants';
 import { EXAMPLE_SCENE } from '../shared/scene/examples';
 import { sceneSchemaV1 } from '../shared/scene/schema';
 import { ACKNOWLEDGMENTS_TXT, DOCS_VERSION, REFERENCE_MD, WORKFLOW_MD } from './generated/content';
@@ -17,6 +17,9 @@ function fill(text: string, origin: string): string {
     AIRCRAFT_LIST: AIRCRAFT_DESIGNATORS.map((t) => `\`${t}\` ${AIRCRAFT_TYPES[t].name}`).join(', '),
     MIN_FLIGHT_MINUTES: String(LIMITS.minFlightMinutes),
     MAX_FLIGHT_HOURS: String(LIMITS.maxFlightMinutes / 60),
+    MAX_SURFACE_DAYS: String(LIMITS.maxSurfaceMinutes / (24 * 60)),
+    SURFACE_MODES: SURFACE_MODES.map((m) => `\`${m}\``).join(', '),
+    MIN_SURFACE_WEIGHT: String(DEFAULTS.minSurfaceWeight),
     MAX_JOURNEY_DAYS: String(LIMITS.maxJourneyDays),
     MIN_DURATION: String(LIMITS.minDurationSeconds),
     MAX_DURATION: String(LIMITS.maxDurationSeconds),
@@ -32,6 +35,9 @@ function fill(text: string, origin: string): string {
     WARN_MIN_KMH: WARNING_THRESHOLDS.minAverageKmh.toLocaleString('en-US'),
     WARN_MAX_KMH: WARNING_THRESHOLDS.maxAverageKmh.toLocaleString('en-US'),
     WARN_SLOW_HOURS: String(WARNING_THRESHOLDS.slowCheckMinBlockMinutes / 60),
+    WARN_SURFACE_MAX_KMH: String(WARNING_THRESHOLDS.surfaceMaxAverageKmh),
+    WARN_SURFACE_MIN_KMH: String(WARNING_THRESHOLDS.surfaceMinAverageKmh),
+    WARN_SURFACE_SLOW_HOURS: String(WARNING_THRESHOLDS.surfaceSlowCheckMinBlockMinutes / 60),
     WARN_LONG_HOURS: String(WARNING_THRESHOLDS.longBlockMinutes / 60),
     WARN_SCREEN_SECONDS: String(WARNING_THRESHOLDS.minScreenSeconds),
     WARN_LAYOVER_RATE: String(WARNING_THRESHOLDS.maxLayoverHoursPerSecond),

@@ -7,6 +7,7 @@
  */
 import { GreatCircle } from '../geo/greatCircle';
 import { sunDirection } from '../geo/solar';
+import { PathTrack, type Track } from '../geo/track';
 import {
   type Vec3,
   add,
@@ -21,17 +22,23 @@ import {
   sub,
 } from '../geo/vec';
 import type { AircraftType } from '../scene/aircraft';
-import { type AspectRatio, HOLD_MINUTES } from '../scene/constants';
+import { type AspectRatio, HOLD_MINUTES, type SurfaceMode } from '../scene/constants';
 import { exposureProfile, meterGlobe } from './exposure';
 import type { NormalizedSceneV1 } from '../scene/types';
 
-export type Phase = 'start' | 'flight' | 'stop' | 'end';
+/** `flight` and `surface` are a leg in motion: flown, or travelled by train, bus, car, or ferry. */
+export type Phase = 'start' | 'flight' | 'surface' | 'stop' | 'end';
+
+/** Every surface leg draws this marker, whatever its mode, in place of an aircraft. */
+export const SURFACE_MARKER = 'surface';
+/** What moves along a leg: the flight's aircraft type, or the surface marker. */
+export type Craft = AircraftType | typeof SURFACE_MARKER;
 
 interface Segment {
   kind: Phase;
   t0: number;
   t1: number;
-  /** Leg index: the flight itself, the leg about to depart (start), or the leg just arrived (stop/end). */
+  /** Leg index: the leg in motion, the leg about to depart (start), or the leg just arrived (stop/end). */
   leg: number;
 }
 
@@ -39,11 +46,16 @@ interface TimelineLeg {
   id: string;
   from: string;
   to: string;
-  aircraft: AircraftType;
+  craft: Craft;
+  /** Surface legs only: how the leg was travelled. Every mode draws the same marker. */
+  mode: SurfaceMode | null;
+  /** Between the two airports: sets how far the camera pulls back. */
   circle: GreatCircle;
+  /** The line travelled: the great circle, or a surface leg's looked-up route. */
+  track: Track;
   depMs: number;
   arrMs: number;
-  /** Display altitude at mid-flight in Earth radii (artistic, not physical). */
+  /** Display altitude at mid-flight in Earth radii (artistic, not physical); 0 on surface legs. */
   cruise: number;
   /** This leg's length as a fraction of the trip's longest: how far the camera pulls back on it. */
   height: number;
@@ -97,10 +109,10 @@ export interface SceneState {
     /** Unit tangent of travel direction. */
     heading: Vec3;
     /**
-     * The aircraft drawn, with weights that add up to 1: one type, or two while a connection changes aircraft
-     * (the offline renderer's dissolve through the middle half of the stop).
+     * What is drawn, with weights that add up to 1: one craft, or two while a connection changes aircraft or
+     * moves between the air and the ground (the offline renderer's dissolve through the middle half of the stop).
      */
-    mix: { type: AircraftType; weight: number }[];
+    mix: { type: Craft; weight: number }[];
   };
   /** Revealed fraction of each leg's trail. */
   trail: number[];
@@ -192,16 +204,19 @@ export function buildTimeline(scene: NormalizedSceneV1): Timeline {
   scene.legs.forEach((leg, i) => {
     const circle = circles[i]!;
     const flightStart = t;
-    push('flight', leg.flightSeconds, i);
+    const surface = leg.mode !== undefined;
+    push(surface ? 'surface' : 'flight', leg.flightSeconds, i);
     legs.push({
       id: leg.id,
       from: leg.from,
       to: leg.to,
-      aircraft: leg.aircraft,
+      craft: surface ? SURFACE_MARKER : leg.aircraft!,
+      mode: leg.mode ?? null,
       circle,
+      track: (surface && leg.path && PathTrack.fromPolyline(leg.path)) || circle,
       depMs: Date.parse(leg.departureUtc),
       arrMs: Date.parse(leg.arrivalUtc),
-      cruise: CRUISE_DISPLAY,
+      cruise: surface ? 0 : CRUISE_DISPLAY,
       height: circle.angle / longest,
       flightStart,
       flightEnd: t,
@@ -275,27 +290,28 @@ function kinematics(tl: Timeline, tIn: number): Kinematics {
         legIndex: 0,
         legProgress: 0,
         physicalUtcMs: leg.depMs - HOLD_MS * (1 - eased),
-        ground: leg.circle.a,
+        ground: leg.track.a,
         altitude: 0,
-        heading: leg.circle.tangent(0),
+        heading: leg.track.tangent(0),
         radiusPx: GROUND_RADIUS_PX,
       };
-    case 'flight': {
+    case 'flight':
+    case 'surface': {
       const p = flightProgress(u);
       return {
         seg,
         legIndex: seg.leg,
         legProgress: p,
         physicalUtcMs: leg.depMs + p * (leg.arrMs - leg.depMs),
-        ground: leg.circle.at(p),
+        ground: leg.track.at(p),
         altitude: displayAltitude(leg.cruise, p),
-        heading: leg.circle.tangent(p),
+        heading: leg.track.tangent(p),
         radiusPx: apparentRadius(p, leg.height),
       };
     }
     case 'stop': {
       const next = tl.legs[seg.leg + 1]!;
-      const ground = leg.circle.b;
+      const ground = leg.track.b;
       return {
         seg,
         legIndex: seg.leg,
@@ -303,7 +319,7 @@ function kinematics(tl: Timeline, tIn: number): Kinematics {
         physicalUtcMs: leg.arrMs + eased * (next.depMs - leg.arrMs),
         ground,
         altitude: 0,
-        heading: turnHeading(leg.circle.tangent(1), next.circle.tangent(0), ground, eased),
+        heading: turnHeading(leg.track.tangent(1), next.track.tangent(0), ground, eased),
         radiusPx: GROUND_RADIUS_PX,
       };
     }
@@ -316,9 +332,9 @@ function kinematics(tl: Timeline, tIn: number): Kinematics {
         legIndex: seg.leg,
         legProgress: 1,
         physicalUtcMs: leg.arrMs + hold,
-        ground: leg.circle.b,
+        ground: leg.track.b,
         altitude: 0,
-        heading: leg.circle.tangent(1),
+        heading: leg.track.tangent(1),
         radiusPx: GROUND_RADIUS_PX,
       };
     }
@@ -377,10 +393,10 @@ export function visibleLabelOpacity(label: LabelState, cameraPosition: Vec3): nu
 }
 
 function aircraftMix(tl: Timeline, k: Kinematics, t: number): SceneState['aircraft']['mix'] {
-  const here = tl.legs[k.legIndex]!.aircraft;
+  const here = tl.legs[k.legIndex]!.craft;
   const seg = k.seg;
   if (seg.kind !== 'stop') return [{ type: here, weight: 1 }];
-  const next = tl.legs[seg.leg + 1]!.aircraft;
+  const next = tl.legs[seg.leg + 1]!.craft;
   const w = smootherstep(((t - seg.t0) / (seg.t1 - seg.t0) - 0.25) / 0.5);
   if (next === here || w === 0) return [{ type: here, weight: 1 }];
   if (w === 1) return [{ type: next, weight: 1 }];

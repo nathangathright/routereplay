@@ -12,6 +12,7 @@ import { ACTIVITY_MESSAGE_MAX, type LiveState, cleanActivityMessage } from './li
 import { storyboardSvg } from './storyboardSvg';
 import { AIRPORT_DATA_VERSION, lookupAirport } from './airports';
 import { weatherFieldsOp } from './weather';
+import { type RoutingDeps, routeSurfaceLegs } from './surfaceRoutes';
 import { formatLocalTimestamp, formatOffset, formatUtc, resolveWallTime } from '../shared/scene/time';
 import { TOKEN_RE, constantTimeEqual, newToken, randomId, sha256Hex } from './crypto';
 import {
@@ -20,6 +21,7 @@ import {
   completeIdempotent,
   enforceLimit,
   readIdempotencyKey,
+  withinLimit,
   type LimitRule,
 } from './guards';
 import { ApiError, bearerToken, clientAddress, etagMatches, json, parseCookies, readJsonBody } from './http';
@@ -39,6 +41,12 @@ export interface Env {
   SESSION_LIMIT_PER_HOUR?: string;
   /** One SceneLive Durable Object per draft pushes "changed" events to open previews. */
   LIVE?: DurableObjectNamespace;
+  /** "off" skips route lookups: train, bus, car, and ferry legs are drawn as great circles. */
+  SURFACE_ROUTING?: string;
+  /** Requests a day to the public routing services, across all drafts (default 1000). */
+  ROUTE_LOOKUPS_PER_DAY?: string;
+  /** Tests only: stands in for fetch in route lookups. */
+  ROUTE_FETCH?: typeof fetch;
 }
 
 export interface Ctx {
@@ -60,7 +68,24 @@ function limits(env: Env) {
     createGlobal: { name: 'global_scene_creation', windowMs: 86_400_000, limit: n(env.CREATE_LIMIT_PER_DAY, 2000) } as LimitRule,
     writesPerScene: { name: 'scene_write', windowMs: 3_600_000, limit: n(env.WRITE_LIMIT_PER_HOUR, 240) } as LimitRule,
     sessionsPerClient: { name: 'session_exchange', windowMs: 3_600_000, limit: n(env.SESSION_LIMIT_PER_HOUR, 60) } as LimitRule,
+    // The routing services are community-run; this keeps Route Replay well inside their fair use.
+    routeLookups: { name: 'route_lookup', windowMs: 86_400_000, limit: n(env.ROUTE_LOOKUPS_PER_DAY, 1000) } as LimitRule,
   };
+}
+
+/**
+ * Traces train, bus, car, and ferry legs along railways, roads, and ferry lines (see surfaceRoutes.ts). Legs
+ * matching a routed leg in `previous` keep its route. Returns the record and any lookup warnings.
+ */
+async function withSurfaceRoutes(env: Env, now: number, normalized: NormalizedSceneV1, previous: NormalizedSceneV1 | null) {
+  if (env.SURFACE_ROUTING === 'off' || !normalized.legs.some((l) => l.mode !== undefined)) return { scene: normalized, warnings: [] };
+  const deps: RoutingDeps = {
+    fetch: env.ROUTE_FETCH ?? ((input, init) => fetch(input, init)),
+    cache: typeof caches === 'undefined' ? null : (caches as unknown as { default: Cache }).default,
+    allow: () => withinLimit(env.DB, limits(env).routeLookups, 'all', now),
+    airportDataVersion: AIRPORT_DATA_VERSION,
+  };
+  return routeSurfaceLegs(normalized, previous, deps);
 }
 
 export function originOf(request: Request, env: Env): string {
@@ -211,7 +236,6 @@ async function createScene(request: Request, env: Env, ctx: Ctx, origin: string,
   const input = await readJsonBody(request);
   const result = validateScene(input, { ...validateOptions, now });
   if (!result.ok) throw validationError(result);
-  const warnings = sceneWarnings(result.normalized, now);
   const bodyText = JSON.stringify(input);
 
   const idem = await beginIdempotent(env.DB, 'create', key, bodyText, now, true);
@@ -225,6 +249,8 @@ async function createScene(request: Request, env: Env, ctx: Ctx, origin: string,
     const lim = limits(env);
     await enforceLimit(env.DB, lim.createPerClient, await clientSubject(request, env), now);
     await enforceLimit(env.DB, lim.createGlobal, 'all', now);
+    const routed = await withSurfaceRoutes(env, now, result.normalized, null);
+    const warnings = [...sceneWarnings(routed.scene, now), ...routed.warnings];
 
     const id = randomId(16);
     const editToken = newToken('edit');
@@ -233,7 +259,7 @@ async function createScene(request: Request, env: Env, ctx: Ctx, origin: string,
       id,
       revision: 1,
       spec_json: JSON.stringify(result.spec),
-      normalized_json: JSON.stringify(result.normalized),
+      normalized_json: JSON.stringify(routed.scene),
       edit_token_hash: await sha256Hex(editToken),
       owner_token_hash: await sha256Hex(ownerToken),
       edit_generation: 1,
@@ -379,17 +405,19 @@ async function replaceSceneOp(request: Request, env: Env, id: string, origin: st
     });
   };
   if (expectedRevision !== auth.row.revision) throw await conflict();
+  const previous = JSON.parse(auth.row.normalized_json) as NormalizedSceneV1;
+  const routed = await withSurfaceRoutes(env, now, result.normalized, previous);
   const next = await store.replaceScene(
     env.DB,
     id,
     expectedRevision,
     JSON.stringify(result.spec),
-    JSON.stringify(result.normalized),
+    JSON.stringify(routed.scene),
     now,
   );
   if (next === null) throw await conflict();
   const row = (await store.getScene(env.DB, id))!;
-  const warnings = sceneWarnings(result.normalized, now);
+  const warnings = [...sceneWarnings(routed.scene, now), ...routed.warnings];
   return json(
     {
       ...(await sceneView(env.DB, origin, row, auth.role)),
@@ -635,6 +663,9 @@ async function validateOp(request: Request, now: number): Promise<Response> {
     note: 'Nothing was saved. POST /api/v1/scenes to create a draft.',
     next: [
       ...warningNext(warnings),
+      ...(result.normalized.legs.some((l) => l.mode !== undefined)
+        ? ['Train, bus, car, and ferry legs are traced along railways, roads, and ferry lines when you save. This dry run draws them as straight lines.']
+        : []),
       'To save it, POST the spec to /api/v1/scenes for a new draft, or PUT it to the existing draft with expectedRevision when revising.',
       ...(frames ? [] : ['Add ?storyboard=8 to see keyframes of the animation before saving.']),
     ],

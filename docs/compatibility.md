@@ -5,7 +5,7 @@
 | Field | Meaning | Current |
 | --- | --- | --- |
 | `schemaVersion` | Authoring contract (`/schemas/scene-v1.json`) | 1 |
-| `compatibility.rendererVersion` | Semver of the timeline and scene code | 2.0.0 |
+| `compatibility.rendererVersion` | Semver of the timeline and scene code | 2.1.0 |
 | `compatibility.assetManifestVersion` | Directory under `/assets/` holding textures and font when the record was saved | 2026-11-12 |
 | `compatibility.airportDataVersion` | Airport table used to normalize the record | `2026-11-11.<hash>` |
 
@@ -21,6 +21,8 @@ The player plays a record when its schema version is supported and its renderer 
 - **Schema v2**, if needed, gets a new schema file, a new fixture, and its own golden states. v1 keeps validating.
 
 Renderer 2.0 (November 2026) replaced the camera presets with the offline renderer's single camera and moved time through the start and end holds (see [decisions.md](decisions.md#one-camera-the-offline-renderers)). It also added weather-model clouds (`environment.weather: "clouds"` with a pinned `environment.cloudRun`), made `legs[].aircraft` (an ICAO type designator) required, and dropped `presentation.camera`, `presentation.aspectRatio`, and `assets.aircraft`. This was a development reset: no outside agents or owners existed yet, so there is no migration. 1.x records show the "can't be played here" page with their route summary, and the fixture and its golden states were regenerated for 2.0. From here on the policy above applies. The ocean-glint water mask joined the existing asset directory because it adds a file and changes none.
+
+Renderer 2.1 added train, bus, car, and ferry legs (`legs[].mode` in place of `aircraft`; see [decisions.md](decisions.md#surface-legs-one-marker-for-every-mode)). Journeys with only flights evaluate exactly as before, so the fixture's golden states and storyboard are unchanged.
 
 Pixel-identical output across GPUs is not promised. The golden states pin what is drawn, not how a GPU rasterizes it.
 

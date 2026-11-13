@@ -86,6 +86,7 @@ Free-tier references, to recheck periodically:
 | --- | --- | --- | --- |
 | Agent creates a draft | 1 | 0 | ~2 / ~4 (scene, revision, rate limits, idempotency) |
 | Agent revises | 2 (GET + PUT) | 1 (notify) | ~4 / ~4 |
+| Each new train, bus, car, or ferry leg in a save (not cached) | 0 (1–2 outgoing requests to BRouter or OSRM; outgoing requests don't count) | 0 | ~1 / ~1 (daily lookup budget) |
 | Open a preview | 3 (shell, session, first read) + 1 socket upgrade + 1 read on connect | 1 | ~6 / ~1 |
 | Each change while a preview is open | 1 refetch per open preview | included above | ~2 |
 | Preview left open with no changes | 0 | 0 | 0 |

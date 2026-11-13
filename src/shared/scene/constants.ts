@@ -6,7 +6,7 @@ export const SCHEMA_VERSION = 1 as const;
 export const SUPPORTED_SCHEMA_VERSIONS = [1] as const;
 
 /** Renderer semantic version pinned into every normalized record and publication. */
-export const RENDERER_VERSION = '2.0.0';
+export const RENDERER_VERSION = '2.1.0';
 /** Version of the static asset bundle (textures, fonts) under /assets. */
 export const ASSET_MANIFEST_VERSION = '2026-11-12';
 
@@ -27,6 +27,8 @@ export const LIMITS = {
   /** Flight block time bounds (minutes). */
   minFlightMinutes: 10,
   maxFlightMinutes: 30 * 60,
+  /** Longest train, bus, car, or ferry leg (minutes): a week, enough for the longest scheduled rail journeys. */
+  maxSurfaceMinutes: 7 * 24 * 60,
   /** Whole journey span from first departure to last arrival. */
   maxJourneyDays: 366,
   earliestYear: 1950,
@@ -49,6 +51,11 @@ export const DEFAULTS = {
   /** Default flight time per leg when durationSeconds is omitted. */
   secondsPerLeg: 6,
   minFlightSeconds: 6,
+  /**
+   * Floor on a surface leg's default weight. Ground legs are short beside the flights around them, so the
+   * distance-based default would flash a ferry crossing past in a second.
+   */
+  minSurfaceWeight: 0.5,
   weather: 'clouds',
   style: 'standard',
   seed: 1,
@@ -64,6 +71,10 @@ export const WARNING_THRESHOLDS = {
   maxAverageKmh: 1050,
   /** Slow averages are flagged only above this block time, so short hops with long taxi times pass. */
   slowCheckMinBlockMinutes: 180,
+  /** Surface legs: faster than high-speed rail over the great-circle distance, or slower than walking pace. */
+  surfaceMaxAverageKmh: 350,
+  surfaceMinAverageKmh: 5,
+  surfaceSlowCheckMinBlockMinutes: 12 * 60,
   /** Longer than the longest scheduled nonstops, but within the validation limit. */
   longBlockMinutes: 19.5 * 60,
   minScreenSeconds: 2,
@@ -72,6 +83,12 @@ export const WARNING_THRESHOLDS = {
   maxYearsFromToday: 2,
 } as const;
 
+/**
+ * Ways to travel a leg on the ground or water. Every mode is drawn the same way (a marker moving along the
+ * ground); the word is for the route summary and storyboards, and leaves room to draw modes apart later.
+ */
+export const SURFACE_MODES = ['train', 'bus', 'car', 'ferry'] as const;
+
 export const ASPECT_RATIOS = ['16:9', '9:16', '1:1'] as const;
 export const WEATHER_TREATMENTS = ['clouds', 'omitted'] as const;
 export const STYLE_PRESETS = ['standard'] as const;
@@ -79,6 +96,7 @@ export const STYLE_PRESETS = ['standard'] as const;
 export type AspectRatio = (typeof ASPECT_RATIOS)[number];
 export type WeatherTreatment = (typeof WEATHER_TREATMENTS)[number];
 export type StylePreset = (typeof STYLE_PRESETS)[number];
+export type SurfaceMode = (typeof SURFACE_MODES)[number];
 
 export const LEG_ID_PATTERN = '^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$';
 export const AIRPORT_CODE_PATTERN = '^[A-Z]{3}$';

@@ -12,7 +12,10 @@ export type WarningCode =
   | 'short_screen_time'
   | 'compressed_connection'
   | 'far_future_or_past'
-  | 'no_cloud_data';
+  | 'no_cloud_data'
+  // Raised when a journey is saved, by the route lookup for train, bus, car, and ferry legs (src/server/surfaceRoutes.ts).
+  | 'route_not_found'
+  | 'route_unavailable';
 
 export interface SceneWarning {
   /** JSON Pointer into the spec where a fix would go. */
@@ -45,9 +48,22 @@ export function sceneWarnings(scene: NormalizedSceneV1, nowMs: number): SceneWar
     const route = `${leg.from} → ${leg.to}`;
     const blockMinutes = (Date.parse(leg.arrivalUtc) - Date.parse(leg.departureUtc)) / 60_000;
     const kmh = leg.distanceKm / (blockMinutes / 60);
-    const tooFast = kmh > W.maxAverageKmh;
-    const tooSlow = kmh < W.minAverageKmh && blockMinutes > W.slowCheckMinBlockMinutes;
-    if (tooFast || tooSlow) {
+    if (leg.mode !== undefined) {
+      // Surface legs wind and stop on the way, so only speeds no train, bus, car, or ferry averages are flagged.
+      const fast = kmh > W.surfaceMaxAverageKmh;
+      const slow = kmh < W.surfaceMinAverageKmh && blockMinutes > W.surfaceSlowCheckMinBlockMinutes;
+      if (fast || slow) {
+        out.push({
+          path: `/legs/${i}`,
+          code: 'implausible_speed',
+          message: `The ${leg.mode} from ${route} covers ${km(leg.distanceKm)} km in ${duration(blockMinutes)}, an average of ${km(kmh)} km/h.`,
+          hint: fast
+            ? 'That is faster than high-speed rail over the straight-line distance. Check both dates and times, both airports standing for the stations, and whether this leg was a flight.'
+            : 'That is slower than walking pace. Check that the arrival date is not a day or more late.',
+        });
+      }
+    } else if (kmh > W.maxAverageKmh || (kmh < W.minAverageKmh && blockMinutes > W.slowCheckMinBlockMinutes)) {
+      const tooFast = kmh > W.maxAverageKmh;
       out.push({
         path: `/legs/${i}`,
         code: 'implausible_speed',

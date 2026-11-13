@@ -18,7 +18,7 @@ export interface Keyframe {
   legId: string;
   /** Fraction of the current leg flown (0 before departure, 1 after arrival). */
   legProgress: number;
-  /** Plain-language description, e.g. "Flying ORD → SFO, 43% of the way". */
+  /** Plain-language description, e.g. "Flying ORD → SFO, 43% of the way" or "By train AKL → WLG, 43% of the way". */
   summary: string;
   /** The physical moment shown. */
   utc: string;
@@ -37,7 +37,8 @@ export interface Storyboard {
   /** How long each part of the journey is on screen. */
   onScreenSeconds: {
     startHold: number;
-    legs: { id: string; from: string; to: string; startsAt: number; seconds: number }[];
+    /** `mode` is present on train, bus, car, and ferry legs. */
+    legs: { id: string; from: string; to: string; mode?: string; startsAt: number; seconds: number }[];
     stops: { airport: string; afterLegId: string; startsAt: number; seconds: number; connectionMinutes: number }[];
     endHold: number;
   };
@@ -66,10 +67,13 @@ export function keyframeAt(tl: Timeline, tIn: number): Keyframe {
       ? `At ${leg.from} before departure`
       : s.phase === 'flight'
         ? `Flying ${route}, ${Math.round(s.legProgress * 100)}% of the way`
-        : s.phase === 'stop'
+        : s.phase === 'surface'
+          ? `By ${leg.mode} ${route}, ${Math.round(s.legProgress * 100)}% of the way`
+          : s.phase === 'stop'
           ? `Connecting at ${leg.to}`
           : `Arrived at ${leg.to}`;
-  const codes = s.phase === 'flight' ? [leg.from, leg.to] : [s.phase === 'start' ? leg.from : leg.to];
+  const moving = s.phase === 'flight' || s.phase === 'surface';
+  const codes = moving ? [leg.from, leg.to] : [s.phase === 'start' ? leg.from : leg.to];
   const local: Record<string, string> = {};
   for (const c of codes) local[c] = localTime(scene, c, s.physicalUtcMs);
   const ground = vecToLatLon(s.aircraft.ground);
@@ -109,7 +113,8 @@ export function buildStoryboard(scene: NormalizedSceneV1, times?: number[], fram
     const leg = scene.legs[seg.leg]!;
     if (seg.kind === 'start') startHold = seconds;
     else if (seg.kind === 'end') endHold = seconds;
-    else if (seg.kind === 'flight') legs.push({ id: leg.id, from: leg.from, to: leg.to, startsAt: round(seg.t0, 2), seconds });
+    else if (seg.kind === 'flight' || seg.kind === 'surface')
+      legs.push({ id: leg.id, from: leg.from, to: leg.to, ...(leg.mode ? { mode: leg.mode } : {}), startsAt: round(seg.t0, 2), seconds });
     else {
       const next = scene.legs[seg.leg + 1]!;
       stops.push({

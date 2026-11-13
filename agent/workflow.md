@@ -1,6 +1,6 @@
 ## Workflow
 
-Route Replay turns a flight itinerary into an animated journey on a 3D Earth. You (the agent) research and clarify the itinerary with the creator, then submit a small JSON scene spec over HTTPS. Route Replay validates it, stores a private draft, and shows it in a live browser preview. You do the authoring; the page only plays, shares, and exports.
+Route Replay turns a travel itinerary (flights, and any train, bus, car, or ferry legs between them) into an animated journey on a 3D Earth. You (the agent) research and clarify the itinerary with the creator, then submit a small JSON scene spec over HTTPS. Route Replay validates it, stores a private draft, and shows it in a live browser preview. You do the authoring; the page only plays, shares, and exports.
 
 Every successful response includes `next`: a short list of suggested next steps. Follow it unless the creator asked for something else.
 
@@ -11,10 +11,11 @@ You need to be able to make HTTP requests with custom headers and JSON bodies (f
 - Collect each flight in order: departure airport, arrival airport, and local departure and arrival times with dates.
 - Use 3-letter IATA airport codes (`ORD`, not `KORD` or the city code `CHI`).
 - Find the aircraft type for every flight; the scene draws it. Give its 4-character ICAO type designator, such as `B38M` (Boeing 737 MAX 8) or `A21N` (Airbus A321neo), not the 3-character IATA code many booking sites show (`7M8`, `32Q`). For a past flight, flight-history sites list the type that flew; for an upcoming one, use the airline's schedule or the creator's booking, and tell the creator that airlines sometimes swap aircraft. If the type isn't in the supported list (Reference section), choose the closest listed type and say so.
+- Travel on the ground or water between flights (a train, bus, car, or ferry) is a leg too, with `mode` in place of `aircraft`, so the journey stays connected. For its `from` and `to`, use the IATA code of the airport nearest each station or terminal (Wellington's ferry terminal is `WLG`). Split a multi-day trip at its overnight stops: the night there shows, and the route is traced through the place the creator stopped rather than the fastest way. When you save, Route Replay traces each such leg along the railway, road, or ferry line; the scene draws every mode the same way, as a marker moving along that route.
 - Write every time with the airport's local UTC offset at that moment, including daylight saving time: `2031-07-05T10:00:00-05:00` in Chicago in July, `-06:00` in January.
 - Clocks can change during a trip, even overnight on a flight. Check each timestamp's offset separately. If you have no time-zone database, `GET {{ORIGIN}}/api/v1/airports/{IATA}?local=2031-03-30T06:40` returns the airport, its IANA zone, and the exact offset (or both offsets, or none) for that local time.
 - Flights over the date line often arrive on a different calendar day. Check that arrival is after departure in UTC.
-- Ask the creator only about material ambiguity: a missing or unclear time or date, a city with several airports, or a gap between flights that suggests a missing leg. Do not invent times. Where the creator has a booking, prefer its scheduled times.
+- Ask the creator only about material ambiguity: a missing or unclear time or date, a city with several airports, or a gap between flights that suggests a missing leg (a flight, or travel on the ground). Do not invent times. Where the creator has a booking, prefer its scheduled times.
 - Leave out passenger names, booking references, ticket numbers, seat numbers, prices, and sources. The scene contains only what is needed to draw the journey.
 
 ### 2. Build the spec

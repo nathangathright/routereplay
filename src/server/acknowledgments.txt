@@ -61,6 +61,20 @@ for sun glint. Made with Natural Earth.
   https://www.naturalearthdata.com/
 
 
+GROUND ROUTES
+
+Train, bus, car, and ferry legs follow railways, roads, and ferry lines
+from OpenStreetMap. Map data © OpenStreetMap contributors, available
+under the Open Database License (ODbL).
+  https://www.openstreetmap.org/copyright
+
+Routes are looked up when a journey is saved, through two community-run
+services, with thanks:
+  BRouter (railways), by Arndt Brenschede: https://brouter.de/
+  OSRM (roads and ferries), hosted by FOSSGIS e.V.:
+  https://routing.openstreetmap.de/
+
+
 SUN AND MOON
 
 Sun and Moon positions use the low-precision formulas from The

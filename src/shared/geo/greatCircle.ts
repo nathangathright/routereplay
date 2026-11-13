@@ -20,6 +20,8 @@ export class GreatCircle {
   readonly a: Vec3;
   readonly b: Vec3;
   readonly angle: number;
+  /** A great circle never turns (see Track). */
+  readonly corners: readonly number[] = [];
   private readonly sinAngle: number;
 
   constructor(a: Vec3, b: Vec3) {

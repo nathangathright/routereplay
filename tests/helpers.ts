@@ -1,6 +1,6 @@
 import { AIRPORT_DATA_VERSION, lookupAirport } from '../src/server/airports';
 import { validateScene } from '../src/shared/scene/validate';
-import type { Airport, NormalizedSceneV1, SceneSpecV1, ValidationIssue } from '../src/shared/scene/types';
+import type { Airport, LegSpec, NormalizedSceneV1, SceneSpecV1, ValidationIssue } from '../src/shared/scene/types';
 
 export const opts = { lookupAirport, airportDataVersion: AIRPORT_DATA_VERSION };
 
@@ -22,7 +22,12 @@ export function leg(id: string, from: string, to: string, departure: string, arr
   return { id, from, to, departure, arrival, aircraft };
 }
 
-export function spec(legs: ReturnType<typeof leg>[], extra: Partial<SceneSpecV1> = {}): SceneSpecV1 {
+/** A train, bus, car, or ferry leg. */
+export function surface(id: string, from: string, to: string, departure: string, arrival: string, mode = 'train'): LegSpec {
+  return { id, from, to, departure, arrival, mode };
+}
+
+export function spec(legs: LegSpec[], extra: Partial<SceneSpecV1> = {}): SceneSpecV1 {
   return { schemaVersion: 1, legs, ...extra } as SceneSpecV1;
 }
 

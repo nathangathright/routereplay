@@ -3,7 +3,6 @@
  * markers, and night shading at a chosen moment. Pure geometry, so it is cheap to build
  * on the server and gives vision-capable agents a picture to check.
  */
-import { GreatCircle } from '../shared/geo/greatCircle';
 import { subsolarPoint } from '../shared/geo/solar';
 import { vecToLatLon } from '../shared/geo/vec';
 import type { NormalizedSceneV1 } from '../shared/scene/types';
@@ -16,6 +15,7 @@ const H = 400;
 const HEADER = 34;
 const FOOTER = 26;
 const SAMPLES = 48;
+const MAX_ROUTE_SAMPLES = 400;
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 const f1 = (n: number) => (Math.round(n * 10) / 10).toString();
@@ -24,22 +24,23 @@ const f1 = (n: number) => (Math.round(n * 10) / 10).toString();
 const unwrap = (lon: number, ref: number) => lon + 360 * Math.round((ref - lon) / 360);
 
 export function storyboardSvg(scene: NormalizedSceneV1, board: Storyboard, nightAtSeconds: number): string {
-  // Route samples with longitudes unwrapped into one continuous range.
-  const routes: { id: string; pts: { f: number; lat: number; lon: number }[] }[] = [];
+  const tl = buildTimeline(scene);
+  // Route samples with longitudes unwrapped into one continuous range. A looked-up route gets enough samples
+  // to show its bends (one per corner, up to a few hundred).
+  const routes: { id: string; surface: boolean; pts: { f: number; lat: number; lon: number }[] }[] = [];
   let ref: number | null = null;
-  for (const leg of scene.legs) {
-    const a = scene.airports[leg.from]!;
-    const b = scene.airports[leg.to]!;
-    const circle = GreatCircle.fromLatLon(a.lat, a.lon, b.lat, b.lon);
+  for (const [i, leg] of scene.legs.entries()) {
+    const track = tl.legs[i]!.track;
+    const samples = Math.max(SAMPLES, Math.min(track.corners.length, MAX_ROUTE_SAMPLES));
     const pts: { f: number; lat: number; lon: number }[] = [];
-    for (let i = 0; i <= SAMPLES; i++) {
-      const f = i / SAMPLES;
-      const p = vecToLatLon(circle.at(f));
+    for (let j = 0; j <= samples; j++) {
+      const f = j / samples;
+      const p = vecToLatLon(track.at(f));
       const lon: number = ref === null ? p.lon : unwrap(p.lon, ref);
       ref = lon;
       pts.push({ f, lat: p.lat, lon });
     }
-    routes.push({ id: leg.id, pts });
+    routes.push({ id: leg.id, surface: leg.mode !== undefined, pts });
   }
 
   // Frame the routes with padding at a 2:1 aspect, clamped to the globe.
@@ -65,7 +66,6 @@ export function storyboardSvg(scene: NormalizedSceneV1, board: Storyboard, night
   parts.push(`<rect x="0" y="${HEADER}" width="${W}" height="${H}" fill="#163a5c"/>`);
 
   // Night shading at the chosen moment.
-  const tl = buildTimeline(scene);
   const nightUtc = evaluate(tl, nightAtSeconds).physicalUtcMs;
   const sun = subsolarPoint(nightUtc);
   const decl = (Math.sign(sun.lat) || 1) * Math.max(Math.abs(sun.lat), 0.05);
@@ -99,7 +99,9 @@ export function storyboardSvg(scene: NormalizedSceneV1, board: Storyboard, night
 
   // Routes and airports.
   for (const r of routes) {
-    parts.push(`<polyline points="${r.pts.map((p) => pt(p.lat, p.lon)).join(' ')}" fill="none" stroke="#ffc76b" stroke-width="2.5" stroke-linecap="round"/>`);
+    // Train, bus, car, and ferry legs are dashed so the sketch tells them from flights.
+    const dash = r.surface ? ' stroke-dasharray="1 5"' : '';
+    parts.push(`<polyline points="${r.pts.map((p) => pt(p.lat, p.lon)).join(' ')}" fill="none" stroke="#ffc76b" stroke-width="2.5" stroke-linecap="round"${dash}/>`);
   }
   const airports: { code: string; lat: number; lon: number }[] = [];
   routes.forEach((r, i) => {
@@ -135,7 +137,9 @@ export function storyboardSvg(scene: NormalizedSceneV1, board: Storyboard, night
   parts.push(...codes);
 
   const title = scene.title ?? `${scene.legs[0]!.from} to ${scene.legs[scene.legs.length - 1]!.to}`;
-  const header = `${esc(title)} · ${board.keyframes.length} keyframes over ${board.durationSeconds} s`;
+  // The footer is full, so the key for dotted routes goes up here.
+  const dotted = routes.some((r) => r.surface) ? ' · dotted: train, bus, car, or ferry' : '';
+  const header = `${esc(title)} · ${board.keyframes.length} keyframes over ${board.durationSeconds} s${dotted}`;
   const legend =
     `Numbered circles: keyframes in order (light: aircraft in daylight, dark: at night). ` +
     `Shaded side: night at ${f1(nightAtSeconds)} s (${formatUtc(Math.round(nightUtc / 60_000) * 60_000)}). No coastlines.`;

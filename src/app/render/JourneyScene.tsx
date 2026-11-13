@@ -4,7 +4,7 @@ import { useCurrentFrame } from 'remotion';
 import * as THREE from 'three';
 import { moonPosition } from '../../shared/geo/solar';
 import { length, scale } from '../../shared/geo/vec';
-import { AIRCRAFT_SHORT_SIDE_FRACTION, type Timeline, evaluate, exposureAt } from '../../shared/timeline/evaluate';
+import { AIRCRAFT_SHORT_SIDE_FRACTION, SURFACE_MARKER, type Timeline, evaluate, exposureAt } from '../../shared/timeline/evaluate';
 import { Aircraft } from './Aircraft';
 import type { EarthTextures } from './assets';
 import { type CloudSet, Clouds, cloudFrameAt } from './Clouds';
@@ -13,6 +13,7 @@ import { Labels, labelHeightFor } from './Labels';
 import { skyLights } from './lighting';
 import { Routes } from './Routes';
 import { Stars } from './Stars';
+import { MARKER_SHORT_SIDE_FRACTION, SurfaceMarker } from './SurfaceMarker';
 import { Moon, Sun, sunVisibleFraction } from './SunAndMoon';
 
 export interface SceneStats {
@@ -73,7 +74,8 @@ export function JourneyScene({
   // A constant-size icon, as in the offline renderer: every model is one unit nose to tail and spans the same
   // fraction of the frame's short side at every zoom.
   const toAircraft = camDist - 1 - state.aircraft.altitude;
-  const aircraftSize = AIRCRAFT_SHORT_SIDE_FRACTION * toAircraft * 2 * Math.tan((35 * Math.PI) / 180);
+  const shortSide = toAircraft * 2 * Math.tan((35 * Math.PI) / 180);
+  const aircraftSize = AIRCRAFT_SHORT_SIDE_FRACTION * shortSide;
   const halfWidth = 0.0022 * (camDist - 1);
 
   return (
@@ -91,19 +93,28 @@ export function JourneyScene({
       {cloudFrame && <Clouds frame={cloudFrame} lights={lights} night={textures.night} segments={segments} />}
       <Atmosphere sun={sun} segments={Math.max(48, segments / 2)} />
       <Routes timeline={timeline} trail={state.trail} currentLeg={state.legIndex} halfWidth={halfWidth} />
-      {state.aircraft.mix.map((m) => (
-        <Aircraft
-          key={m.type}
-          type={m.type}
-          opacity={m.weight}
-          ground={state.aircraft.ground}
-          heading={state.aircraft.heading}
-          altitude={state.aircraft.altitude}
-          size={aircraftSize}
-          sun={sun}
-          clock={t}
-        />
-      ))}
+      {state.aircraft.mix.map((m) =>
+        m.type === SURFACE_MARKER ? (
+          <SurfaceMarker
+            key={m.type}
+            ground={state.aircraft.ground}
+            size={MARKER_SHORT_SIDE_FRACTION * shortSide}
+            opacity={m.weight}
+          />
+        ) : (
+          <Aircraft
+            key={m.type}
+            type={m.type}
+            opacity={m.weight}
+            ground={state.aircraft.ground}
+            heading={state.aircraft.heading}
+            altitude={state.aircraft.altitude}
+            size={aircraftSize}
+            sun={sun}
+            clock={t}
+          />
+        ),
+      )}
       <Labels
         labels={state.labels}
         codes={codes}
