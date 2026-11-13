@@ -5,6 +5,7 @@ import {
   ChevronUpIcon,
   CircleAlertIcon,
   CircleCheckIcon,
+  CircleQuestionMarkIcon,
   EllipsisVerticalIcon,
   LinkIcon,
   LoaderCircleIcon,
@@ -95,7 +96,9 @@ import {
   exportRunning,
   runExport,
 } from './ChatActions';
+import { ChatFaq, type FaqRequest } from './ChatFaq';
 import { CopyButton, copyText, getStartedPrompt, publicOrigin } from './CopyPrompt';
+import { PRIVACY_QUESTION } from '../faq';
 
 /** The server's cap on a whole conversation (src/server/compose/index.ts). */
 const MAX_CHARACTERS = 4000;
@@ -843,13 +846,19 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
   const summary = inDraft && draft.view ? sceneSummary(draft.view.normalized) : null;
   const collapsed = layout === 'drawer' && !expanded;
 
+  // The questions and answers, over the chat. Hiding or collapsing the chat closes them.
+  const [faq, setFaq] = useState<FaqRequest | null>(null);
+  const showFaq = (item: string | null, opener: HTMLElement) => setFaq({ item, opener });
+  if (faq && (!open || collapsed)) setFaq(null);
+
   return (
-    <div className="chat-panel flex h-full min-h-0 flex-col font-sans" data-layout={layout} data-expanded={expanded}>
+    <div className="chat-panel relative flex h-full min-h-0 flex-col font-sans" data-layout={layout} data-expanded={expanded}>
       <div
         // Filling a phone's screen, the bar sits below the status bar and notch.
         className={`chat-panel-head flex shrink-0 items-center gap-1 border-b border-sidebar-border pl-4 pr-2 transition-[height,padding] duration-300 ${
           layout === 'drawer' && expanded ? 'h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)]' : 'h-14'
         }`}
+        inert={faq !== null || undefined}
         onClick={(e) => {
           // On a phone, the bar itself opens the collapsed drawer.
           if (collapsed && !(e.target as HTMLElement).closest('button')) onExpandedChange(true);
@@ -900,6 +909,19 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
             Start over
           </Button>
         )}
+        {!collapsed && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={(e) => showFaq(null, e.currentTarget)}
+            aria-label="Questions and answers"
+            title="Questions and answers"
+            aria-expanded={faq !== null}
+            aria-controls="chat-faq"
+          >
+            <CircleQuestionMarkIcon aria-hidden="true" />
+          </Button>
+        )}
         {layout === 'rail' ? (
           <Button variant="ghost" size="icon-sm" onClick={onHide} aria-label="Hide chat" title="Hide chat">
             <PanelLeftCloseIcon aria-hidden="true" />
@@ -943,7 +965,7 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
         </AlertDialogContent>
       </AlertDialog>
 
-      <div id="chat-body" className="chat-panel-body flex min-h-0 flex-1 flex-col" hidden={collapsed}>
+      <div id="chat-body" className="chat-panel-body flex min-h-0 flex-1 flex-col" hidden={collapsed} inert={faq !== null || undefined}>
         {/* Trackpad scrolling here scrolls the chat; the globe turns only over the stage. */}
         {/* A new conversation opens at its first line; a restored one at its latest. */}
         <Conversation className="min-h-0" initial={entries.length ? 'instant' : false} aria-label="Conversation" aria-live="polite" aria-relevant="additions">
@@ -973,9 +995,14 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
                 {inDraft && summary && entries.length === 0 && <LegList legs={summary} />}
                 <p className="text-muted-foreground">
                   Cloudflare Workers AI reads what you send; neither Cloudflare nor Route Replay keeps it.{' '}
-                  <a className="text-inherit underline underline-offset-3 hover:text-foreground" href="/faq" target="_blank" rel="noopener">
-                    More in the FAQ
-                  </a>
+                  <button
+                    type="button"
+                    className="cursor-pointer text-inherit underline underline-offset-3 hover:text-foreground"
+                    onClick={(e) => showFaq(PRIVACY_QUESTION, e.currentTarget)}
+                    aria-controls="chat-faq"
+                  >
+                    More about privacy
+                  </button>
                 </p>
               </MessageContent>
             </Message>
@@ -1230,6 +1257,8 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
           )}
         </div>
       </div>
+
+      <ChatFaq request={faq} layout={layout} onClose={() => setFaq(null)} />
     </div>
   );
 }

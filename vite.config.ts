@@ -26,7 +26,6 @@ function workerProxy(): Record<string, ProxyOptions> {
     '/api': { ...route, ws: true },
     '/agent-docs': route,
     '/acknowledgments': route,
-    '/faq': route,
     '/llms.txt': route,
     '/schemas': route,
   };

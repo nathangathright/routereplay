@@ -3,8 +3,8 @@ import { AIRCRAFT_DESIGNATORS, AIRCRAFT_TYPES } from '../shared/scene/aircraft';
 import { ASSET_MANIFEST_VERSION, DEFAULTS, LIMITS, SURFACE_MODES, WARNING_THRESHOLDS } from '../shared/scene/constants';
 import { EXAMPLE_SCENE } from '../shared/scene/examples';
 import { sceneSchemaV1 } from '../shared/scene/schema';
-import { ACKNOWLEDGMENTS_TXT, DOCS_VERSION, FAQ_TXT, REFERENCE_MD, WORKFLOW_MD } from './generated/content';
-import { DRAFT_RETENTION_DAYS, REVISIONS_KEPT, SESSION_DAYS } from './store';
+import { ACKNOWLEDGMENTS_TXT, DOCS_VERSION, REFERENCE_MD, WORKFLOW_MD } from './generated/content';
+import { DRAFT_RETENTION_DAYS, REVISIONS_KEPT } from './store';
 
 export { DOCS_VERSION };
 
@@ -58,15 +58,6 @@ Docs version ${DOCS_VERSION}, scene schema v1. Endpoints: ${origin}/api/v1. Sche
 /** Credits for the imagery, data, and software the site uses, as plain text (src/server/acknowledgments.txt). */
 export function acknowledgments(origin: string): string {
   return ACKNOWLEDGMENTS_TXT.replace(/\{\{ORIGIN\}\}/g, origin).replace(/\{\{ASSET_VERSION\}\}/g, ASSET_MANIFEST_VERSION);
-}
-
-/**
- * Questions and answers for people using the site, as plain text (src/server/faq.txt): what happens to the text
- * typed into the chat, who can see a draft, where the routes and clouds come from.
- */
-export function faq(origin: string): string {
-  const values: Record<string, string> = { ORIGIN: origin, SESSION_DAYS: String(SESSION_DAYS), DRAFT_RETENTION_DAYS: String(DRAFT_RETENTION_DAYS) };
-  return FAQ_TXT.replace(/\{\{([A-Z_]+)\}\}/g, (m, k: string) => values[k] ?? m);
 }
 
 export function llmsTxt(origin: string): string {

@@ -184,10 +184,27 @@ select:focus-visible {
   position: relative;
 }
 
+/* The questions and answers slide over the chat as a second drawer: from the left, as the rail did, or up from the
+   bottom on phones. Closed, they wait out of sight, clipped by the chat, and inert (ChatFaq.tsx). Not
+   visibility: hidden, which the accordion's transitions would carry into the first frame after opening, so its
+   answers couldn't take focus. */
+.chat-faq {
+  transition: transform 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.chat-faq[data-open='false'] {
+  transform: translateX(-100%);
+}
+
+.chat-faq[data-layout='drawer'][data-open='false'] {
+  transform: translateY(100%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .studio-chat,
   .studio-stage,
-  .studio-draft {
+  .studio-draft,
+  .chat-faq {
     transition: none;
   }
 }
