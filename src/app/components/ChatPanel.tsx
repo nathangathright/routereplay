@@ -1217,6 +1217,8 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
                     <MessageContent className="w-full">
                       <ExportResult
                         phase={e.phase}
+                        // The trip as it was exported, not as it is now.
+                        title={journeyTitle(e.scene)}
                         onTryAgain={() => {
                           patch(e.id, { phase: { kind: 'checking' } } as Partial<Entry>);
                           startExport(e.id, e.scene, e.choice);

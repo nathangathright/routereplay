@@ -36,6 +36,11 @@ a {
   color: var(--blue);
 }
 
+/* The chat is stock shadcn/ui: its links take the colour of the text around them, as the components expect. */
+.chat-panel a {
+  color: inherit;
+}
+
 button {
   font: inherit;
 }
