@@ -34,15 +34,19 @@ interface Props {
   fill?: boolean;
 }
 
-/** Size of an element in CSS pixels, kept current as it resizes. */
+/**
+ * Layout size of an element in CSS pixels, kept current as it resizes. Transforms don't count: a phone's floating
+ * window (pip.ts) shrinks the stage with one, and the journey should keep its frame.
+ */
 function useElementSize(ref: React.RefObject<HTMLElement | null>, enabled: boolean) {
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   useEffect(() => {
     const el = ref.current;
     if (!enabled || !el) return;
     const measure = () => {
-      const r = el.getBoundingClientRect();
-      if (r.width > 0 && r.height > 0) setSize({ width: Math.round(r.width), height: Math.round(r.height) });
+      const width = el.offsetWidth;
+      const height = el.offsetHeight;
+      if (width > 0 && height > 0) setSize((s) => (s?.width === width && s.height === height ? s : { width, height }));
     };
     measure();
     const ro = new ResizeObserver(measure);

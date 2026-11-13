@@ -495,8 +495,9 @@ export function IdleEarth({
         camera={{ fov: CAMERA_FOV, near: 0.1, far: 200, position: [0, 0, CAMERA_DISTANCE] }}
         frameloop={reduceMotion || !visible ? 'demand' : 'always'}
         // Follow the stage as the chat rail slides open: R3F's default waits for resizing to stop, which leaves the
-        // globe off centre during the slide. The page never scrolls, so there's no scroll to track either.
-        resize={{ scroll: false, debounce: 0 }}
+        // globe off centre during the slide. The page never scrolls, so there's no scroll to track either. Layout
+        // sizes, because a phone's floating window (pip.ts) shrinks the stage with a transform, not a resize.
+        resize={{ scroll: false, debounce: 0, offsetSize: true }}
         gl={{ antialias: true, toneMapping: THREE.ReinhardToneMapping }}
         aria-hidden="true"
       >

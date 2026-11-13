@@ -104,8 +104,8 @@ select:focus-visible {
 
 /*
  * The workspace for the homepage and drafts (Studio.tsx): the chat and the stage beside it. On desktop the chat is a
- * left rail that slides open and squeezes the stage; on phones it is a drawer from the bottom, collapsible to its
- * title bar, and the stage shrinks to the space above it. The page itself never scrolls.
+ * left rail that slides open and squeezes the stage; on phones it is a drawer from the bottom that fills the screen,
+ * collapsible to its title bar, with the stage in the space above the bar. The page itself never scrolls.
  */
 .studio {
   --rail-width: clamp(340px, 30vw, 420px);
@@ -192,27 +192,92 @@ select:focus-visible {
   }
 }
 
-/* Phones and narrow windows: the chat is a drawer from the bottom. */
+/*
+ * Phones and narrow windows: the chat is a drawer from the bottom. Expanded, it covers the whole screen and the stage
+ * floats over it in a small window, like a video's picture-in-picture (pip.ts). The stage keeps the size it has with
+ * the drawer collapsed and is only scaled, so the globe or the player is never resized as the drawer moves.
+ */
 @media (max-width: 899px) {
   .studio {
     --drawer-collapsed: calc(56px + env(safe-area-inset-bottom));
-    --drawer-expanded: min(max(56svh, 380px), calc(100svh - 140px));
-    --drawer: 0px;
+    --drawer-radius: 20px;
+    --stage-bottom: 0px;
+    --pip-x: 0px;
+    --pip-y: 0px;
+    --pip-scale: 0.33;
+    --pip-radius: 14px;
     display: block;
   }
 
+  /* The scene reaches under the collapsed drawer's rounded top, so it shows in the drawer's corners. */
   .studio[data-chat='open'] {
-    --drawer: var(--drawer-collapsed);
+    --stage-bottom: calc(var(--drawer-collapsed) - var(--drawer-radius));
   }
 
-  .studio[data-chat='open'][data-drawer='expanded'] {
-    --drawer: var(--drawer-expanded);
-  }
-
+  /*
+   * Under the collapsed drawer. Opaque, since the globe's canvas isn't quite, and the chat would show through it
+   * when the stage is a window over it.
+   */
   .studio-stage {
     position: absolute;
-    inset: 0 0 var(--drawer) 0;
-    transition: bottom 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    inset: 0 0 var(--stage-bottom) 0;
+    z-index: 2;
+    background: var(--bg);
+    transform-origin: 0 0;
+    /* Back under the drawer only once it has grown out of its window. */
+    transition:
+      bottom 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      border-radius 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      z-index 0s linear 350ms;
+  }
+
+  /*
+   * As a window, over the drawer straight away, so it shrinks over the chat. Lengths are divided by the scale so they
+   * come out at their size on screen.
+   */
+  .studio[data-pip='true'] .studio-stage {
+    z-index: 4;
+    transition:
+      bottom 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      border-radius 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform: translate(var(--pip-x), var(--pip-y)) scale(var(--pip-scale));
+    border-radius: calc(var(--pip-radius) / var(--pip-scale));
+    box-shadow:
+      0 0 0 calc(1px / var(--pip-scale)) rgba(255, 255, 255, 0.16),
+      0 calc(10px / var(--pip-scale)) calc(32px / var(--pip-scale)) rgba(0, 0, 0, 0.55);
+  }
+
+  /* The window's touch target: the stage's box under the same transform, over it. */
+  .studio-pip {
+    position: absolute;
+    inset: 0 0 var(--stage-bottom) 0;
+    z-index: 5;
+    padding: 0;
+    border: 0;
+    border-radius: calc(var(--pip-radius) / var(--pip-scale));
+    background: transparent;
+    cursor: grab;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    transform-origin: 0 0;
+    transform: translate(var(--pip-x), var(--pip-y)) scale(var(--pip-scale));
+    transition: transform 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .studio-pip:focus-visible {
+    outline: calc(2px / var(--pip-scale)) solid var(--blue);
+    outline-offset: calc(2px / var(--pip-scale));
+  }
+
+  /* While a finger holds it, the window follows without easing. */
+  .studio[data-pip-dragging] .studio-stage,
+  .studio[data-pip-dragging] .studio-pip {
+    cursor: grabbing;
+    transition: none;
   }
 
   .studio-chat,
@@ -222,16 +287,24 @@ select:focus-visible {
     right: 0;
     bottom: var(--keyboard, 0px);
     width: auto;
-    height: max(var(--drawer), var(--drawer-collapsed));
-    max-height: calc(var(--visible-height, 100svh) - 12px);
+    height: var(--drawer-collapsed);
+    max-height: var(--visible-height, 100dvh);
     border: 0;
     border-top: 1px solid var(--sidebar-border);
-    border-radius: 20px 20px 0 0;
+    border-radius: var(--drawer-radius) var(--drawer-radius) 0 0;
     box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
     transform: translateY(calc(100% + 24px));
     transition:
       transform 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
-      height 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      height 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      border-radius 350ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* Expanded, it fills what the keyboard leaves visible, square at the screen's top edge. */
+  .studio[data-drawer='expanded'] .studio-chat {
+    height: var(--visible-height, 100dvh);
+    border-top-color: transparent;
+    border-radius: 0;
   }
 
   .studio[data-chat='open'] .studio-chat {
@@ -246,7 +319,7 @@ select:focus-visible {
     cursor: pointer;
   }
 
-  /* The drawer's handle, centred above its title. */
+  /* The drawer's handle, centred above its title, clear of the status bar when the drawer fills the screen. */
   .chat-grabber {
     position: absolute;
     top: 6px;
@@ -256,6 +329,18 @@ select:focus-visible {
     border-radius: 2px;
     background: rgba(255, 255, 255, 0.22);
     transform: translateX(-50%);
+  }
+
+  .chat-panel[data-expanded='true'] .chat-grabber {
+    top: calc(6px + env(safe-area-inset-top));
+  }
+}
+
+@media (max-width: 899px) and (prefers-reduced-motion: reduce) {
+  .studio-chat,
+  .studio-stage,
+  .studio-pip {
+    transition: none;
   }
 }
 

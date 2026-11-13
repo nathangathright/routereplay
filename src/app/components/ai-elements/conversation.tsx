@@ -19,17 +19,18 @@ export const ConversationContent = ({ className, ...props }: ConversationContent
 );
 
 /**
- * Not in AI Elements: scrolls to the newest message whenever `messages` changes (after the person sends one, say), so a
- * conversation that opens at its first line still follows along once it gets going.
+ * Not in AI Elements: scrolls to the newest message whenever `when` changes: after the person sends one, say, so a
+ * conversation that opens at its first line still follows along once it gets going, or when a drawer it was measured
+ * in while collapsed opens.
  */
-export const ConversationFollow = ({ messages }: { messages: number }) => {
+export const ConversationFollow = ({ when }: { when: unknown }) => {
   const { scrollToBottom } = useStickToBottomContext();
-  const seen = useRef(messages);
+  const seen = useRef(when);
   useEffect(() => {
-    if (seen.current === messages) return;
-    seen.current = messages;
+    if (Object.is(seen.current, when)) return;
+    seen.current = when;
     void scrollToBottom();
-  }, [messages, scrollToBottom]);
+  }, [when, scrollToBottom]);
   return null;
 };
 

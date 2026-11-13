@@ -846,7 +846,10 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
   return (
     <div className="chat-panel flex h-full min-h-0 flex-col font-sans" data-layout={layout} data-expanded={expanded}>
       <div
-        className="chat-panel-head flex h-14 shrink-0 items-center gap-1 border-b border-sidebar-border pl-4 pr-2"
+        // Filling a phone's screen, the bar sits below the status bar and notch.
+        className={`chat-panel-head flex shrink-0 items-center gap-1 border-b border-sidebar-border pl-4 pr-2 transition-[height,padding] duration-300 ${
+          layout === 'drawer' && expanded ? 'h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)]' : 'h-14'
+        }`}
         onClick={(e) => {
           // On a phone, the bar itself opens the collapsed drawer.
           if (collapsed && !(e.target as HTMLElement).closest('button')) onExpandedChange(true);
@@ -1129,11 +1132,15 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
             })}
 
           </ConversationContent>
-          <ConversationFollow messages={entries.length} />
+          <ConversationFollow when={entries.length} />
+          <ConversationFollow when={expanded} />
           <ConversationScrollButton />
         </Conversation>
 
-        <div className="flex max-h-[75%] shrink-0 flex-col gap-2 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-1">
+        <div
+          data-chat-footer
+          className="flex max-h-[75%] shrink-0 flex-col gap-2 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-1"
+        >
           {dock === 'exporting' && runningExport ? (
             <div className="rounded-lg border p-4">
               <ExportProgress phase={runningExport.phase} onCancel={() => exportJob.current?.controller.abort()} />

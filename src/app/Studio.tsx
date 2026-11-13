@@ -1,5 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useDraft } from './draft';
+import { usePip } from './pip';
 import { LandingStage } from './pages/Landing';
 
 // The chat and the UI kit it's built from load when someone reaches for Get started, not with the homepage.
@@ -136,13 +137,21 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
     };
   }, [desktop, chatOpen]);
 
+  // On a phone, while the drawer fills the screen, the scene floats over the chat in a small window (pip.ts).
+  const pip = !desktop && chatOpen && expanded;
+  const studio = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  const pipHandlers = usePip(studio, stage, !desktop, pip, useCallback(() => setExpanded(false), []));
+
   const layout = desktop ? 'rail' : 'drawer';
   return (
     <div
+      ref={studio}
       className="studio"
       data-chat={chatOpen ? 'open' : 'closed'}
       data-drawer={expanded ? 'expanded' : 'collapsed'}
       data-page={sceneId ? 'draft' : 'home'}
+      data-pip={pip}
     >
       <aside ref={rail} id="chat-panel" className="studio-chat" aria-label="Chat" inert={!chatOpen || undefined}>
         {chatMounted && (
@@ -162,7 +171,8 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
           </Suspense>
         )}
       </aside>
-      <div className="studio-stage">
+      {/* Shrunk into the floating window, the stage is only a picture: the window's touch target takes the input. */}
+      <div ref={stage} className="studio-stage" inert={pip || undefined}>
         {!landingGone && (
           <LandingStage chatOpen={chatOpen} onGetStarted={() => setChatOpen(true)} onApproach={loadChat} getStarted={getStarted} />
         )}
@@ -179,6 +189,15 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
           </Suspense>
         )}
       </div>
+      {pip && (
+        <button
+          type="button"
+          className="studio-pip"
+          aria-label={sceneId ? 'Show the journey' : 'Show the globe'}
+          title={sceneId ? 'Show the journey' : 'Show the globe'}
+          {...pipHandlers}
+        />
+      )}
     </div>
   );
 }
