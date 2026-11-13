@@ -214,10 +214,12 @@ const CITY_EMISSION = 0.45;
 const glslArray = (type: string, items: string[]) => `${type}[${items.length}](${items.join(', ')})`;
 
 /**
- * cityLights(n, texel): light from cities at the ground point n (unit vector, Earth frame), given the night
- * map's texel there. The map gives only where lights are and how bright; the model decides their colour,
- * when they switch on at dusk (later) and off at dawn, and how buildings and signs go dark late at night.
- * Needs LIGHT_GLSL first.
+ * lightLevel(texel): how bright the city light in a night-map texel is, 0–1, proportional to the light emitted.
+ * scripts/build-textures.py computes the same level for the night-detail tiles, which store it directly.
+ *
+ * cityLights(n, level): light from cities at the ground point n (unit vector, Earth frame), given the light level
+ * there. The map gives only where lights are and how bright; the model decides their colour, when they switch on
+ * at dusk (later) and off at dawn, and how buildings and signs go dark late at night. Needs LIGHT_GLSL first.
  */
 export const CITY_GLSL = /* glsl */ `
 const vec3 SODIUM = ${v3(LAMP.sodium, 4)};
@@ -273,13 +275,15 @@ float occupied(float hour, float start, float end, float width) {
   return 1.0 / (1.0 + exp(-((end - start) * 0.5 - distance) / width));
 }
 
-vec3 cityLights(vec3 n, vec3 texel) {
+float lightLevel(vec3 texel) {
   // The night map shows lights warm or white over a faint bluish moonlit land (deserts a little warmer);
   // keep only the lights.
   vec3 e = pow(max(texel, vec3(0.0)), vec3(1.0 / 2.2));
-  float level = clamp((e.r - 0.55 * e.b - 0.06) / 0.39, 0.0, 1.0);
+  return pow(clamp((e.r - 0.55 * e.b - 0.06) / 0.39, 0.0, 1.0), 0.82);
+}
+
+vec3 cityLights(vec3 n, float level) {
   if (level <= 0.0) return vec3(0.0);
-  level = pow(level, 0.82);
 
   float region = geoNoise(n, 60.0, 20161017u) - 0.5;
   float district = geoNoise(n, 18.0, 20261017u) - 0.5;

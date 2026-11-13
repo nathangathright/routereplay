@@ -4,6 +4,7 @@ import type { Vec3 } from '../../shared/geo/vec';
 import type { EarthTextures } from './assets';
 import { CLOUD_GLSL, CLOUD_RADIUS, type CloudFrame, cloudUniforms, setCloudUniforms } from './Clouds';
 import { AIR_GLSL, ATMOSPHERE_TOP, CITY_GLSL, LIGHT_GLSL, type SkyLights, lightUniforms, setLightUniforms } from './lighting';
+import { NIGHT_DETAIL_GLSL, type NightDetailTextures, nightDetailUniforms, setNightDetailUniforms } from './nightDetail';
 
 export { ATMOSPHERE_TOP };
 
@@ -42,6 +43,7 @@ ${LIGHT_GLSL}
 ${AIR_GLSL}
 ${CITY_GLSL}
 ${CLOUD_GLSL}
+${NIGHT_DETAIL_GLSL}
 
 // Sun glint on open water: a rough-water GGX lobe with Schlick Fresnel and Smith masking, as in the
 // offline renderer (routereplay surfacelighting.py). Roughness and gain are cinematic, not measured.
@@ -139,7 +141,9 @@ void main() {
   }
 
   color += exp(-pow(mu / 0.065, 2.0)) * TWILIGHT;
-  color += cityLights(g, texture2D(nightMap, vUv).rgb);
+  // City light from the global night map, or the full-resolution tiles where the camera is close.
+  float spread = length(cameraPosition - vPosW) / max(viewDepth, 1e-3);
+  color += cityLights(g, nightLevel(vUv, lightLevel(texture2D(nightMap, vUv).rgb), spread));
 
   gl_FragColor = vec4(color, 1.0);
   #include <tonemapping_fragment>
@@ -230,17 +234,20 @@ void main() {
 /**
  * `lights`: the Sun, Moon, and clock in the Earth's own frame (see vec.ts), whatever the Earth's parent rotation.
  * `clouds`: the cloud layer's current frame, for cloud shadows on the ground.
+ * `detail`: a journey's full-resolution city lights near its airports (nightDetail.ts), or none.
  */
 export function Earth({
   textures,
   lights,
   segments,
   clouds = null,
+  detail = null,
 }: {
   textures: EarthTextures;
   lights: SkyLights;
   segments: number;
   clouds?: CloudFrame | null;
+  detail?: NightDetailTextures | null;
 }) {
   const material = useMemo(
     () =>
@@ -252,6 +259,7 @@ export function Earth({
           reliefMap: { value: textures.relief },
           ...cloudUniforms(),
           ...lightUniforms(),
+          ...nightDetailUniforms(),
         },
         vertexShader: earthVertex,
         fragmentShader: earthFragment,
@@ -260,6 +268,7 @@ export function Earth({
   );
   setLightUniforms(material.uniforms, lights);
   setCloudUniforms(material.uniforms, clouds);
+  setNightDetailUniforms(material.uniforms, detail);
   return (
     <mesh material={material} renderOrder={0}>
       <sphereGeometry args={[1, segments, Math.round(segments / 2)]} />

@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ASSET_MANIFEST_VERSION } from '../src/shared/scene/constants';
 import { DAY_TEXTURE_WIDTHS, currentSurfaceMonth, dayTextureWidth, journeySurfaceMonth } from '../src/shared/scene/surface';
 import type { NormalizedSceneV1 } from '../src/shared/scene/types';
+import { DETAIL_DEGREES, DETAIL_TILE } from '../src/shared/timeline/nightDetail';
 
 const ASSETS = new URL('../public/assets/', import.meta.url).pathname;
 const FIXTURE = JSON.parse(readFileSync(new URL('./fixtures/publication-v1.json', import.meta.url).pathname, 'utf8')) as {
@@ -50,8 +51,20 @@ describe('asset directory', () => {
   const dir = `${ASSETS}${ASSET_MANIFEST_VERSION}/`;
   const manifest = JSON.parse(readFileSync(`${dir}manifest.json`, 'utf8')) as {
     version: string;
-    files: { path: string; kind: string; month?: number; width?: number; bytes: number; sha256: string }[];
+    files: {
+      path: string;
+      kind: string;
+      month?: number;
+      width?: number;
+      quality?: 'low' | 'standard';
+      degrees?: number;
+      gutter?: number;
+      tiles?: number;
+      bytes: number;
+      sha256: string;
+    }[];
   };
+  const sha256 = (bytes: Buffer | string) => createHash('sha256').update(bytes).digest('hex');
 
   it('has a day texture for every month and a water mask at every width', () => {
     expect(manifest.version).toBe(ASSET_MANIFEST_VERSION);
@@ -71,9 +84,24 @@ describe('asset directory', () => {
 
   it('matches the hashes in its manifest', () => {
     for (const f of manifest.files) {
+      if (f.tiles !== undefined) continue;
       const bytes = readFileSync(`${dir}${f.path}`);
       expect(bytes.length, f.path).toBe(f.bytes);
-      expect(createHash('sha256').update(bytes).digest('hex'), f.path).toBe(f.sha256);
+      expect(sha256(bytes), f.path).toBe(f.sha256);
+    }
+  });
+
+  it('has night-detail tiles at each quality, laid out as the renderer reads them', () => {
+    for (const quality of ['standard', 'low'] as const) {
+      const record = manifest.files.find((f) => f.kind === 'earth-night-detail' && f.quality === quality);
+      const { cell, gutter } = DETAIL_TILE[quality];
+      expect(record, quality).toMatchObject({ path: `earth-night-detail-${quality}`, degrees: DETAIL_DEGREES, width: cell + 2 * gutter, gutter });
+      // The record hashes a sha256sum-style listing of the directory.
+      const names = readdirSync(`${dir}${record!.path}`).sort();
+      const files = names.map((name) => readFileSync(`${dir}${record!.path}/${name}`));
+      expect(names.length).toBe(record!.tiles);
+      expect(files.reduce((a, b) => a + b.length, 0)).toBe(record!.bytes);
+      expect(sha256(names.map((name, i) => `${sha256(files[i]!)}  ${name}\n`).join(''))).toBe(record!.sha256);
     }
   });
 

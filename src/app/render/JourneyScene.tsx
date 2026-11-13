@@ -8,6 +8,7 @@ import { AIRCRAFT_SHORT_SIDE_FRACTION, SURFACE_MARKER, type Timeline, evaluate, 
 import { Aircraft } from './Aircraft';
 import type { EarthTextures } from './assets';
 import { type CloudSet, Clouds, cloudFrameAt } from './Clouds';
+import type { NightDetailTextures } from './nightDetail';
 import { Atmosphere, Earth } from './Earth';
 import { Labels, labelHeightFor } from './Labels';
 import { skyLights } from './lighting';
@@ -29,6 +30,8 @@ export function JourneyScene({
   timeline,
   textures,
   clouds = null,
+  detail = null,
+  detailVersion = 0,
   segments,
   aspect,
   onFrame,
@@ -36,6 +39,9 @@ export function JourneyScene({
   timeline: Timeline;
   textures: EarthTextures;
   clouds?: CloudSet | null;
+  /** Full-resolution city lights near the airports; `detailVersion` changes as tiles arrive. */
+  detail?: NightDetailTextures | null;
+  detailVersion?: number;
   segments: number;
   /** Width ÷ height of the frame: the camera frames the route for this shape. */
   aspect: number;
@@ -65,7 +71,7 @@ export function JourneyScene({
     onFrame?.({ frame, t });
     // Rendered-frame counter for the ?measure device budget panel.
     if (typeof window !== 'undefined' && window.__rrRenderedFrames !== undefined) window.__rrRenderedFrames++;
-  }, [frame, t, invalidate, onFrame, state]);
+  }, [frame, t, invalidate, onFrame, state, detailVersion]);
 
   const codes = useMemo(() => [...new Set(timeline.occurrences.map((o) => o.code))], [timeline]);
   const sun = state.sun;
@@ -89,7 +95,7 @@ export function JourneyScene({
       <Moon position={moonPosition(state.physicalUtcMs)} sun={sun} />
       <ambientLight intensity={0.5} />
       <directionalLight position={scale(sun, 10) as [number, number, number]} intensity={2.4} />
-      <Earth textures={textures} lights={lights} segments={segments} clouds={cloudFrame} />
+      <Earth textures={textures} lights={lights} segments={segments} clouds={cloudFrame} detail={detail} />
       {cloudFrame && <Clouds frame={cloudFrame} lights={lights} night={textures.night} segments={segments} />}
       <Atmosphere sun={sun} segments={Math.max(48, segments / 2)} />
       <Routes timeline={timeline} trail={state.trail} currentLeg={state.legIndex} halfWidth={halfWidth} />

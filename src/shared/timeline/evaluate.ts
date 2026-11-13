@@ -139,7 +139,8 @@ export const DEFAULT_ASPECT = ASPECT_VALUE['16:9'];
  */
 const SHORT_SIDE_PX = 1080;
 const SHORT_SIDE_FOV = 70 * DEG;
-const FOCAL_PX = SHORT_SIDE_PX / (2 * Math.tan(SHORT_SIDE_FOV / 2));
+/** Focal length in pixels of a 1080-pixel short side seen through 70°. */
+export const FOCAL_PX = SHORT_SIDE_PX / (2 * Math.tan(SHORT_SIDE_FOV / 2));
 const GROUND_RADIUS_PX = 1300;
 const SUMMIT_RADIUS_PX = 440;
 /** Illustrative cruise: 11 km at mid-flight following sin(πp), drawn 12× taller, as the offline renderer does. */
@@ -347,6 +348,12 @@ function northUp(dir: Vec3, heading: Vec3): Vec3 {
   const w = smoothstep(0.03, 0.25, length(proj));
   const alt = sub(heading, scale(dir, dot(heading, dir)));
   return normalize(add(scale(normalize(proj, alt), w), scale(normalize(alt, proj), 1 - w)), [0, 0, 1]);
+}
+
+/** The camera's position at presentation time t (Earth frame, Earth radii), whatever the frame's shape. */
+export function cameraPositionAt(tl: Timeline, t: number): Vec3 {
+  const k = kinematics(tl, t);
+  return scale(k.ground, cameraDistance(k.radiusPx));
 }
 
 /** Straight down at the aircraft (or the airport it waits at), north up. */

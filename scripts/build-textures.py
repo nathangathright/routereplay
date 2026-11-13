@@ -8,8 +8,12 @@ elevation for the relief map (see docs/assets.md). Downloads are cached under .c
 to public/assets/<ASSET_MANIFEST_VERSION>/, read from src/shared/scene/constants.ts. Older version
 directories are left untouched. Requires Pillow with WebP support, NumPy, and SciPy.
 
-Usage: python3 -I scripts/build-textures.py
+Usage: python3 -I scripts/build-textures.py [part ...]
+
+With no parts, everything is built and the manifest rewritten. Naming parts (day, night, night-detail, water,
+relief) builds only those and replaces their records in the existing manifest.
 """
+import base64
 import calendar
 import hashlib
 import json
@@ -21,6 +25,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
@@ -61,6 +66,23 @@ NIGHT_VARIANTS = {
     'low': (2048, 1024, 82),
     'standard': (3600, 1800, 85),
 }
+
+# The same Black Marble at full resolution (43200x21600: 30 arc seconds, about 0.93 km per pixel; 279 MB), for the
+# night-detail tiles journeys load around their airports. URL and SHA-1 from the Commons API
+# (action=query&prop=imageinfo&iiprop=url|sha1). Decoding it takes about 4 GB of memory.
+NIGHT_FULL = {
+    'url': 'https://upload.wikimedia.org/wikipedia/commons/a/af/BlackMarble20161km.jpg',
+    'sha1': '2f94891914481e85c80f1a9892886e4473a871b6',
+    'file': 'black-marble-2016-43200.jpg',
+}
+# Night-detail tiles: 5-degree cells of the shader's light level (one channel), only for cells with any light, as
+# lossless WebP. Each tile also holds NIGHT_DETAIL_GUTTER pixels of its neighbours on every side, so filtering is
+# seamless across tile edges. Standard keeps the full resolution (600 + 2 x 4 pixels square); low averages 2 x 2
+# (300 + 2 x 2). src/shared/scene/nightTiles.ts lists the cells that have a tile; nightDetail.ts mirrors the layout.
+NIGHT_DETAIL_DEGREES = 5
+NIGHT_DETAIL_GUTTER = 4
+NIGHT_DETAIL_REDUCTION = {'standard': 1, 'low': 2}
+NIGHT_TILES_MODULE = ROOT / 'src' / 'shared' / 'scene' / 'nightTiles.ts'
 
 # Natural Earth 1:10m outlines (public domain), rasterized into the water mask for ocean glint and sky
 # reflection. Minor islands and Antarctic ice shelves count as land: the day map shows both, and ice shelves
@@ -243,6 +265,92 @@ def build_night(files):
         ))
 
 
+def night_light_level():
+    """The shader's light level for every pixel of the full-resolution Black Marble, 0-255, rows from the north: the
+    pixel decoded from sRGB and raised to 1/2.2, warm light (red less 0.55 x blue) above the moonlit land, to the
+    power 0.82 (lightLevel in src/app/render/lighting.ts). It is proportional to the light emitted, so filtering
+    and mipmaps average it correctly."""
+    path = fetch(NIGHT_FULL['url'], NIGHT_FULL['file'])
+    if hashlib.sha1(path.read_bytes()).hexdigest() != NIGHT_FULL['sha1']:
+        sys.exit(f'{path} does not match the SHA-1 Commons lists; delete it to download it again')
+    v = np.arange(256) / 255
+    e = np.where(v <= 0.04045, v / 12.92, ((v + 0.055) / 1.055) ** 2.4) ** (1 / 2.2)
+    lut = np.round(255 * np.clip((e[:, None] - 0.55 * e[None, :] - 0.06) / 0.39, 0, 1) ** 0.82).astype(np.uint8)
+    image = Image.open(path)
+    width, height = image.size
+    level = np.empty((height, width), np.uint8)
+    band = 1200
+    for top in range(0, height, band):
+        rgb = np.asarray(image.crop((0, top, width, top + band)))
+        level[top:top + band] = lut[rgb[..., 0], rgb[..., 2]]
+    return level
+
+
+def tile_name(row, col):
+    """A cell's file name from its south-west corner, e.g. N50W005 (row counts 5-degree cells from 90°S, col from 180°W)."""
+    lat = row * NIGHT_DETAIL_DEGREES - 90
+    lon = col * NIGHT_DETAIL_DEGREES - 180
+    return f"{'S' if lat < 0 else 'N'}{abs(lat):02d}{'W' if lon < 0 else 'E'}{abs(lon):03d}.webp"
+
+
+def record_dir(path, **fields):
+    """A manifest record for a directory of tiles: total bytes, and the SHA-256 of a `sha256sum`-style listing."""
+    names = sorted(p.name for p in path.iterdir())
+    listing = ''.join(f'{sha256(path / name)}  {name}\n' for name in names)
+    return {
+        'path': path.name, **fields, 'tiles': len(names),
+        'bytes': sum((path / name).stat().st_size for name in names),
+        'sha256': hashlib.sha256(listing.encode()).hexdigest(),
+    }
+
+
+def build_night_detail(files):
+    level = night_light_level()
+    n = level.shape[1] // (360 // NIGHT_DETAIL_DEGREES)  # pixels per cell side
+    rows, cols = 180 // NIGHT_DETAIL_DEGREES, 360 // NIGHT_DETAIL_DEGREES
+    g = NIGHT_DETAIL_GUTTER
+    cells = [(row, col) for row in range(rows) for col in range(cols)
+             if level[(rows - 1 - row) * n:(rows - row) * n, col * n:(col + 1) * n].any()]
+
+    def tile(row, col, reduction):
+        top, left = (rows - 1 - row) * n, col * n
+        y = np.clip(np.arange(top - g, top + n + g), 0, level.shape[0] - 1)  # the poles repeat their edge row
+        x = np.arange(left - g, left + n + g) % level.shape[1]  # longitude wraps
+        t = level[np.ix_(y, x)]
+        if reduction > 1:
+            s = t.shape[0] // reduction
+            t = np.round(t.reshape(s, reduction, s, reduction).mean(axis=(1, 3))).astype(np.uint8)
+        return Image.fromarray(t)
+
+    for quality, reduction in NIGHT_DETAIL_REDUCTION.items():
+        out = OUT / f'earth-night-detail-{quality}'
+        shutil.rmtree(out, ignore_errors=True)
+        out.mkdir()
+
+        def write(cell):
+            tile(*cell, reduction).save(out / tile_name(*cell), 'WEBP', lossless=True, quality=100, method=6)
+
+        with ThreadPoolExecutor() as pool:  # the WebP encoder releases the GIL
+            list(pool.map(write, cells))
+        files.append(record_dir(
+            out, kind='earth-night-detail', quality=quality, degrees=NIGHT_DETAIL_DEGREES,
+            width=(n + 2 * g) // reduction, gutter=g // reduction,
+            source=NIGHT['page'], url=NIGHT_FULL['url'], credit=NIGHT['credit'], license=NASA_LICENSE,
+        ))
+
+    bits = bytearray(rows * cols // 8)
+    for row, col in cells:
+        i = row * cols + col
+        bits[i // 8] |= 1 << (i % 8)
+    NIGHT_TILES_MODULE.write_text(
+        f'// Generated by scripts/build-textures.py for asset directory {VERSION}; do not edit.\n\n'
+        f'/**\n * Which {NIGHT_DETAIL_DEGREES}° cells have a night-detail tile (any city light at full resolution): one bit per cell,\n'
+        f' * least significant first, cell = row × {cols} + column, rows from 90°S and columns from 180°W, in base64.\n'
+        f' * {len(cells)} of {rows * cols} cells.\n */\n'
+        f"export const NIGHT_TILE_CELLS = '{base64.b64encode(bits).decode()}';\n"
+    )
+
+
 def carry_forward():
     """Copy the font and its license from the newest older version directory, if this one lacks them."""
     older = sorted(p for p in ASSETS.iterdir() if p.is_dir() and p.name < VERSION)
@@ -253,32 +361,51 @@ def carry_forward():
             shutil.copy2(older[-1] / name, OUT / name)
 
 
+BUILDERS = {
+    'day': build_day,
+    'night': build_night,
+    'night-detail': build_night_detail,
+    'water': build_water_masks,
+    'relief': build_relief,
+}
+
+
 def main():
+    parts = sys.argv[1:] or list(BUILDERS)
+    unknown = [p for p in parts if p not in BUILDERS]
+    if unknown:
+        sys.exit(f'Unknown part {", ".join(unknown)}; choose from {", ".join(BUILDERS)}')
     OUT.mkdir(parents=True, exist_ok=True)
     carry_forward()
     files = []
-    build_day(files)
-    build_night(files)
-    build_water_masks(files)
-    build_relief(files)
+    for part in parts:
+        BUILDERS[part](files)
     files.append(record(
         OUT / 'Dosis-Variable.ttf', kind='font',
         source='https://github.com/google/fonts/tree/main/ofl/dosis',
         credit='The Dosis Project Authors', license='SIL Open Font License 1.1 (OFL.txt)',
     ))
+    if sys.argv[1:]:
+        # A partial build replaces its own records and keeps the rest, in place.
+        merged = {f['path']: f for f in json.loads((OUT / 'manifest.json').read_text())['files']}
+        merged.update({f['path']: f for f in files})
+        files = list(merged.values())
     manifest = {
         'version': VERSION,
         'note': (
             'Static assets for Route Replay Web. Day textures are monthly (earth-day-<month>-<width>.webp), '
-            'with a water mask at each width (earth-water-<width>.webp); the aircraft model is generated in code '
+            'with a water mask at each width (earth-water-<width>.webp). Night-detail tiles '
+            '(earth-night-detail-<quality>/, one record per directory) cover 5-degree cells with city light; '
+            'each record hashes a sha256sum-style listing of its tiles. The aircraft model is generated in code '
             '(src/app/render/Aircraft.tsx).'
         ),
         'files': files,
     }
     (OUT / 'manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n')
     for f in files:
-        size = f"{f['width']}x{f['height']} " if 'width' in f else ''
-        print(f"{f['path']}: {size}{f['bytes'] / 1024:.0f} KiB", file=sys.stderr)
+        size = f"{f['width']}x{f.get('height', f['width'])} " if 'width' in f else ''
+        count = f"{f['tiles']} tiles, " if 'tiles' in f else ''
+        print(f"{f['path']}: {size}{count}{f['bytes'] / 1024:.0f} KiB", file=sys.stderr)
 
 
 if __name__ == '__main__':

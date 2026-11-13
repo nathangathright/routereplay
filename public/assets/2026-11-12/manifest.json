@@ -1,6 +1,6 @@
 {
   "version": "2026-11-12",
-  "note": "Static assets for Route Replay Web. Day textures are monthly (earth-day-<month>-<width>.webp), with a water mask at each width (earth-water-<width>.webp); the aircraft model is generated in code (src/app/render/Aircraft.tsx).",
+  "note": "Static assets for Route Replay Web. Day textures are monthly (earth-day-<month>-<width>.webp), with a water mask at each width (earth-water-<width>.webp). Night-detail tiles (earth-night-detail-<quality>/, one record per directory) cover 5-degree cells with city light; each record hashes a sha256sum-style listing of its tiles. The aircraft model is generated in code (src/app/render/Aircraft.tsx).",
   "files": [
     {
       "path": "earth-day-01-8192.webp",
@@ -398,6 +398,36 @@
       "license": "SIL Open Font License 1.1 (OFL.txt)",
       "bytes": 117280,
       "sha256": "b2238eef0b3464904fed097ef274c704bc63d21407369b7d7a5be7b0821a0e82"
+    },
+    {
+      "path": "earth-night-detail-standard",
+      "kind": "earth-night-detail",
+      "quality": "standard",
+      "degrees": 5,
+      "width": 608,
+      "gutter": 4,
+      "source": "https://commons.wikimedia.org/wiki/File:BlackMarble20161km.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/af/BlackMarble20161km.jpg",
+      "credit": "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA's Goddard Space Flight Center (Black Marble 2016)",
+      "license": "Public domain (NASA)",
+      "tiles": 1215,
+      "bytes": 8075554,
+      "sha256": "c7f6df0720a93889cc5c8974a828e15610cf0b6e942a426d19b0a6cdf3ae8127"
+    },
+    {
+      "path": "earth-night-detail-low",
+      "kind": "earth-night-detail",
+      "quality": "low",
+      "degrees": 5,
+      "width": 304,
+      "gutter": 2,
+      "source": "https://commons.wikimedia.org/wiki/File:BlackMarble20161km.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/af/BlackMarble20161km.jpg",
+      "credit": "NASA Earth Observatory images by Joshua Stevens, using Suomi NPP VIIRS data from Miguel Román, NASA's Goddard Space Flight Center (Black Marble 2016)",
+      "license": "Public domain (NASA)",
+      "tiles": 1215,
+      "bytes": 3314282,
+      "sha256": "14d31c3c151664837de83681c444b61e5d2af8cc4378ebc57e0c96db48bc1c56"
     }
   ]
 }
