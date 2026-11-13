@@ -1,46 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { requestStats } from '../api';
 import { JourneyStage } from '../components/JourneyStage';
 import type { Draft } from '../draft';
 import { journeyTitle } from '../../shared/scene/title';
 import { registerWebMcpTools, webMcpAvailable } from '../webmcp';
 
-const AGO_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
-  ['year', 365 * 86_400],
-  ['month', 30 * 86_400],
-  ['week', 7 * 86_400],
-  ['day', 86_400],
-  ['hour', 3_600],
-  ['minute', 60],
-];
-
-/** "5m ago", "2d ago"; "now" within the first minute. */
-function ago(iso: string, now: number): string {
-  const seconds = Math.max(0, (now - Date.parse(iso)) / 1000);
-  for (const [unit, size] of AGO_UNITS) {
-    if (seconds >= size) return new Intl.RelativeTimeFormat(undefined, { style: 'narrow' }).format(-Math.floor(seconds / size), unit);
-  }
-  return new Intl.RelativeTimeFormat(undefined, { style: 'narrow', numeric: 'auto' }).format(0, 'second');
-}
-
-/** Its own clock, so the scene doesn't re-render as the label ages. */
-function EditedAgo({ iso }: { iso: string }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 15_000);
-    return () => clearInterval(t);
-  }, [iso]);
-  return (
-    <time dateTime={iso} title={new Date(iso).toLocaleString()}>
-      {ago(iso, now)}
-    </time>
-  );
-}
-
 /**
- * The draft's journey, filling the stage beside the chat: title and status top left, the agent's activity at the
- * bottom. Publishing and exporting happen in the chat. Loads with the Remotion player, so it's its own chunk.
+ * The draft's journey, filling the stage beside the chat, with the agent's activity at the bottom. The chat's title
+ * bar names the trip, so the scene carries no heading of its own except for screen readers. Publishing and exporting
+ * happen in the chat. Loads with the Remotion player, so it's its own chunk.
  */
 export function DraftStage({ draft }: { draft: Draft }) {
   const { sceneId, load, view, viewRef, adopt, notice, activity, connected, player, lastError } = draft;
@@ -99,14 +67,7 @@ export function DraftStage({ draft }: { draft: Draft }) {
     <JourneyStage
       ref={player}
       scene={view.normalized}
-      corner={
-        <div className="draft-heading">
-          <h1>{title}</h1>
-          <p>
-            Draft · Edited <EditedAgo iso={view.updatedAt} />
-          </p>
-        </div>
-      }
+      corner={<h1 className="visually-hidden">{title}</h1>}
       exportable={false}
     >
       {activity && (

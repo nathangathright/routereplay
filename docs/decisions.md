@@ -339,7 +339,7 @@ Other choices:
 - `presentation.aspectRatio` is rejected as an unknown field, like `presentation.camera`.
 - Storyboards describe the 16:9 framing.
 - The watch page keeps only a "make your own" button, share, export, and a play/pause button that appears on tap. The title, route summary, and data notes remain for screen readers and in the page title.
-- The draft page has the same stage (November 12, 2026). Its top left shows the title and "Draft · Edited 5m ago" instead of the + button. Its top right shows Publish, with no confirmation step, in place of Share. Once the shown revision has a watch link, Share takes its place again. Export is unchanged. "Your agent is working" floats at the bottom. The list of earlier watch links and the quality menu are gone; agents still list publications through the API. A publication now changes the draft's ETag, so an open draft notices when the agent publishes.
+- The draft page has the same stage (November 12, 2026). Its top left showed the title and "Draft · Edited 5m ago" instead of the + button (since November 13, 2026, nothing: the chat's title bar names the trip, and the title stays for screen readers, as on the watch page). Its top right shows Publish, with no confirmation step, in place of Share. Once the shown revision has a watch link, Share takes its place again. Export is unchanged. "Your agent is working" floats at the bottom. The list of earlier watch links and the quality menu are gone; agents still list publications through the API. A publication now changes the draft's ETag, so an open draft notices when the agent publishes.
 
 ## Watch pages: out of search, previewed in chats
 
