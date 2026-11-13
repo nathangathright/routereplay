@@ -22,8 +22,8 @@ Real iPhone, cold load over Wi-Fi: **919 KiB**, first journey frame at **981 ms*
 
 | Set | Day texture (by month) | Night | Water mask | Relief | Total |
 | --- | --- | --- | --- | --- | --- |
-| Low | 4096×2048 WebP, 408–541 KiB | 2048×1024 JPEG, 129 KiB | 4096×2048 WebP, 83 KiB | 2160×1080 lossless WebP, 397 KiB | 0.99–1.12 MiB |
-| Standard | 8192×4096 WebP, 1,369–1,786 KiB | 3600×1800 JPEG, 434 KiB | 8192×4096 WebP, 205 KiB | 4320×2160 lossless WebP, 1,886 KiB | 3.8–4.2 MiB |
+| Low | 4096×2048 WebP, 408–541 KiB | 2048×1024 JPEG, 129 KiB | 4096×2048 WebP, 83 KiB | 2160×1080 lossless WebP, 393 KiB | 0.99–1.12 MiB |
+| Standard | 8192×4096 WebP, 1,369–1,786 KiB | 3600×1800 JPEG, 434 KiB | 8192×4096 WebP, 205 KiB | 4320×2160 lossless WebP, 1,871 KiB | 3.8–4.2 MiB |
 
 Standard falls back to the 4096 day texture and water mask on devices whose largest WebGL texture is under 8192. December and January are the largest files and July and August the smallest, probably because northern snow cover adds detail. The whole directory, all 12 months at both widths, is 25 MiB on the server.
 
@@ -31,7 +31,7 @@ The landing page does not download Remotion: the player pages are code-split. Mu
 
 **Clouds** add about 240 KB per model step (cloud water plus 700 hPa wind, as GRIB2), cached for a year in the browser and at the edge: about 0.5–0.7 MB when the homepage opens, then about 10 KB/s while it stays on screen, and about 1 MB for a short journey (24 steps, about 5.8 MB, at most). These figures are from November 12, 2026 and were not part of the earlier device measurements below.
 
-**Relief** (November 12, 2026) is heavy: on standard its 1,886 KiB is more than the day texture and roughly doubles the set, and on low its 397 KiB adds 55–68 %. It was not part of the device measurements above; [assets.md](assets.md) explains the size.
+**Relief** (November 12, 2026) is heavy: on standard its 1,871 KiB is more than the day texture and roughly doubles the set, and on low its 393 KiB adds 55–68 %. It was not part of the device measurements above; [assets.md](assets.md) explains the size.
 
 ## Frame time
 

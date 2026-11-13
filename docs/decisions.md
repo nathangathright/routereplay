@@ -147,7 +147,7 @@ Deliberate differences:
   - ocean glint and wherever the water mask says water;
   - city-light switching.
 - **Exposure** still meters a smooth sphere, as the offline renderer's proxy does, so the timeline's golden states don't change.
-- **Cost:** per ground pixel, one more texture read and about 20 arithmetic operations. GPU memory: two-channel textures of 24 MiB (standard) and 6 MiB (low). Downloads: 1,886 KiB (standard) and 397 KiB (low).
+- **Cost:** per ground pixel, one more texture read and about 20 arithmetic operations. GPU memory: two-channel textures of 24 MiB (standard) and 6 MiB (low). Downloads: 1,871 KiB (standard) and 393 KiB (low).
 
 Not ported from the offline renderer:
 - **Night-side relief fill:** a fixed light from the south-east that scales the night floor by 0.77–1.12. At this scene's night levels it changed 99 % of pixels by 2/255 or less. It would also bring back a fixed light direction, the reason the shaded day map was dropped. Moonlight shows the relief at night instead.
