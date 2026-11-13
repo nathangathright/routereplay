@@ -336,21 +336,6 @@ select:focus-visible {
     cursor: pointer;
   }
 
-  /* The drawer's handle, centred above its title, clear of the status bar when the drawer fills the screen. */
-  .chat-grabber {
-    position: absolute;
-    top: 6px;
-    left: 50%;
-    width: 36px;
-    height: 4px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.22);
-    transform: translateX(-50%);
-  }
-
-  .chat-panel[data-expanded='true'] .chat-grabber {
-    top: calc(6px + env(safe-area-inset-top));
-  }
 }
 
 @media (max-width: 899px) and (prefers-reduced-motion: reduce) {

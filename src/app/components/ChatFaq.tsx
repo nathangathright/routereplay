@@ -95,7 +95,6 @@ export function ChatFaq({ request, layout, onClose }: { request: FaqRequest | nu
           layout === 'drawer' ? 'h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)]' : 'h-14'
         }`}
       >
-        {layout === 'drawer' && <span className="chat-grabber" aria-hidden="true" />}
         <h2 ref={heading} id="chat-faq-title" tabIndex={-1} className="mr-auto truncate font-heading text-sm font-medium outline-none">
           Questions and answers
         </h2>

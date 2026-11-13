@@ -18,7 +18,6 @@ import {
   PlusIcon,
   ShipIcon,
   TrainFrontIcon,
-  XIcon,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Conversation, ConversationContent, ConversationFollow, ConversationScrollButton } from '@/components/ai-elements/conversation';
@@ -752,9 +751,9 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
     }
   }
 
+  /** A fresh conversation for another trip. Anything in the message box stays: it's often the new trip. */
   function startOver() {
     setEntries([]);
-    setText('');
     input.current?.focus();
   }
 
@@ -850,6 +849,9 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
   const offerExport = settled && !exporting && lastEntry?.kind !== 'export';
   // It would replace what's being typed.
   const offerExample = !inDraft && entries.length === 0 && !text.trim();
+  // Before a draft exists, once the person has said something and it isn't being read: a draft has New trip in its menu
+  // instead. Not at the hour's limit, where it would only clear the limit's note and its prompt for their own agent.
+  const offerStartOver = !inDraft && entries.some((e) => e.kind === 'user') && !busy && !exhausted;
   // A reading someone else's save overtook: apply the same request to the trip as it is now, until something's sent.
   const lastReading = entries.findLast((e) => e.kind === 'ready');
   const offerRetry =
@@ -924,7 +926,10 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
 
   const title = inDraft ? (view ? journeyTitle(view.normalized) : 'Your trip') : 'Describe your trip';
   const summary = inDraft && draft.view ? sceneSummary(draft.view.normalized) : null;
-  const collapsed = layout === 'drawer' && !expanded;
+  const drawer = layout === 'drawer';
+  const collapsed = drawer && !expanded;
+  // A draft's menu: New trip, its links, Delete. Not on a collapsed phone bar, which a tap expands.
+  const tripMenu = inDraft && view !== null && !collapsed;
 
   // The questions and answers, over the chat. Hiding or collapsing the chat closes them.
   const [faq, setFaq] = useState<FaqRequest | null>(null);
@@ -934,96 +939,95 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
   return (
     <div className="chat-panel relative flex h-full min-h-0 flex-col font-sans" data-layout={layout} data-expanded={expanded}>
       <div
-        // Filling a phone's screen, the bar sits below the status bar and notch.
-        className={`chat-panel-head flex shrink-0 items-center gap-1 border-b border-sidebar-border pl-4 pr-2 transition-[height,padding] duration-300 ${
-          layout === 'drawer' && expanded ? 'h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)]' : 'h-14'
-        }`}
+        // Filling a phone's screen, the bar sits below the status bar and notch. On a phone it's three columns of
+        // equal sides, so the title stays centred whether or not the FAQ button shows: collapse, title and ⋮, FAQ.
+        className={`chat-panel-head shrink-0 items-center gap-1 border-b border-sidebar-border transition-[height,padding] duration-300 ${
+          drawer ? 'grid grid-cols-[2rem_minmax(0,1fr)_2rem] px-2' : 'flex pl-4 pr-2'
+        } ${drawer && expanded ? 'h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)]' : 'h-14'}`}
         inert={faq !== null || undefined}
         onClick={(e) => {
           // On a phone, the bar itself opens the collapsed drawer.
           if (collapsed && !(e.target as HTMLElement).closest('button')) onExpandedChange(true);
         }}
       >
-        {layout === 'drawer' && <span className="chat-grabber" aria-hidden="true" />}
-        <div className="mr-auto flex min-w-0 items-center gap-0.5">
-          <h2 ref={heading} id="chat-title" tabIndex={-1} className="truncate font-heading text-sm font-medium outline-none">
-            {title}
-          </h2>
-          {inDraft && view && !collapsed && (
-            <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Trip options" />}>
-                <EllipsisVerticalIcon />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-52">
-                <DropdownMenuItem onClick={onNewTrip}>
-                  <PlusIcon />
-                  New trip
-                </DropdownMenuItem>
-                {draft.privateLink && (
-                  <DropdownMenuItem onClick={() => void copyPrivateLink()}>
-                    <LinkIcon />
-                    Copy private link
-                  </DropdownMenuItem>
-                )}
-                {publicLink && (
-                  <DropdownMenuItem onClick={() => void sharePublicLink()}>
-                    <Share2Icon />
-                    Share public link
-                  </DropdownMenuItem>
-                )}
-                {view.capabilities.delete && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" onClick={() => setConfirmDelete(true)}>
-                      <Trash2Icon />
-                      Delete trip
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-        {!inDraft && entries.some((e) => e.kind === 'user') && !collapsed && (
-          <Button variant="ghost" size="sm" onClick={startOver} disabled={busy}>
-            Start over
-          </Button>
-        )}
-        {!collapsed && (
+        {drawer && (
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={(e) => showFaq(null, e.currentTarget)}
-            aria-label="Questions and answers"
-            title="Questions and answers"
-            aria-expanded={faq !== null}
-            aria-controls="chat-faq"
+            // It says whether the drawer is open, but shouldn't look pressed the whole time it is: no fill for
+            // aria-expanded, the stock hover kept.
+            className="aria-expanded:bg-transparent aria-expanded:hover:bg-muted dark:aria-expanded:hover:bg-muted/50"
+            onClick={() => onExpandedChange(!expanded)}
+            aria-label={expanded ? 'Collapse chat' : 'Expand chat'}
+            aria-expanded={expanded}
+            aria-controls="chat-body"
           >
-            <CircleQuestionMarkIcon aria-hidden="true" />
+            {expanded ? <ChevronDownIcon aria-hidden="true" /> : <ChevronUpIcon aria-hidden="true" />}
           </Button>
         )}
-        {layout === 'rail' ? (
-          <Button variant="ghost" size="icon-sm" onClick={onHide} aria-label="Hide chat" title="Hide chat">
-            <PanelLeftCloseIcon aria-hidden="true" />
-          </Button>
-        ) : (
-          <>
+        {/* With a menu, the title is the button that opens it: one target, the ⋮ right after the words. Desktop pulls it
+            left by the button's padding so the words line up with the conversation below. */}
+        <div className={`flex min-w-0 items-center ${drawer ? 'justify-center' : `mr-auto ${tripMenu ? '-ml-2.5' : ''}`}`}>
+          <h2 ref={heading} id="chat-title" tabIndex={-1} className="flex min-w-0 font-heading text-sm font-medium outline-none">
+            {tripMenu ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="ghost" className="max-w-full min-w-0 shrink" title="Trip options" />}>
+                  <span className="truncate">{title}</span>
+                  <EllipsisVerticalIcon data-icon="inline-end" aria-hidden="true" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-52" align={drawer ? 'center' : 'start'}>
+                  <DropdownMenuItem onClick={onNewTrip}>
+                    <PlusIcon />
+                    New trip
+                  </DropdownMenuItem>
+                  {draft.privateLink && (
+                    <DropdownMenuItem onClick={() => void copyPrivateLink()}>
+                      <LinkIcon />
+                      Copy private link
+                    </DropdownMenuItem>
+                  )}
+                  {publicLink && (
+                    <DropdownMenuItem onClick={() => void sharePublicLink()}>
+                      <Share2Icon />
+                      Share public link
+                    </DropdownMenuItem>
+                  )}
+                  {view.capabilities.delete && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem variant="destructive" onClick={() => setConfirmDelete(true)}>
+                        <Trash2Icon />
+                        Delete trip
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <span className="truncate">{title}</span>
+            )}
+          </h2>
+        </div>
+        {/* An empty cell on a collapsed phone bar keeps the title centred. */}
+        <div className="flex justify-end">
+          {!collapsed && (
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => onExpandedChange(!expanded)}
-              aria-label={expanded ? 'Collapse chat' : 'Expand chat'}
-              aria-expanded={expanded}
-              aria-controls="chat-body"
+              onClick={(e) => showFaq(null, e.currentTarget)}
+              aria-label="Questions and answers"
+              title="Questions and answers"
+              aria-expanded={faq !== null}
+              aria-controls="chat-faq"
             >
-              {expanded ? <ChevronDownIcon aria-hidden="true" /> : <ChevronUpIcon aria-hidden="true" />}
+              <CircleQuestionMarkIcon aria-hidden="true" />
             </Button>
-            {!inDraft && (
-              <Button variant="ghost" size="icon-sm" onClick={onHide} aria-label="Close chat">
-                <XIcon aria-hidden="true" />
-              </Button>
-            )}
-          </>
+          )}
+        </div>
+        {!drawer && (
+          <Button variant="ghost" size="icon-sm" onClick={onHide} aria-label="Hide chat" title="Hide chat">
+            <PanelLeftCloseIcon aria-hidden="true" />
+          </Button>
         )}
       </div>
 
@@ -1290,7 +1294,7 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
             </div>
           ) : (
             <>
-              {(answerChip || offerRetry || offerPublish || offerShare || offerExport || offerExample) && (
+              {(answerChip || offerRetry || offerPublish || offerShare || offerExport || offerExample || offerStartOver) && (
                 <Suggestions>
                   {offerRetry && <Suggestion suggestion="Apply my change again" onClick={retry} />}
                   {/* Questions answered by typing can be brought back. */}
@@ -1310,6 +1314,7 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, onH
                       Try an example
                     </Suggestion>
                   )}
+                  {offerStartOver && <Suggestion suggestion="Start over" onClick={startOver} />}
                 </Suggestions>
               )}
               <PromptInput
