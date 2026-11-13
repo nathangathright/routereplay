@@ -1,5 +1,5 @@
 import { Canvas, invalidate, useFrame, useThree } from '@react-three/fiber';
-import { type MutableRefObject, type PointerEvent, type RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { type MutableRefObject, type PointerEvent, type RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { EARTH_RADIUS_KM, GreatCircle } from '../../shared/geo/greatCircle';
 import { moonPosition, sunDirection } from '../../shared/geo/solar';
@@ -49,6 +49,13 @@ function centredDistance(aspect: number): number {
   const halfH = Math.atan(Math.tan(halfV) * aspect);
   return 1 / Math.sin(CENTRED_FILL * Math.min(halfV, halfH));
 }
+
+/**
+ * The part of a canvas this tall, at the top of the window, that's inside it, px. On a phone's homepage the scene
+ * reaches below the window, under Safari's toolbar (styles.css): the view is framed for the part inside, and carries on
+ * below.
+ */
+const frameHeight = (height: number) => Math.min(height, document.documentElement.clientHeight);
 
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 /** Smoothstep, so the move starts and ends gently. */
@@ -147,15 +154,33 @@ function LiveEarth({
   const nextSpawn = useRef(-1);
   const nextId = useRef(0);
   const [, setFrame] = useState(0);
+  const frame = Math.max(1, frameHeight(size.height));
+  const aspect = size.width / frame;
   const heroDrop = globeDrop(horizon);
   const heroLatitude = useMemo(() => viewLatitude(horizon, heroDrop), [horizon, heroDrop]);
   const f = ease(framing.current);
-  const distance = mix(CAMERA_DISTANCE, centredDistance(size.width / Math.max(1, size.height)), f);
+  const distance = mix(CAMERA_DISTANCE, centredDistance(aspect), f);
   const drop = mix(heroDrop, 0, f);
   const reach = Math.hypot(distance, drop) - 1;
   const tools = useMemo(() => ({ ray: new THREE.Raycaster(), sphere: new THREE.Sphere(), ndc: new THREE.Vector2() }), []);
   // Sunlight on the planes points at the Earth's center, which is only the world origin before the globe is moved.
   const lightTarget = useMemo(() => new THREE.Object3D(), []);
+
+  // Frame the view for the part of the canvas inside the window, and draw the rest of the canvas as more of it.
+  useLayoutEffect(() => {
+    const cam = camera as THREE.PerspectiveCamera & { manual?: boolean };
+    cam.manual = true; // R3F would fit the view to the whole canvas
+    const width = Math.max(1, size.width);
+    if (size.height > frame) cam.setViewOffset(width, frame, 0, 0, width, size.height);
+    else {
+      cam.clearViewOffset();
+      cam.aspect = width / frame;
+      cam.updateProjectionMatrix();
+    }
+    invalidate();
+  }, [camera, size.width, size.height, frame]);
+  // From a height in the frame (-1 at its bottom, 1 at its top) to one in the canvas, which may carry on below it.
+  const canvasY = (y: number) => 1 - ((1 - y) * frame) / Math.max(1, size.height);
 
   useFrame((_, delta) => {
     const g = globe.current;
@@ -167,7 +192,7 @@ function LiveEarth({
     framing.current = animate ? mix(framing.current, goal, 1 - Math.exp(-FRAMING_RATE * dt)) : goal;
     if (Math.abs(goal - framing.current) < 0.001) framing.current = goal;
     const k = ease(framing.current);
-    const dist = mix(CAMERA_DISTANCE, centredDistance(size.width / Math.max(1, size.height)), k);
+    const dist = mix(CAMERA_DISTANCE, centredDistance(aspect), k);
     const lift = mix(heroDrop, 0, k);
     const centreLatitude = mix(heroLatitude, 0, k);
     if (camera.position.z !== dist) {
@@ -243,8 +268,8 @@ function LiveEarth({
       const top = horizonNdc - 0.25 * (horizonNdc + 1);
       const disc = (0.6 * Math.tan(Math.asin(1 / dist))) / Math.tan((CAMERA_FOV * Math.PI) / 360);
       for (let attempt = 0; attempt < 12; attempt++) {
-        if (k > 0.5) tools.ndc.set(((Math.random() * 2 - 1) * disc * size.height) / Math.max(1, size.width), (Math.random() * 2 - 1) * disc);
-        else tools.ndc.set(Math.random() * 1.5 - 0.75, -0.9 + Math.random() * Math.max(0.1, top + 0.9));
+        if (k > 0.5) tools.ndc.set(((Math.random() * 2 - 1) * disc) / aspect, canvasY((Math.random() * 2 - 1) * disc));
+        else tools.ndc.set(Math.random() * 1.5 - 0.75, canvasY(-0.9 + Math.random() * Math.max(0.1, top + 0.9)));
         tools.ray.setFromCamera(tools.ndc, camera);
         const hit = tools.ray.ray.intersectSphere(tools.sphere, new THREE.Vector3());
         if (!hit) continue;
@@ -350,7 +375,8 @@ function LiveEarth({
 }
 
 /**
- * `horizon`: where Earth's top edge should sit, as a fraction of the frame height from the top, with the hero.
+ * `horizon`: where Earth's top edge should sit, as a fraction of the frame height from the top, with the hero. The
+ * frame is the part of the canvas inside the window (frameHeight).
  * `centred`: frame the whole globe in the middle instead (beside the chat); the camera moves between the two.
  * `sunlitTarget`: a button over the globe to paint as an object lit by the scene (SunlitButton), fading with the
  * opacity of `sunlitFade`.
@@ -434,7 +460,7 @@ export function IdleEarth({
     const d = drag.current;
     if (!d || d.id !== e.pointerId) return;
     // About one globe radius of drag per radian, so the surface stays roughly under the pointer.
-    const perPx = 2 / Math.max(1, e.currentTarget.clientHeight);
+    const perPx = 2 / Math.max(1, frameHeight(e.currentTarget.clientHeight));
     const dLon = -(e.clientX - d.x) * perPx;
     const dLat = (e.clientY - d.y) * perPx;
     const v = view.current;
@@ -469,7 +495,7 @@ export function IdleEarth({
       e.preventDefault();
       // The same scale as a drag; scrolling right or down moves the view east or south, so the surface
       // follows the fingers with natural scrolling.
-      const perPx = 2 / Math.max(1, container.current?.clientHeight ?? window.innerHeight);
+      const perPx = 2 / Math.max(1, frameHeight(container.current?.clientHeight ?? window.innerHeight));
       const v = view.current;
       v.vLat = v.vLon = 0;
       v.lon += dx * perPx;

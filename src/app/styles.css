@@ -532,7 +532,8 @@ select:focus-visible {
 .acknowledgments-link {
   position: absolute;
   right: max(8px, env(safe-area-inset-right));
-  bottom: max(8px, env(safe-area-inset-bottom));
+  /* Above the window's bottom, where the homepage reaches under Safari's toolbar on phones. */
+  bottom: calc(var(--overhang, 0px) + max(8px, env(safe-area-inset-bottom)));
   z-index: 2;
   display: grid;
   place-items: center;
@@ -1104,6 +1105,27 @@ select:focus-visible {
   .studio[data-chat='open'][data-drawer='expanded'] {
     background: var(--sidebar);
     transition: background-color 0s linear 350ms;
+  }
+
+  /*
+   * On the homepage the scene carries on under Safari's toolbar, which shows it through its glass. Only the page can:
+   * Safari ends fixed elements at the toolbar and fills in below them with their edge's colour. So with the chat closed
+   * the workspace is part of the page, reaching past the window's bottom by about the toolbar's height (IdleEarth.tsx
+   * frames the globe for the part above), and the page is kept from scrolling. No strip at the bottom then, so Safari
+   * shows the scene rather than a band.
+   */
+  html:has(.studio[data-page='home'][data-chat='closed']) {
+    overflow: hidden;
+  }
+
+  .studio[data-page='home'][data-chat='closed'] {
+    --overhang: 120px;
+    position: absolute;
+    bottom: calc(-1 * var(--overhang));
+  }
+
+  .studio[data-page='home'][data-chat='closed'] .studio-edge[data-edge='bottom'] {
+    display: none;
   }
 
   /* Paint the space vacated by the keyboard-lifted drawer, without moving its

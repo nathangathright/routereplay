@@ -24,15 +24,18 @@ export function LandingStage({
   const hero = useRef<HTMLElement>(null);
   const [horizon, setHorizon] = useState(0.5);
 
-  // Place Earth's top edge so the space between the hero and Earth equals the space above the hero.
+  // Place Earth's top edge so the space between the hero and Earth equals the space above the hero: a fraction of the
+  // part of the page inside the window, which the globe is framed for (on a phone the page reaches under Safari's
+  // toolbar, IdleEarth.tsx).
   useLayoutEffect(() => {
     const measure = () => {
       if (!page.current || !hero.current || chatOpen) return;
       const p = page.current.getBoundingClientRect();
       const h = hero.current.getBoundingClientRect();
-      if (p.height <= 0) return;
+      const frame = Math.min(p.bottom, document.documentElement.clientHeight) - p.top;
+      if (frame <= 0) return;
       const above = h.top - p.top;
-      setHorizon(Math.min(0.85, Math.max(0.35, (h.bottom - p.top + above) / p.height)));
+      setHorizon(Math.min(0.85, Math.max(0.35, (h.bottom - p.top + above) / frame)));
     };
     measure();
     const ro = new ResizeObserver(measure);
