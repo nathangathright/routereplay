@@ -62,7 +62,7 @@ The API tests also cover weak ETag comparison, which Cloudflare compression requ
 
 Earlier local checks with a stand-in for the same API showed that edit-only sessions do not register `publish_scene`. Public watch pages registered no tools then (they do since the change below). The HTTP path works without WebMCP (all agent runs above).
 
-**Browser tools that share the page (November 13, 2026, local).** Chrome 157 with native WebMCP, driven through Puppeteer's WebMCP API against `wrangler dev` with the production build ([decisions.md](decisions.md#browser-tools-that-share-the-page-webmcp)). Not yet repeated on production.
+**Browser tools that share the page (November 13, 2026, local and production).** Chrome 157 with native WebMCP, driven through Puppeteer's WebMCP API against `wrangler dev` with the production build ([decisions.md](decisions.md#browser-tools-that-share-the-page-webmcp)), then on production after deploying.
 
 - **Homepage:** offered `lookup_airport` and `create_scene`. The lookup gave HNL's zone and offset. `create_scene` made a two-flight draft (with a `compressed_connection` warning) and the page became `/s/{id}` with no fragment left, offering the seven draft tools; the result held no credential.
 - **Draft:** `set_scene` fixed the warning and returned revision 2 with `assetsReady: true` in 34 ms. The chat said "Your agent changed your trip", showed "Your agent is working", and offered neither Publish nor Export meanwhile. A stale save returned `revision_conflict` with the current spec and no normalized record.
@@ -72,6 +72,14 @@ Earlier local checks with a stand-in for the same API showed that edit-only sess
 - **Watch page:** offered `get_scene` and `get_storyboard` (marked untrusted), `control_playback` and `export_video`, which opened the drawer with high and portrait chosen; a second export while one ran returned `export_running`.
 - **HTTP alongside:** an HTTP `/viewer` seek paused the preview at 5 s, matching `viewer.at`; HTTP activity showed with its message and cleared on idle. An edit-credential session had no `publish_scene`.
 - **Without WebMCP:** a browser without it (Chromium 152) fetched none of the tools' code, and the watch page's Export drawer chose, exported, cancelled and reset as before.
+- **On production (the same day, after deploying `425f76e`):** `npm run smoke` passed. Headless Chrome 157 with native WebMCP on https://routereplay.video:
+  - The homepage offered `lookup_airport` and `create_scene`. The lookup gave both of ORD's offsets for a time when clocks fall back.
+  - `create_scene` made a synthetic two-flight draft. The result held no credential, and the page offered the seven draft tools.
+  - `set_scene` returned revision 2 with `assetsReady: true` in about 1.1 s, including the network round trip. The chat said "Your agent changed your trip" and showed "Your agent is working". A stale save returned `revision_conflict` with the spec.
+  - With the preview paused at 4 s, `get_storyboard` left it there. A preview plays on its own when it opens, so time moves between reads until something pauses it.
+  - Publishing twice gave one link (`existing: true` the second time), and the chat answered both requests.
+  - The watch page offered the four tools, with `get_scene` and `get_storyboard` marked untrusted, and its result didn't contain the draft's id.
+  - Both synthetic drafts were deleted afterwards. The chat-gating and export checks were not repeated.
 
 **Not covered:** ChatGPT desktop's built-in browser was not available in this environment, so compatibility is claimed only for Chrome's native WebMCP as exercised above.
 
