@@ -85,19 +85,9 @@ import {
   getComposeLimits,
   putScene,
 } from '../api';
-import type { Draft } from '../draft';
-import {
-  type ExportChoice,
-  type ExportPhase,
-  ExportProgress,
-  ExportQuestionnaire,
-  ExportResult,
-  PublishReply,
-  type PublishState,
-  describeExport,
-  exportRunning,
-  runExport,
-} from './ChatActions';
+import type { ChatBridge, ChatState, Draft } from '../draft';
+import { type ExportChoice, type ExportPhase, describeExport, exportRunning, runExport } from '../exportOptions';
+import { ExportProgress, ExportQuestionnaire, ExportResult, PublishReply, type PublishState } from './ChatActions';
 import { ChatFaq, type FaqRequest } from './ChatFaq';
 import { CopyButton, copyText, getStartedPrompt, publicOrigin } from './CopyPrompt';
 import { PRIVACY_QUESTION } from '../faq';
@@ -116,8 +106,11 @@ type Entry =
    * wasn't applied. `revision`: the draft revision the save made.
    */
   | { id: number; kind: 'ready'; legs: ComposeLeg[]; outcome: 'saving' | 'created' | 'updated' | 'unsaved' | 'conflict'; revision?: number }
-  /** The draft changed outside this chat (an agent, another window, the page's browser tools): the trip as it is now. */
-  | { id: number; kind: 'changed'; legs: ComposeLeg[]; revision: number }
+  /**
+   * The draft changed outside this chat: the trip as it is now. `by: 'agent'`: an agent here saved it through the
+   * page's browser tools; otherwise an agent over HTTP or another window did.
+   */
+  | { id: number; kind: 'changed'; legs: ComposeLeg[]; revision: number; by?: 'agent' }
   | { id: number; kind: 'notice'; text: string }
   | { id: number; kind: 'limit'; limits: ComposeLimits }
   /** What the person asked for with a button in the suggestion row, shown as their message. */
@@ -537,6 +530,8 @@ export interface ChatPanelProps {
   faqLayer: HTMLElement | null;
   /** Hide the rail, or close the homepage drawer. */
   onHide: () => void;
+  /** Show the rail if it's hidden: an agent asked for something that's answered here (a watch link, a video). */
+  onReveal: () => void;
   /** The chat made a draft: the page becomes it, opening it with the owner credential as an agent's link would. */
   onDraftCreated: (sceneId: string, ownerCredential: string) => void;
   /** From a draft, back to the homepage with a fresh chat. */
@@ -568,7 +563,7 @@ export function ShowChatButton({ onClick }: { onClick: () => void }) {
  * POST /api/v1/compose with the conversation so far. When the journey is complete, the chat saves it: the first
  * time as a new draft that this page becomes, then as new revisions of it.
  */
-export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, faqLayer, onHide, onDraftCreated, onNewTrip, onDeleted }: ChatPanelProps) {
+export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, faqLayer, onHide, onReveal, onDraftCreated, onNewTrip, onDeleted }: ChatPanelProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const [entries, setEntries] = useState<Entry[]>(() => (draft.sceneId ? loadEntries(draft.sceneId) : []));
@@ -649,6 +644,8 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, faq
   // conversation matches the trip on screen. The next message starts from it either way (draftSeed). `known` is the
   // latest revision the thread accounts for; the chat's own saves set it before they're adopted.
   const known = useRef<number | null>(null);
+  // Revisions the page's browser tools saved, told to the chat before the page shows them (ChatBridge.agentSaved).
+  const agentRevisions = useRef(new Set<number>());
   const shownRevision = draft.view?.revision ?? null;
   useEffect(() => {
     const v = draft.viewRef.current;
@@ -660,7 +657,8 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, faq
     }
     if (v.revision <= known.current) return;
     known.current = v.revision;
-    add({ id: nextId++, kind: 'changed', legs: sceneSummary(v.normalized), revision: v.revision });
+    const by = agentRevisions.current.has(v.revision) ? ('agent' as const) : undefined;
+    add({ id: nextId++, kind: 'changed', legs: sceneSummary(v.normalized), revision: v.revision, ...(by ? { by } : {}) });
   }, [shownRevision]);
 
   /**
@@ -793,16 +791,24 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, faq
   const publishedNow = view?.publications.find((p) => p.revision === view.revision);
   const publishing = entries.some((e) => e.kind === 'publish' && e.state === 'publishing');
 
-  async function publish() {
-    if (!view || publishing) return;
-    const earlier = view.publications.length > 0;
+  /**
+   * Publish, from the suggestion row (the person's request, shown as their message) or from the browser tools (the
+   * agent's, said in a line of its own), answered with the watch link either way.
+   */
+  async function publish(agent?: { revision: number }) {
+    if (!view || (publishing && !agent)) return;
     const reply = { id: nextId++, kind: 'publish' as const, state: 'publishing' as const };
-    add({ id: nextId++, kind: 'action', text: publishLabel }, reply);
+    add(agent ? { id: nextId++, kind: 'info', text: 'Your agent asked to publish your trip.' } : { id: nextId++, kind: 'action', text: publishLabel }, reply);
     try {
-      const { watchUrl } = await draft.publish();
-      patch(reply.id, { state: 'published', url: watchUrl, earlier } as Partial<Entry>);
+      const published = await draft.publish(agent?.revision);
+      // Another link (to another version) existed before this one.
+      const earlier = draft.viewRef.current?.publications.some((p) => p.id !== published.id) ?? false;
+      patch(reply.id, { state: published.existing ? 'shared' : 'published', url: published.watchUrl, earlier } as Partial<Entry>);
+      return published;
     } catch (e) {
       patch(reply.id, { state: 'failed', message: e instanceof ApiFailure ? e.info.message : 'Check your connection and try again.' } as Partial<Entry>);
+      // The agent hears why; the person reads it in the reply.
+      if (agent) throw e;
     }
   }
 
@@ -874,14 +880,57 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, faq
     requestAnimationFrame(() => input.current?.focus());
   }
 
-  function exportVideo(choice: ExportChoice) {
+  /** Export a video of the trip on screen, asked for in the questionnaire or (`byAgent`) through the browser tools. */
+  function exportVideo(choice: ExportChoice, byAgent = false) {
     if (!view || exporting) return;
     setAskExport(false);
     setLastExport(choice);
     const id = nextId++;
-    add({ id: nextId++, kind: 'action', text: `Export video: ${describeExport(choice)}` }, { id, kind: 'export', scene: view.normalized, choice, phase: { kind: 'checking' } });
+    const asked: Entry = byAgent
+      ? { id: nextId++, kind: 'info', text: `Your agent started a video export: ${describeExport(choice)}.` }
+      : { id: nextId++, kind: 'action', text: `Export video: ${describeExport(choice)}` };
+    add(asked, { id, kind: 'export', scene: view.normalized, choice, phase: { kind: 'checking' } });
     startExport(id, view.normalized, choice);
   }
+
+  // The browser tools reach the chat through the draft (ChatBridge): what it's doing, so an agent waits rather than
+  // change the trip under a message being read, and its Publish and Export, answered here in the thread. The bridge
+  // is made once and reads the latest render through refs.
+  const chatState = useRef<ChatState>({ changing: false, asking: false, typing: false, exporting: false });
+  chatState.current = { changing: busy, asking: liveQuestions !== null, typing: !!text.trim(), exporting };
+  const actions = useRef({ publish, exportVideo, onReveal, exportStatus: () => null as ExportPhase | null });
+  actions.current = {
+    publish,
+    exportVideo,
+    onReveal,
+    exportStatus: () => (entries.findLast((e) => e.kind === 'export') as Extract<Entry, { kind: 'export' }> | undefined)?.phase ?? null,
+  };
+  useEffect(() => {
+    const bridge: ChatBridge = {
+      state: () => chatState.current,
+      publish: async (revision) => {
+        actions.current.onReveal();
+        const published = await actions.current.publish({ revision });
+        if (!published) throw new Error('The draft hasn’t loaded yet.');
+        return published;
+      },
+      exports: {
+        start(choice) {
+          if (chatState.current.exporting) return { ok: false, code: 'export_running', message: 'An export is already running in the chat.' };
+          if (!draft.viewRef.current) return { ok: false, code: 'not_ready', message: 'The draft hasn’t loaded yet.' };
+          actions.current.onReveal();
+          actions.current.exportVideo(choice, true);
+          return { ok: true };
+        },
+        status: () => actions.current.exportStatus(),
+      },
+      agentSaved: (revision) => void agentRevisions.current.add(revision),
+    };
+    draft.chat.current = bridge;
+    return () => {
+      if (draft.chat.current === bridge) draft.chat.current = null;
+    };
+  }, [draft.chat, draft.viewRef]);
 
   // The trip's menu: a new trip, its links, and deleting it.
   const publicLink = publishedNow?.watchUrl ?? view?.publications[0]?.watchUrl ?? null;
@@ -1158,7 +1207,11 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, faq
                 return (
                   <Message key={e.id} from="assistant">
                     <MessageContent>
-                      <p>Your trip was changed outside this chat, by your agent or in another window. Here it is now, in local times.</p>
+                      <p>
+                        {e.by === 'agent'
+                          ? 'Your agent changed your trip. Here it is now, in local times.'
+                          : 'Your trip was changed outside this chat, by your agent or in another window. Here it is now, in local times.'}
+                      </p>
                       <LegList legs={e.legs} />
                     </MessageContent>
                   </Message>

@@ -14,6 +14,8 @@ export interface JourneyPlayerHandle {
   seekSeconds(seconds: number, pause?: boolean): number;
   pause(): void;
   play(): void;
+  /** Show a moment: jump to `seconds`, pausing there unless `playing` is true; or just play (true) or pause (false). */
+  show(seconds?: number, playing?: boolean): void;
   currentSeconds(): number;
   isPlaying(): boolean;
   /** Resolves once a frame of the given scene object has rendered with loaded assets. */
@@ -153,6 +155,16 @@ export const JourneyPlayer = forwardRef<JourneyPlayerHandle, Props>(function Jou
       },
       pause: () => playerRef.current?.pause(),
       play: () => playerRef.current?.play(),
+      show(seconds?: number, playing?: boolean) {
+        const p = playerRef.current;
+        if (!p) return;
+        if (seconds !== undefined) {
+          if (playing !== true) p.pause();
+          p.seekTo(Math.max(0, Math.min(timeline.durationInFrames - 1, Math.round(seconds * timeline.fps))));
+        }
+        if (playing === true) p.play();
+        else if (playing === false) p.pause();
+      },
       currentSeconds: () => (playerRef.current?.getCurrentFrame() ?? 0) / timeline.fps,
       isPlaying: () => playerRef.current?.isPlaying() ?? false,
       whenRendered(target, timeoutMs = 15000) {

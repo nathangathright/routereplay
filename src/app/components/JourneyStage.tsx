@@ -1,6 +1,7 @@
-import { forwardRef, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { type Ref, forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
 import { compatibility } from '../../shared/scene/compat';
 import type { NormalizedSceneV1 } from '../../shared/scene/types';
+import { type ExportPort, exportRunning, useExportJob } from '../exportOptions';
 import { ExportDrawer } from './ExportDrawer';
 import { JourneyPlayer, type JourneyPlayerHandle, type QualityMode, webglAvailable } from './JourneyPlayer';
 import { MeasurePanel } from './MeasurePanel';
@@ -83,6 +84,8 @@ interface StageProps {
   action?: ReactNode;
   /** The Export button and drawer; the draft page exports from its chat instead. */
   exportable?: boolean;
+  /** Lets the page's browser tools start an export in the drawer, where the viewer saves the file. */
+  exportPort?: Ref<ExportPort | null>;
   /** Further overlays, such as status lines. */
   children?: ReactNode;
 }
@@ -92,7 +95,7 @@ interface StageProps {
  * corner (top left), its action and Export (top right), and a play/pause button in the middle that appears
  * when the visitor taps the scene.
  */
-export const JourneyStage = forwardRef<JourneyPlayerHandle, StageProps>(function JourneyStage({ scene, corner, action, exportable = true, children }, ref) {
+export const JourneyStage = forwardRef<JourneyPlayerHandle, StageProps>(function JourneyStage({ scene, corner, action, exportable = true, exportPort, children }, ref) {
   const compat = compatibility(scene);
   if (!compat.ok) {
     return (
@@ -109,13 +112,13 @@ export const JourneyStage = forwardRef<JourneyPlayerHandle, StageProps>(function
     );
   }
   return (
-    <Stage ref={ref} scene={scene} corner={corner} action={action} exportable={exportable}>
+    <Stage ref={ref} scene={scene} corner={corner} action={action} exportable={exportable} exportPort={exportPort}>
       {children}
     </Stage>
   );
 });
 
-const Stage = forwardRef<JourneyPlayerHandle, StageProps>(function Stage({ scene, corner, action, exportable = true, children }, ref) {
+const Stage = forwardRef<JourneyPlayerHandle, StageProps>(function Stage({ scene, corner, action, exportable = true, exportPort, children }, ref) {
   const player = useRef<JourneyPlayerHandle | null>(null);
   const [webgl] = useState(webglAvailable);
   const [autoPlay] = useState(() => !reducedMotion());
@@ -128,6 +131,28 @@ const Stage = forwardRef<JourneyPlayerHandle, StageProps>(function Stage({ scene
   const [measure] = useState(() => new URLSearchParams(location.search).has('measure'));
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const exportButton = useRef<HTMLButtonElement>(null);
+  const job = useExportJob(scene);
+  const latestJob = useRef(job);
+  latestJob.current = job;
+  const canExport = webgl && exportable;
+
+  // An export a browser tool asks for runs in the drawer, as if the viewer had chosen it there, so they see its
+  // progress and save the file themselves.
+  useImperativeHandle(
+    exportPort,
+    () => ({
+      start(choice) {
+        if (!canExport) return { ok: false, code: 'export_unavailable', message: 'Video export isn’t available on this page or device.' };
+        const running = latestJob.current.phase;
+        if (running && exportRunning(running)) return { ok: false, code: 'export_running', message: 'An export is already running.' };
+        setExporting(true);
+        latestJob.current.start(choice);
+        return { ok: true };
+      },
+      status: () => latestJob.current.phase,
+    }),
+    [canExport],
+  );
 
   // The page gets the same player handle the stage uses, including after a remount.
   const attach = useCallback(
@@ -211,7 +236,7 @@ const Stage = forwardRef<JourneyPlayerHandle, StageProps>(function Stage({ scene
 
       <div className="watch-actions">
         {action}
-        {webgl && exportable && (
+        {canExport && (
           <button ref={exportButton} className="icon-btn" onClick={() => setExporting(true)} aria-label="Export video" title="Export video">
             {Icon.download}
           </button>
@@ -260,9 +285,9 @@ const Stage = forwardRef<JourneyPlayerHandle, StageProps>(function Stage({ scene
         </div>
       )}
 
-      {webgl && exportable && (
+      {canExport && (
         <ExportDrawer
-          scene={scene}
+          job={job}
           open={exporting}
           onClose={() => {
             setExporting(false);

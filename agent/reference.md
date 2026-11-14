@@ -19,7 +19,7 @@ This example sets optional presentation fields to show their shape. Only `schema
 | `PUT /api/v1/scenes/{id}` | Replace the spec: `{"expectedRevision", "spec"}` | Edit or owner |
 | `GET /api/v1/scenes/{id}/revisions` | List retained revisions (last {{REVISIONS_KEPT}}) | Edit or owner |
 | `GET /api/v1/scenes/{id}/revisions/{n}` | Read one revision | Edit or owner |
-| `POST /api/v1/scenes/{id}/publications` | Publish a revision as an immutable snapshot: `{"revision"}` | Owner |
+| `POST /api/v1/scenes/{id}/publications` | Publish a revision as an immutable snapshot: `{"revision"}`; a revision already published returns its link (`200`, `"existing": true`) | Owner |
 | `GET /api/v1/scenes/{id}/publications` | List this draft's watch links | Edit or owner |
 | `POST /api/v1/scenes/{id}/viewer` | `{"seek": seconds}`: pause open previews at that moment | Edit or owner |
 | `POST /api/v1/scenes/{id}/activity` | `{"state": "working", "message"}` or `{"state": "idle"}`: the preview's "Your agent is working" line, lapsing after 3 minutes | Edit or owner |

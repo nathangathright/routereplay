@@ -2,6 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useRef, useState, useSyncExtern
 import { useDraft } from './draft';
 import { usePip } from './pip';
 import { LandingStage } from './pages/Landing';
+import { offerTools } from './webmcp/core';
 
 // The chat and the UI kit it's built from load when someone reaches for Get started, not with the homepage.
 const loadChat = () => import('./components/ChatPanel');
@@ -96,6 +97,22 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
     setSceneId(id);
   }, []);
 
+  // An agent made a draft with the homepage's browser tools: the page becomes it, as for one the chat made, with a
+  // fresh chat (the homepage's conversation, if any, wasn't about this trip) and, on phones, the journey on screen.
+  const onAgentCreated = useCallback((id: string, owner: string) => {
+    history.pushState(null, '', `/s/${id}#k=${encodeURIComponent(owner)}`);
+    setSceneId(id);
+    setChatKey((k) => k + 1);
+    setChatOpen(true);
+    setExpanded(false);
+  }, []);
+
+  // The homepage's WebMCP tools, for an agent in this browser (webmcp/home.ts); a draft's page offers its own.
+  useEffect(() => {
+    if (sceneId) return;
+    return offerTools(async () => (await import('./webmcp/home')).homeTools({ origin: location.origin, chat: () => draft.chat.current, open: onAgentCreated }));
+  }, [sceneId, draft.chat, onAgentCreated]);
+
   const onNewTrip = useCallback(() => {
     history.pushState(null, '', '/');
     setSceneId(null);
@@ -112,6 +129,10 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
     setChatOpen(true);
     setExpanded(true);
   }, []);
+
+  // An agent asked for something the chat answers (a watch link, a video): show the rail if it's hidden. A phone's
+  // collapsed drawer already shows the reply's progress in place of the message box.
+  const reveal = useCallback(() => setChatOpen(true), []);
 
   // Back to Get started when the homepage chat closes.
   const hide = useCallback(() => {
@@ -180,6 +201,7 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
               onExpandedChange={setExpanded}
               faqLayer={desktop ? null : faqLayer}
               onHide={hide}
+              onReveal={reveal}
               onDraftCreated={onDraftCreated}
               onNewTrip={onNewTrip}
               onDeleted={onDeleted}

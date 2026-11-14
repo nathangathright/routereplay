@@ -3,7 +3,7 @@ import { requestStats } from '../api';
 import { JourneyStage } from '../components/JourneyStage';
 import type { Draft } from '../draft';
 import { journeyTitle } from '../../shared/scene/title';
-import { registerWebMcpTools, webMcpAvailable } from '../webmcp';
+import { offerTools, webMcpAvailable } from '../webmcp/core';
 
 /**
  * The draft's journey, filling the stage beside the chat, with the agent's activity at the bottom while the chat
@@ -12,24 +12,33 @@ import { registerWebMcpTools, webMcpAvailable } from '../webmcp';
  * happen in the chat. Loads with the Remotion player, so it's its own chunk.
  */
 export function DraftStage({ draft, activityInChat }: { draft: Draft; activityInChat: boolean }) {
-  const { sceneId, load, view, viewRef, adopt, notice, activity, connected, player, lastError } = draft;
+  const { sceneId, load, view, viewRef, adopt, notice, activity, connected, player, lastError, showMoment, chat, agentWorking, publish } = draft;
   const debug = new URLSearchParams(location.search).has('debug');
 
-  // Optional WebMCP tools for agents driving this page in a compatible browser.
+  // Optional WebMCP tools for an agent working in this browser, if it supports them (webmcp/scene.ts).
   const role = view?.capabilities.role;
   useEffect(() => {
-    if (load.kind !== 'ready' || !role || !sceneId || !webMcpAvailable()) return;
-    return registerWebMcpTools({
-      sceneId,
-      getView: () => viewRef.current,
-      applyView: async (v) => {
-        adopt(v, null);
-        return player.current ? player.current.whenRendered(v.normalized) : false;
-      },
-      player: () => player.current,
-      lastError: () => lastError.current,
-    });
-  }, [load.kind, role, sceneId, adopt, viewRef, player, lastError]);
+    if (load.kind !== 'ready' || !role || !sceneId) return;
+    return offerTools(async () =>
+      (await import('../webmcp/scene')).draftTools({
+        sceneId,
+        origin: location.origin,
+        view: () => viewRef.current,
+        applyView: async (v) => {
+          adopt(v, null);
+          // The stage draws the view the draft holds, which is this one unless a later revision arrived meanwhile.
+          const shown = viewRef.current;
+          return player.current && shown ? player.current.whenRendered(shown.normalized) : false;
+        },
+        player: () => player.current,
+        show: showMoment,
+        chat: () => chat.current,
+        working: agentWorking,
+        publish,
+        connectionError: () => lastError.current,
+      }),
+    );
+  }, [load.kind, role, sceneId, adopt, viewRef, player, lastError, showMoment, chat, agentWorking, publish]);
 
   if (load.kind === 'loading' || load.kind === 'idle') {
     return (

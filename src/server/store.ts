@@ -122,6 +122,14 @@ export async function listPublications(db: D1Database, sceneId: string): Promise
   return r.results;
 }
 
+/** The watch link already made from this revision, if any (the oldest, should there be several). */
+export async function findPublication(db: D1Database, sceneId: string, revision: number): Promise<Omit<PublicationRow, 'snapshot_json'> | null> {
+  return db
+    .prepare('SELECT id, scene_id, revision, created_at FROM publications WHERE scene_id = ? AND revision = ? ORDER BY created_at, id LIMIT 1')
+    .bind(sceneId, revision)
+    .first<Omit<PublicationRow, 'snapshot_json'>>();
+}
+
 export async function insertPublication(db: D1Database, row: PublicationRow): Promise<void> {
   await db
     .prepare('INSERT INTO publications (id, scene_id, revision, snapshot_json, created_at) VALUES (?, ?, ?, ?, ?)')

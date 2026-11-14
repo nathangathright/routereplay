@@ -1,10 +1,13 @@
 /**
- * A draft's live state, shared by the chat sidebar (which edits it) and the stage (which plays it): the session
- * handshake, the scene itself, and the Durable Object socket that brings an agent's changes.
+ * A draft's live state, shared by the chat sidebar (which edits it), the stage (which plays it), and the page's
+ * browser tools (webmcp/, which an agent in this browser uses): the session handshake, the scene itself, the Durable
+ * Object socket that brings changes from elsewhere, and what the chat and an agent here are doing, so each can wait
+ * for the other.
  */
 import { type RefObject, useCallback, useEffect, useRef, useState } from 'react';
-import { ApiFailure, type PublicationRef, type SceneView, getScene, publishScene, startSession } from './api';
+import { ApiFailure, type Published, type SceneView, getScene, publishScene, startSession } from './api';
 import type { JourneyPlayerHandle } from './components/JourneyPlayer';
+import type { ExportPort } from './exportOptions';
 import { journeyTitle } from '../shared/scene/title';
 
 export type LoadState =
@@ -20,6 +23,32 @@ export interface AgentActivity {
   until: number;
 }
 
+/** What the page's chat is doing, for the browser tools (an agent shouldn't change the trip under it). */
+export interface ChatState {
+  /** A message is being read, or the change it found saved: the trip is about to change. */
+  changing: boolean;
+  /** Questions about a change wait for the creator's answers. */
+  asking: boolean;
+  /** The creator has typed a message they haven't sent. */
+  typing: boolean;
+  /** A video export is running. */
+  exporting: boolean;
+}
+
+/**
+ * The chat, as the browser tools reach it: its state, and its actions, which answer in the thread as the agent's,
+ * so the creator sees what their agent did where they'd have done it themselves.
+ */
+export interface ChatBridge {
+  state: () => ChatState;
+  /** Publish a revision (the chat's Publish, asked by the agent). */
+  publish: (revision: number) => Promise<Published>;
+  /** Exports run in the chat, whose card holds the file for the creator to save. */
+  exports: ExportPort;
+  /** A revision the browser tools saved, so the thread says the agent changed the trip, not "outside this chat". */
+  agentSaved: (revision: number) => void;
+}
+
 export interface Draft {
   sceneId: string | null;
   load: LoadState;
@@ -31,10 +60,20 @@ export interface Draft {
   adopt: (v: SceneView, tag: string | null) => void;
   /** Fetch the draft now, as a "changed" event would (after a revision conflict, say). */
   refresh: () => Promise<void>;
-  /** Publish the revision on screen; resolves to its watch link. */
-  publish: () => Promise<PublicationRef>;
+  /** Publish a revision (by default the one on screen); resolves to its watch link, new or existing. */
+  publish: (revision?: number) => Promise<Published>;
   connected: boolean;
+  /** An agent at work: over HTTP (the socket's activity), or here through the browser tools (`agentWorking`). */
   activity: AgentActivity | null;
+  /** The browser tools are at work: hold back the chat's Publish and Export, and say so, until it lapses. */
+  agentWorking: (message?: string, forMs?: number) => void;
+  /**
+   * Show the creator a moment, or play or pause: what an agent's seek does, from either the socket or the browser
+   * tools. The scene comes into view (a phone's drawer collapses). False before the player is ready.
+   */
+  showMoment: (seconds?: number, playing?: boolean) => boolean;
+  /** The chat, once it has loaded (it registers itself), for the browser tools. */
+  chat: RefObject<ChatBridge | null>;
   /** For screen readers: "Updated to revision 4." */
   notice: string | null;
   setNotice: (n: string | null) => void;
@@ -45,9 +84,24 @@ export interface Draft {
 }
 
 const RECONNECT_MS = 3000;
+/** How long the browser tools' activity shows after their last call (they can't say when the agent is done). */
+const AGENT_TOOLS_MS = 15_000;
 /** Viewer reports: at most one per 2 s, none during continuous playback (plan 2, A1). */
 const VIEWER_REPORT_MS = 2000;
 const VIEWER_CHECK_MS = 250;
+
+/**
+ * What to do with a view that arrives for the draft on screen. `ignore`: a late response for an earlier revision,
+ * which never replaces a later one. `keep`: the same revision with the same watch links is the same draft, so keep
+ * the object the stage is drawing (the player waits for that object to render) and take only the newer ETag; a save
+ * comes back this way through the socket's refetch. `replace`: anything else.
+ */
+export function adoption(prev: SceneView | null, next: SceneView): 'replace' | 'keep' | 'ignore' {
+  if (!prev || prev.id !== next.id) return 'replace';
+  if (next.revision < prev.revision) return 'ignore';
+  if (next.revision === prev.revision && next.publications.length === prev.publications.length) return 'keep';
+  return 'replace';
+}
 
 const handshakes = new Map<string, Promise<string | null>>();
 
@@ -83,7 +137,10 @@ export function useDraft(sceneId: string | null, { onSeek }: DraftOptions = {}):
   const [load, setLoad] = useState<LoadState>(sceneId ? { kind: 'loading' } : { kind: 'idle' });
   const [view, setView] = useState<SceneView | null>(null);
   const [connected, setConnected] = useState(false);
+  // An agent over HTTP sets its activity through the socket; one here, through the browser tools.
   const [activity, setActivity] = useState<AgentActivity | null>(null);
+  const [toolActivity, setToolActivity] = useState<AgentActivity | null>(null);
+  const chat = useRef<ChatBridge | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [privateLink, setPrivateLink] = useState<{ sceneId: string; url: string } | null>(null);
   const viewRef = useRef<SceneView | null>(null);
@@ -93,23 +150,45 @@ export function useDraft(sceneId: string | null, { onSeek }: DraftOptions = {}):
 
   const adopt = useCallback((v: SceneView, tag: string | null) => {
     const prev = viewRef.current;
+    const step = adoption(prev, v);
+    if (step === 'ignore') return;
+    if (step === 'keep') {
+      if (tag) etag.current = tag;
+      return;
+    }
     viewRef.current = v;
     etag.current = tag;
     setView(v);
     if (prev && prev.id === v.id && prev.revision !== v.revision) setNotice(`Updated to revision ${v.revision}.`);
   }, []);
 
-  const publish = useCallback(async (): Promise<PublicationRef> => {
-    const current = viewRef.current;
-    if (!current) throw new Error('The draft isn’t loaded yet.');
-    const { id, revision, createdAt, watchUrl } = (await publishScene(current.id, current.revision)).body!;
-    const latest = viewRef.current;
-    // Show it at once; the live socket's refetch brings the same publication.
-    if (latest && latest.id === current.id && !latest.publications.some((p) => p.id === id)) {
-      adopt({ ...latest, publications: [{ id, revision, createdAt, watchUrl }, ...latest.publications] }, etag.current);
-    }
-    return { id, revision, createdAt, watchUrl };
-  }, [adopt]);
+  const publish = useCallback(
+    async (revision?: number): Promise<Published> => {
+      const current = viewRef.current;
+      if (!current) throw new Error('The draft isn’t loaded yet.');
+      const published = (await publishScene(current.id, revision ?? current.revision)).body!;
+      const { id, createdAt, watchUrl } = published;
+      const latest = viewRef.current;
+      // Show it at once; the live socket's refetch brings the same publication.
+      if (latest && latest.id === current.id && !latest.publications.some((p) => p.id === id)) {
+        adopt({ ...latest, publications: [{ id, revision: published.revision, createdAt, watchUrl }, ...latest.publications] }, etag.current);
+      }
+      return published;
+    },
+    [adopt],
+  );
+
+  const agentWorking = useCallback((message = '', forMs = AGENT_TOOLS_MS) => {
+    setToolActivity({ message, until: Date.now() + forMs });
+  }, []);
+
+  const showMoment = useCallback((seconds?: number, playing?: boolean) => {
+    const p = player.current;
+    if (!p) return false;
+    p.show(seconds, playing);
+    seekCallback.current?.();
+    return true;
+  }, []);
 
   const poll = useCallback(async () => {
     if (!sceneId) return;
@@ -133,6 +212,7 @@ export function useDraft(sceneId: string | null, { onSeek }: DraftOptions = {}):
     setView(null);
     setPrivateLink(null);
     setActivity(null);
+    setToolActivity(null);
     if (!sceneId) {
       setLoad({ kind: 'idle' });
       return;
@@ -214,10 +294,7 @@ export function useDraft(sceneId: string | null, { onSeek }: DraftOptions = {}):
         } catch {
           return;
         }
-        if (m.type === 'seek' && typeof m.t === 'number') {
-          player.current?.seekSeconds(m.t, true);
-          seekCallback.current?.();
-        }
+        if (m.type === 'seek' && typeof m.t === 'number') showMoment(m.t);
         else if (m.type === 'activity') {
           setActivity(m.state === 'working' ? { message: m.message ?? '', until: Date.now() + (m.expiresInMs ?? 0) } : null);
         } else void poll();
@@ -235,7 +312,7 @@ export function useDraft(sceneId: string | null, { onSeek }: DraftOptions = {}):
       if (pending) clearTimeout(pending);
       socket?.close();
     };
-  }, [load.kind, sceneId, poll]);
+  }, [load.kind, sceneId, poll, showMoment]);
 
   // The activity banner disappears when it lapses, even if no "idle" arrives.
   useEffect(() => {
@@ -243,6 +320,11 @@ export function useDraft(sceneId: string | null, { onSeek }: DraftOptions = {}):
     const t = setTimeout(() => setActivity(null), Math.max(0, activity.until - Date.now()));
     return () => clearTimeout(t);
   }, [activity]);
+  useEffect(() => {
+    if (!toolActivity) return;
+    const t = setTimeout(() => setToolActivity(null), Math.max(0, toolActivity.until - Date.now()));
+    return () => clearTimeout(t);
+  }, [toolActivity]);
 
   useEffect(() => {
     if (view && sceneId) document.title = `${journeyTitle(view.normalized)} · Draft · Route Replay`;
@@ -260,7 +342,11 @@ export function useDraft(sceneId: string | null, { onSeek }: DraftOptions = {}):
     refresh: poll,
     publish,
     connected,
-    activity,
+    // An agent over HTTP names what it's doing; prefer its message.
+    activity: activity ?? toolActivity,
+    agentWorking,
+    showMoment,
+    chat,
     notice,
     setNotice,
     privateLink: privateLink?.sceneId === sceneId ? privateLink.url : null,

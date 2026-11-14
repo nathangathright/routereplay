@@ -457,6 +457,25 @@ async function readRevisionOp(request: Request, env: Env, id: string, rev: numbe
   });
 }
 
+/** A publish response: a new watch link, or (`existing`) the one this revision already had. */
+function publicationOut(origin: string, pubId: string, revision: number, createdAt: number, existing: boolean) {
+  return {
+    id: pubId,
+    revision,
+    createdAt: iso(createdAt),
+    existing,
+    watchUrl: watchUrl(origin, pubId),
+    apiUrl: `${origin}/api/v1/publications/${pubId}`,
+    note: existing
+      ? 'This revision was already published, so this is its existing watch link. Snapshots are immutable; deleting the draft removes it.'
+      : 'This snapshot is immutable. Later edits do not change it; publish a later revision for a new link. Deleting the draft removes it.',
+    next: [
+      'Give the creator watchUrl. Anyone with it can watch; it contains no credentials.',
+      'Later revisions do not change this link. Publish the newer revision if the creator wants it shared.',
+    ],
+  };
+}
+
 async function publishOp(request: Request, env: Env, id: string, origin: string, now: number): Promise<Response> {
   const auth = await authorize(request, env, id, now);
   requireOwner(auth);
@@ -480,6 +499,15 @@ async function publishOp(request: Request, env: Env, id: string, origin: string,
     });
   }
   try {
+    // A revision is immutable, so its watch link already shows exactly this. Hand that one back rather than making
+    // a second link to the same thing (an agent and the page's chat can both be asked to publish).
+    const existing = await store.findPublication(env.DB, id, revision);
+    if (existing) {
+      const out = publicationOut(origin, existing.id, revision, existing.created_at, true);
+      const text = JSON.stringify(out, null, 2) + '\n';
+      await completeIdempotent(env.DB, idem, 200, text, false);
+      return new Response(text, { status: 200, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
+    }
     await enforceLimit(env.DB, limits(env).writesPerScene, id, now);
     let normalizedJson: string;
     if (revision === auth.row.revision) normalizedJson = auth.row.normalized_json;
@@ -498,18 +526,7 @@ async function publishOp(request: Request, env: Env, id: string, origin: string,
       snapshot_json: JSON.stringify(snapshot),
       created_at: now,
     });
-    const out = {
-      id: pubId,
-      revision,
-      createdAt: iso(now),
-      watchUrl: watchUrl(origin, pubId),
-      apiUrl: `${origin}/api/v1/publications/${pubId}`,
-      note: 'This snapshot is immutable. Later edits do not change it; publish again for a new link. Deleting the draft removes it.',
-      next: [
-        'Give the creator watchUrl. Anyone with it can watch; it contains no credentials.',
-        'Later revisions do not change this link. Publish again if the creator wants a newer version shared.',
-      ],
-    };
+    const out = publicationOut(origin, pubId, revision, now, false);
     const text = JSON.stringify(out, null, 2) + '\n';
     await completeIdempotent(env.DB, idem, 201, text, false);
     return new Response(text, {
@@ -976,7 +993,11 @@ export async function routeApi(request: Request, env: Env, ctx: Ctx, now = Date.
       return readRevisionOp(request, env, id, rev, now);
     }
     if (sub === 'publications' && subId === undefined) {
-      if (m === 'POST') return changed(await publishOp(request, env, id, origin, now));
+      if (m === 'POST') {
+        // Handing back an existing link changes nothing, so open previews needn't refetch.
+        const r = await publishOp(request, env, id, origin, now);
+        return r.status === 201 ? changed(r) : r;
+      }
       if (m === 'GET') return listPublicationsOp(request, env, id, origin, now);
       throw methodNotAllowed(['GET', 'POST']);
     }

@@ -412,8 +412,10 @@ describe('publication', () => {
     // No credentials, draft id, or edit links in public data.
     expect(pubRead.text).not.toMatch(/rr_(edit|owner|sess)_/);
     expect(pubRead.text).not.toContain(id);
-    // Publishing again creates a different link.
+    // Publishing a later revision creates a different link.
     const pub2 = await call(`/api/v1/scenes/${id}/publications`, { token: owner, body: { revision: 2 } });
+    expect(pub2.status).toBe(201);
+    expect(pub2.json.existing).toBe(false);
     expect(pub2.json.id).not.toBe(pub.json.id);
     const list = await call(`/api/v1/scenes/${id}/publications`, { token: edit });
     expect(list.json.publications).toHaveLength(2);
@@ -425,6 +427,15 @@ describe('publication', () => {
     const a = await call(`/api/v1/scenes/${id}/publications`, { token: owner, body: { revision: 1 }, headers: { 'idempotency-key': key } });
     const b = await call(`/api/v1/scenes/${id}/publications`, { token: owner, body: { revision: 1 }, headers: { 'idempotency-key': key } });
     expect(b.json.id).toBe(a.json.id);
+    expect((await db.prepare('SELECT COUNT(*) AS n FROM publications').first<{ n: number }>())!.n).toBe(1);
+  });
+
+  it('hands back the existing link when a revision is published again', async () => {
+    const { id, owner } = await created();
+    const first = await call(`/api/v1/scenes/${id}/publications`, { token: owner, body: { revision: 1 } });
+    const again = await call(`/api/v1/scenes/${id}/publications`, { token: owner, body: { revision: 1 } });
+    expect(again.status).toBe(200);
+    expect(again.json).toMatchObject({ id: first.json.id, revision: 1, existing: true, watchUrl: first.json.watchUrl, createdAt: first.json.createdAt });
     expect((await db.prepare('SELECT COUNT(*) AS n FROM publications').first<{ n: number }>())!.n).toBe(1);
   });
 

@@ -12,7 +12,7 @@
     "gen": "node scripts/generate.mjs",
     "dev": "npm run gen && portless run --name vite.routereplay vite",
     "build": "npm run typecheck && vite build",
-    "typecheck": "npm run gen && tsc -p tsconfig.app.json && tsc -p tsconfig.worker.json",
+    "typecheck": "npm run gen && tsc -p tsconfig.app.json && tsc -p tsconfig.worker.json && tsc -p tsconfig.app-tests.json",
     "test": "npm run gen && vitest run",
     "db:migrate:local": "wrangler d1 migrations apply routereplay --local",
     "smoke": "node --use-system-ca scripts/smoke-api.mjs",

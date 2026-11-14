@@ -1,3 +1,4 @@
+import type { SceneWarning } from '../shared/scene/warnings';
 import type { NormalizedSceneV1, SceneSpecV1, ValidationIssue } from '../shared/scene/types';
 
 export interface Capabilities {
@@ -26,6 +27,9 @@ export interface SceneView {
   spec: SceneSpecV1;
   normalized: NormalizedSceneV1;
   publications: PublicationRef[];
+  /** Saves only (PUT): likely mistakes that were still accepted, and suggested next steps. */
+  warnings?: SceneWarning[];
+  next?: string[];
 }
 
 export interface PublicationView {
@@ -98,12 +102,38 @@ export function putScene(sceneId: string, expectedRevision: number, spec: unknow
   });
 }
 
+/** A watch link for a revision: a new one, or (`existing`) the one it already had. */
+export interface Published extends PublicationRef {
+  existing: boolean;
+  apiUrl: string;
+  next: string[];
+}
+
 export function publishScene(sceneId: string, revision: number) {
-  return request<PublicationRef & { apiUrl: string }>(`/api/v1/scenes/${sceneId}/publications`, {
+  return request<Published>(`/api/v1/scenes/${sceneId}/publications`, {
     method: 'POST',
     headers: { 'idempotency-key': crypto.randomUUID() },
     body: JSON.stringify({ revision }),
   });
+}
+
+export interface RevisionRef {
+  revision: number;
+  createdAt: string;
+}
+
+export function listRevisions(sceneId: string) {
+  return request<{ currentRevision: number; retained: number; revisions: RevisionRef[] }>(`/api/v1/scenes/${sceneId}/revisions`);
+}
+
+export function getRevision(sceneId: string, revision: number) {
+  return request<RevisionRef & { spec: SceneSpecV1 }>(`/api/v1/scenes/${sceneId}/revisions/${revision}`);
+}
+
+/** An airport by IATA code; with `local` (YYYY-MM-DDTHH:MM), the UTC offset(s) valid for that local time there. */
+export function lookupAirport(code: string, local?: string) {
+  const query = local ? `?local=${encodeURIComponent(local)}` : '';
+  return request<Record<string, unknown>>(`/api/v1/airports/${encodeURIComponent(code)}${query}`);
 }
 
 export function getPublication(id: string) {
@@ -174,7 +204,14 @@ export function compose(messages: ComposeMessage[]) {
 
 /** Create a draft as an agent would (POST /api/v1/scenes). The response's credentials are shown only once. */
 export function createScene(spec: SceneSpecV1) {
-  return request<{ id: string; revision: number; previewUrl: string; credentials: { edit: string; owner: string } }>('/api/v1/scenes', {
+  return request<{
+    id: string;
+    revision: number;
+    previewUrl: string;
+    credentials: { edit: string; owner: string };
+    normalized: NormalizedSceneV1;
+    warnings: SceneWarning[];
+  }>('/api/v1/scenes', {
     method: 'POST',
     headers: { 'idempotency-key': crypto.randomUUID() },
     body: JSON.stringify(spec),

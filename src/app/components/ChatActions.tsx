@@ -23,9 +23,8 @@ import {
   QuestionnaireTitle,
 } from '@/components/ui/questionnaire';
 import type { AspectRatio } from '../../shared/scene/constants';
-import type { NormalizedSceneV1 } from '../../shared/scene/types';
-import type { ExportCheck, ExportQuality } from '../export';
-import { ASPECTS, QUALITIES, fileName, screenAspect } from '../exportOptions';
+import type { ExportQuality } from '../export';
+import { ASPECTS, type ExportChoice, type ExportPhase, QUALITIES, exportRunning, screenAspect } from '../exportOptions';
 import { CopyButton } from './CopyPrompt';
 
 export type PublishState =
@@ -85,57 +84,6 @@ export function PublishReply({ reply, title }: { reply: PublishState; title: str
     </>
   );
 }
-
-/** Where an export is: running (checking, then exporting), or how it ended. */
-export type ExportPhase =
-  | { kind: 'checking' }
-  | { kind: 'exporting'; progress: number }
-  | { kind: 'unsupported'; reasons: string[] }
-  /** `width` and `height`: the video's frame, in pixels. */
-  | { kind: 'done'; url: string; name: string; size: number; width: number; height: number }
-  | { kind: 'cancelled' }
-  | { kind: 'failed'; message: string };
-
-export const exportRunning = (p: ExportPhase) => p.kind === 'checking' || p.kind === 'exporting';
-
-/**
- * Export a video on this device: a capability check and a short test export, then the export. Reports each phase,
- * ending with done, unsupported, cancelled or failed. Failure or lack of support never affects playback or sharing.
- */
-export async function runExport(scene: NormalizedSceneV1, choice: ExportChoice, signal: AbortSignal, report: (p: ExportPhase) => void) {
-  try {
-    report({ kind: 'checking' });
-    const mod = await import('../export');
-    const check: ExportCheck = await mod.checkExportSupport(choice);
-    if (!check.ok) return report({ kind: 'unsupported', reasons: check.reasons });
-    if (!(await mod.probeExport(scene, check, signal))) {
-      return report({ kind: 'unsupported', reasons: ['A short test export did not produce a playable video on this device.'] });
-    }
-    report({ kind: 'exporting', progress: 0 });
-    const blob = await mod.exportVideo(scene, check, (p) => report({ kind: 'exporting', progress: p }), signal);
-    report({
-      kind: 'done',
-      url: URL.createObjectURL(blob),
-      name: fileName(scene, choice.aspect, check.container),
-      size: blob.size,
-      width: check.width,
-      height: check.height,
-    });
-  } catch (e) {
-    report(signal.aborted ? { kind: 'cancelled' } : { kind: 'failed', message: e instanceof Error ? e.message : String(e) });
-  }
-}
-
-export interface ExportChoice {
-  aspect: AspectRatio;
-  quality: ExportQuality;
-}
-
-export const describeExport = (c: ExportChoice) => {
-  const shape = ASPECTS.find((a) => a.value === c.aspect)!;
-  const quality = QUALITIES.find((q) => q.value === c.quality)!;
-  return `${shape.label} ${shape.value}, ${quality.label} ${quality.detail}`;
-};
 
 /** The export's shape and quality, asked in place of the message box: two steps, with a choice already picked. */
 export function ExportQuestionnaire({ initial, onSubmit }: { initial: ExportChoice | null; onSubmit: (choice: ExportChoice) => void }) {

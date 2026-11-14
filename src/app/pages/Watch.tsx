@@ -1,12 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ApiFailure, type PublicationView, getPublication } from '../api';
 import { journeyTitle } from '../../shared/scene/title';
+import type { JourneyPlayerHandle } from '../components/JourneyPlayer';
 import { Icon, JourneyStage, ShareButton } from '../components/JourneyStage';
+import type { ExportPort } from '../exportOptions';
+import { offerTools } from '../webmcp/core';
 
 type State = { kind: 'loading' } | { kind: 'ready'; pub: PublicationView } | { kind: 'deleted' } | { kind: 'missing' } | { kind: 'error'; message: string };
 
 export function Watch({ publicationId }: { publicationId: string }) {
   const [state, setState] = useState<State>({ kind: 'loading' });
+  const player = useRef<JourneyPlayerHandle | null>(null);
+  const exportPort = useRef<ExportPort | null>(null);
 
   useEffect(() => {
     getPublication(publicationId)
@@ -21,6 +26,23 @@ export function Watch({ publicationId }: { publicationId: string }) {
   useEffect(() => {
     if (state.kind === 'ready') document.title = `${journeyTitle(state.pub.scene)} · Route Replay`;
   }, [state]);
+
+  // Optional WebMCP tools for a viewer's agent in this browser: read the journey, show a moment, export a video.
+  const pub = state.kind === 'ready' ? state.pub : null;
+  useEffect(() => {
+    if (!pub) return;
+    return offerTools(async () =>
+      (await import('../webmcp/scene')).watchTools({
+        publication: pub,
+        player: () => player.current,
+        show: (seconds, playing) => {
+          player.current?.show(seconds, playing);
+          return player.current !== null;
+        },
+        exports: () => exportPort.current,
+      }),
+    );
+  }, [pub]);
 
   if (state.kind === 'loading') {
     return (
@@ -52,6 +74,8 @@ export function Watch({ publicationId }: { publicationId: string }) {
   const title = journeyTitle(scene);
   return (
     <JourneyStage
+      ref={player}
+      exportPort={exportPort}
       scene={scene}
       corner={
         <>

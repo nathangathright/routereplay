@@ -36,7 +36,7 @@ Pixel-identical output across GPUs is not promised. The golden states pin what i
 
 - The player needs WebGL 2. Without it, pages show the route summary and still allow sharing.
 - Export needs WebCodecs `VideoEncoder` and passes a short real-export probe before the full render. Remotion lists Chrome 94+, Firefox 130+, and Safari 26+. Browser version is never used to decide; the probe is.
-- WebMCP tools register only when `document.modelContext.registerTool` (current draft) or `navigator.modelContext.registerTool` (early previews) exists.
+- WebMCP tools register only when `document.modelContext.registerTool` (current draft) or `navigator.modelContext.registerTool` (early previews) exists, and their code loads only then.
 
 ## Agent-facing changes
 
