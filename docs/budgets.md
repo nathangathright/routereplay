@@ -125,6 +125,7 @@ Free-tier references, to recheck periodically:
 | Each change while a preview is open | 1 refetch per open preview | included above | ~2 |
 | Preview left open with no changes | 0 | 0 | 0 |
 | Watch page view | 2 (HTML shell + snapshot) + 1 per 3 h of journey time for clouds (at most 24) | 0 | 1–2 |
+| Homepage view | 1 (HTML shell, which carries the visitor's location for the globe) | 0 | 0 |
 | Homepage clouds | 2–3 on arrival, then 1 per 24 s on screen (one 6-hour model step) | 0 | 0 |
 | Docs or schema fetch | 1 | 0 | 0 |
 | Storyboard (JSON or SVG) | 1 | 0 | 1 (scene or publication) |

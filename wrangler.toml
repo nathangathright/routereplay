@@ -15,6 +15,8 @@ binding = "ASSETS"
 not_found_handling = "404-page"
 # Only these paths invoke the Worker; every other static file is served directly.
 run_worker_first = [
+  # The homepage, so the Worker can write in where the visitor is for the globe to start over (src/server/index.ts).
+  "/",
   "/api/*",
   "/agent-docs",
   "/agent-docs.md",

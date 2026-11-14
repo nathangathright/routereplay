@@ -85,6 +85,15 @@ Viewer context already tells the agent *where*. The creator tells their agent *w
 
 *Decided November 13, 2026.* The zone's Web Analytics injects Cloudflare's beacon into every HTML page, and the CSP blocked it, so it had recorded nothing. The owner chose to keep it: `script-src` allows `https://static.cloudflareinsights.com` (in `src/server/security.ts` and `public/_headers`). The beacon (checked in its 2026.10.1 build) needs nothing else: it posts to `/cdn-cgi/rum` on the same origin, because the injected config sets `version` (without it, it would post to `cloudflareinsights.com`). It uses no `eval`, workers or images. It removes the query and fragment from the page address and referrer it reports, which matters because draft links carry the owner credential in `#k=`, and the chat moves the page to such a link with `pushState`, which the beacon's single-page mode follows. The privacy notes in `agent/reference.md` say so. Turning it off instead is a dashboard setting (Web Analytics → the site → automatic setup), with no code change.
 
+## The homepage globe starts over the visitor
+
+*Decided November 13, 2026.* The homepage globe used to open over the middle of the contiguous United States for everyone. Now it opens over the visitor's approximate location. Cloudflare estimates that from the IP address on every request (`request.cf.latitude` and `longitude`), with no permission prompt. The Worker now serves `/` (it's in `run_worker_first`), rounds the location to whole degrees and writes it into that visitor's copy of the page as `<meta name="visitor-location">`, which `IdleEarth.tsx` reads before the first frame, so the view never jumps. The location isn't stored or logged. Without one (an address Cloudflare can't place, or `npm run dev`, which has no Worker), the globe opens over the United States as before.
+
+- **Written into the page rather than fetched from the API.** The two cost the same one Worker request per homepage view, but a fetch adds a round trip, and the globe would either wait for it or jump once it arrived. Browser geolocation would ask for permission, and `Permissions-Policy` turns it off anyway.
+- **Each copy is for one visitor:** `cache-control: private, no-cache` with no ETag. The Worker fetches the shell without the browser's `If-None-Match`, so a copy cached before this change, without a location, isn't kept in use by a 304.
+- **Cost:** one Worker request and well under a millisecond of CPU per homepage view ([budgets](budgets.md#request-budget-cloudflare-free-tier)).
+- **Share cards keep the default view.** `scripts/browser/share-cards.mjs` removes the tag before the app reads it, so the cards show North America wherever they're captured.
+
 ## Real clouds from NOAA's GFS model
 
 *Decided November 12, 2026.* Journeys and the homepage draw real clouds: NOAA's GFS model analysis for past times and its forecast for upcoming ones, at the journey's own times.
@@ -385,7 +394,7 @@ See [assets.md](assets.md).
 ## Deployment shape
 
 *Revised November 11, 2026.* One Cloudflare Worker (`src/server/worker.ts`) serves the static app (Workers Static Assets), the API, and the `SceneLive` Durable Object, with one D1 database.
-- `assets.run_worker_first` in `wrangler.toml` limits Worker invocations to the API, docs, schema, and the two dynamic page routes. Every other static file, including textures, is served without running the Worker.
+- `assets.run_worker_first` in `wrangler.toml` limits Worker invocations to the API, docs, schema, the two dynamic page routes, and the homepage (since November 13, 2026, so the globe can start over the visitor). Every other static file, including textures, is served without running the Worker.
 - `_headers` still applies the security headers to static files.
 
 The site launched on Cloudflare Pages with one Pages Function. It moved because Pages can't define Durable Objects: keeping Pages would have meant a second Worker just for live updates. The public API didn't change. The old `routereplay-web.pages.dev` project now only redirects every path with a 308 to the Worker, so earlier watch links, preview links, and saved docs URLs keep working.

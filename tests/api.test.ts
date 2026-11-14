@@ -538,6 +538,50 @@ describe('link previews', () => {
   });
 });
 
+describe('homepage', () => {
+  /** A request as Cloudflare delivers it, with its estimate of where the visitor is. */
+  const from = (cf: Record<string, string> | undefined, headers: Record<string, string> = {}) =>
+    Object.assign(new Request(`${ORIGIN}/`, { headers }), { cf }) as unknown as Request;
+
+  it('writes the visitor’s location, rounded to whole degrees, into the real app shell', async () => {
+    const shell = readFileSync(new URL('../index.html', import.meta.url).pathname, 'utf8');
+    const fetched: Request[] = [];
+    env.ASSETS = {
+      fetch: async (r) => {
+        fetched.push(r as Request);
+        return new Response(shell, { headers: { 'content-type': 'text/html', etag: '"abc"' } });
+      },
+    };
+    const res = await handle(from({ latitude: '51.50740', longitude: '-0.12780' }, { 'if-none-match': '"abc"' }), env);
+    expect(res.status).toBe(200);
+    const page = await res.text();
+    expect(page).toContain('<meta name="visitor-location" content="52,0"></head>');
+    // The homepage's own title and preview stay.
+    expect(page).toContain('share:start');
+    // One visitor's copy, fetched whole rather than revalidated.
+    expect(fetched[0]!.headers.get('if-none-match')).toBeNull();
+    expect(res.headers.get('cache-control')).toBe('private, no-cache');
+    expect(res.headers.get('etag')).toBeNull();
+    expect(res.headers.get('content-security-policy')).toContain("default-src 'self'");
+  });
+
+  it('leaves the location out when Cloudflare has none', async () => {
+    const cases: (Record<string, string> | undefined)[] = [undefined, {}, { latitude: '', longitude: '' }, { latitude: '91', longitude: '0' }];
+    for (const cf of cases) {
+      const page = await (await handle(from(cf), env)).text();
+      expect(page).not.toContain('visitor-location');
+      expect(page).toContain('<div id="root"></div>');
+    }
+  });
+
+  it('rounds at the edges of the range, without a negative zero', async () => {
+    const page = await (await handle(from({ latitude: '-89.6', longitude: '179.6' }), env)).text();
+    expect(page).toContain('content="-90,180"');
+    const west = await (await handle(from({ latitude: '-0.2', longitude: '-0.4' }), env)).text();
+    expect(west).toContain('content="0,0"');
+  });
+});
+
 describe('deletion', () => {
   it('only the owner can delete; watch links then report deletion', async () => {
     const { id, edit, owner } = await created();

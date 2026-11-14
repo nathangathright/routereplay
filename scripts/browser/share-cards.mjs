@@ -41,7 +41,12 @@ try {
   for (const card of cards) {
     const page = await browser.newPage();
     await page.evaluateOnNewDocument((css) => {
+      // The globe starts over the visitor's location, which the Worker writes into the page. Removing it as soon as
+      // it's parsed, well before the app's script runs, keeps the cards on the default view wherever they're captured.
+      const unplace = new MutationObserver(() => document.querySelector('meta[name="visitor-location"]')?.remove());
+      unplace.observe(document, { childList: true, subtree: true });
       document.addEventListener('DOMContentLoaded', () => {
+        unplace.disconnect();
         const style = document.createElement('style');
         style.textContent = css;
         document.head.appendChild(style);

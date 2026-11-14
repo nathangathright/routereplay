@@ -20,8 +20,8 @@ import type { ShadowCaster } from './planeShadow';
 const DEG = Math.PI / 180;
 const CAMERA_DISTANCE = 3.4;
 const CAMERA_FOV = 32;
-/** Where the camera starts: over the middle of the contiguous United States. */
-const START_VIEW = { lat: 39.5 * DEG, lon: -98.35 * DEG };
+/** Where the camera starts when the visitor's location is unknown: over the middle of the contiguous United States. */
+const DEFAULT_VIEW = { lat: 39.5 * DEG, lon: -98.35 * DEG };
 const LAT_RANGE = [-70 * DEG, 80 * DEG] as const;
 /** Simulated seconds per real second: a full day and night pass in 96 s. */
 const TIME_SCALE = 900;
@@ -111,6 +111,16 @@ interface Flight {
 
 const clampLat = (lat: number) => Math.min(LAT_RANGE[1], Math.max(LAT_RANGE[0], lat));
 const toThree = (v: Vec3) => new THREE.Vector3(v[0], v[1], v[2]);
+
+/**
+ * Where the camera starts: over the visitor, as Cloudflare places them from their IP address. The Worker writes that
+ * into the homepage (src/server/index.ts). Otherwise, as in local development, DEFAULT_VIEW.
+ */
+function startView(): { lat: number; lon: number } {
+  const tag = document.querySelector<HTMLMetaElement>('meta[name="visitor-location"]');
+  const m = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/.exec(tag?.content ?? '');
+  return m ? { lat: clampLat(Number(m[1]) * DEG), lon: Number(m[2]) * DEG } : DEFAULT_VIEW;
+}
 
 /**
  * An endless, live Earth: the real Sun, Moon, sunlight, and turning sky for an accelerated clock that starts now,
@@ -443,7 +453,8 @@ export function IdleEarth({
 
   // Dragging moves the camera to hover over a new place; the surface follows the pointer,
   // which looks like spinning the globe. A flick carries on briefly.
-  const view = useRef<View>({ ...START_VIEW, vLat: 0, vLon: 0, dragging: false });
+  const [start] = useState(startView);
+  const view = useRef<View>({ ...start, vLat: 0, vLon: 0, dragging: false });
   const drag = useRef<{ x: number; y: number; time: number; id: number } | null>(null);
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;

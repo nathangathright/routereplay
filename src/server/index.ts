@@ -61,6 +61,46 @@ async function shellPage(request: Request, env: Env, origin: string, page: Shell
   });
 }
 
+/**
+ * Where Cloudflare places the visitor from their IP address (request.cf), rounded to whole degrees. That's as precise
+ * as the homepage globe needs, and the page carries nothing more precise. Null when Cloudflare can't place the address,
+ * and outside Cloudflare.
+ */
+export function visitorLocation(request: Request): { lat: number; lon: number } | null {
+  const cf = request.cf as IncomingRequestCfProperties | undefined;
+  const lat = parseFloat(cf?.latitude ?? '');
+  const lon = parseFloat(cf?.longitude ?? '');
+  if (!(Math.abs(lat) <= 90 && Math.abs(lon) <= 180)) return null; // also rules out NaN
+  // `|| 0` turns -0 into 0.
+  return { lat: Math.round(lat) || 0, lon: Math.round(lon) || 0 };
+}
+
+/**
+ * The homepage, with the visitor's location in a meta tag so the globe starts over them (IdleEarth.tsx). Each copy
+ * is for one visitor, so shared caches never keep it, and each visit fetches it again.
+ */
+async function homePage(request: Request, env: Env): Promise<Response> {
+  if (!env.ASSETS) return new Response('Assets unavailable', { status: 500 });
+  // Fetched without the browser's If-None-Match: a copy it cached before the Worker served this page has no location,
+  // and a 304 would keep that copy in use.
+  const shell = await env.ASSETS.fetch(new Request(new URL('/', request.url).toString()));
+  if (!shell.ok) return shell;
+  const place = visitorLocation(request);
+  const html = (await shell.text()).replace(
+    '</head>',
+    () => (place ? `<meta name="visitor-location" content="${place.lat},${place.lon}"></head>` : '</head>'),
+  );
+  return new Response(html, {
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'private, no-cache',
+      'referrer-policy': 'no-referrer',
+      'x-content-type-options': 'nosniff',
+      ...HTML_SECURITY_HEADERS,
+    },
+  });
+}
+
 const siteMeta = (title: string, robots: string): PageMeta => ({
   title,
   previewTitle: title === SITE_NAME ? undefined : title,
@@ -141,6 +181,7 @@ export async function handle(request: Request, env: Env, ctx: Ctx = {}): Promise
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       throw new ApiError(405, 'method_not_allowed', 'Only GET is supported here.', {}, { allow: 'GET' });
     }
+    if (path === '/') return await homePage(request, env);
     if (path === '/agent-docs' || path === '/agent-docs.md' || path === '/agent-docs/') {
       return text(agentDocs(origin), 'text/markdown');
     }
