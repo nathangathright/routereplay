@@ -25,6 +25,9 @@ export interface Grib2Field {
   parameter: number;
   /** Product definition template number: 0 = instantaneous, 8 = average/accumulation. */
   productTemplate: number;
+  /** First fixed surface (code table 4.5: 100 = isobaric, 200 = entire atmosphere) and its value (Pa for isobaric). */
+  surfaceType: number;
+  surfaceValue: number;
   /** Reference (cycle) time from section 1, ms since epoch (UTC). */
   referenceTime: number;
   /** Forecast time in hours. For template 4.8 this is the START of the statistical interval. */
@@ -81,6 +84,8 @@ interface Product {
   template: number;
   category: number;
   parameter: number;
+  surfaceType: number;
+  surfaceValue: number;
   forecastHours: number;
   /** End of the overall time interval (template 4.8 only), ms since epoch. */
   endTime: number | null;
@@ -194,6 +199,8 @@ function decodeMessage(bytes: Uint8Array, view: DataView, start: number, out: Gr
           category: product.category,
           parameter: product.parameter,
           productTemplate: product.template,
+          surfaceType: product.surfaceType,
+          surfaceValue: product.surfaceValue,
           referenceTime,
           forecastHours: product.forecastHours,
           forecastEndHours: product.endTime === null ? product.forecastHours : (product.endTime - referenceTime) / MS_PER_HOUR,
@@ -271,10 +278,15 @@ function parseProduct(view: DataView, at: (octet: number) => number): Product {
       view.getUint8(at(39)), view.getUint8(at(40)), view.getUint8(at(41)),
     )
     : null;
+  // Octets 23–28: the first fixed surface's type, then its value as a scaled integer (missing scale: unscaled).
+  const scale = view.getUint8(at(24));
+  const scaled = view.getUint32(at(25));
   return {
     template,
     category: view.getUint8(at(10)),
     parameter: view.getUint8(at(11)),
+    surfaceType: view.getUint8(at(23)),
+    surfaceValue: scale === 255 || scaled === 0xffffffff ? 0 : scaled / 10 ** (scale & 0x80 ? -(scale & 0x7f) : scale),
     forecastHours: int32(view, at(19)) * hoursPerUnit,
     endTime,
   };

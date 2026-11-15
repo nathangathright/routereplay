@@ -3,11 +3,13 @@ import { useEffect, useMemo } from 'react';
 import { useCurrentFrame } from 'remotion';
 import * as THREE from 'three';
 import { moonPosition } from '../../shared/geo/solar';
-import { length, scale } from '../../shared/geo/vec';
+import { length } from '../../shared/geo/vec';
 import { AIRCRAFT_SHORT_SIDE_FRACTION, CRUISE_DISPLAY, type Timeline, evaluate, exposureAt, isSurfaceMode } from '../../shared/timeline/evaluate';
 import { Aircraft } from './Aircraft';
 import type { EarthTextures } from './assets';
-import { type CloudSet, Clouds, cloudFrameAt } from './Clouds';
+import { CIRRUS_RADIUS, CLOUD_RADIUS, type CloudSet, Clouds, cloudFrameAt } from './Clouds';
+import { craftLight } from './craftLight';
+import { dayAlbedo } from './dayAlbedo';
 import type { NightDetailTextures } from './nightDetail';
 import { Atmosphere, Earth } from './Earth';
 import { Labels } from './Labels';
@@ -64,7 +66,7 @@ export function JourneyScene({
   pc.near = Math.max(0.002, (camDist - 1) * 0.05);
   pc.far = 200;
   pc.updateProjectionMatrix();
-  // The camera's exposure for this frame, metered over the whole journey in advance (Reinhard tone mapping).
+  // The camera's exposure for this frame, metered over the whole journey in advance (applied by display.tsx).
   gl.toneMappingExposure = exposureAt(timeline, t);
 
   useEffect(() => {
@@ -85,6 +87,16 @@ export function JourneyScene({
   // Each aircraft drawn casts its shadow, in proportion while one type dissolves into the next. Vehicles on
   // surface legs draw their own.
   const { ground, heading, altitude } = state.aircraft;
+  // The light on the aircraft or vehicle, from the same Sun, Moon, air, and clouds as the globe (craftLight.ts).
+  const light = craftLight({
+    ground,
+    altitude,
+    lights,
+    eye: cam.position,
+    screenUp: cam.up,
+    albedo: dayAlbedo(gl, textures.day),
+    clouds: cloudFrame && { frame: cloudFrame, top: CLOUD_RADIUS, cirrus: CIRRUS_RADIUS },
+  });
   const shadows: ShadowCaster[] = state.aircraft.mix.flatMap((m) =>
     isSurfaceMode(m.type)
       ? []
@@ -93,22 +105,19 @@ export function JourneyScene({
 
   return (
     <>
-      <color attach="background" args={['#02040a']} />
       {/* Centred on the camera so the stars and Sun sit at infinity. */}
       <group position={cam.position as [number, number, number]}>
         <Stars seed={timeline.scene.seed} utcMs={state.physicalUtcMs} />
         <Sun direction={sun} visible={sunVisibleFraction(cam.position, sun)} />
       </group>
       <Moon position={moonPosition(state.physicalUtcMs)} sun={sun} />
-      <ambientLight intensity={0.5} />
-      <directionalLight position={scale(sun, 10) as [number, number, number]} intensity={2.4} />
       <Earth textures={textures} lights={lights} segments={segments} clouds={cloudFrame} detail={detail} shadows={shadows} />
       {cloudFrame && <Clouds frame={cloudFrame} lights={lights} night={textures.night} segments={segments} shadows={shadows} />}
       <Atmosphere sun={sun} segments={Math.max(48, segments / 2)} shadows={shadows} />
       <Routes timeline={timeline} trail={state.trail} />
       {state.aircraft.mix.map((m) =>
         isSurfaceMode(m.type) ? (
-          <Vehicle key={m.type} mode={m.type} timeline={timeline} state={state} shortSide={shortSide} opacity={m.weight} />
+          <Vehicle key={m.type} mode={m.type} timeline={timeline} state={state} shortSide={shortSide} light={light} opacity={m.weight} />
         ) : (
           <Aircraft
             key={m.type}
@@ -118,7 +127,7 @@ export function JourneyScene({
             heading={state.aircraft.heading}
             altitude={state.aircraft.altitude}
             size={aircraftSize}
-            sun={sun}
+            light={light}
             clock={t}
           />
         ),

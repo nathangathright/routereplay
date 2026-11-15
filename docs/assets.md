@@ -72,13 +72,13 @@ The pages carry no credit line beyond the homepage's info icon.
 
 `home-<date>.jpg` (the homepage's tagline over the globe) and `journey-<date>.jpg` (the globe alone, used for every watch page) are 1200×630 screenshots of the homepage, made with `node scripts/browser/share-cards.mjs`. They show the static assets above, so they carry the same credits. `apple-touch-icon.png` is `favicon.svg` rendered at 180×180 on the page background. Chat apps cache preview images by URL, so give a replacement image a new file name and update `index.html` and `src/server/share.ts` to match.
 
-## Weather (`/api/v1/weather/gfs/{cycle}/{hour}`)
+## Weather (`/api/v1/weather/gfs-layers/{cycle}/{hour}`)
 
 | Source | License | Use |
 | --- | --- | --- |
-| [NOAA GFS on AWS Open Data](https://registry.opendata.aws/noaa-gfs-bdp-pds/) (`noaa-gfs-bdp-pds`), 1° `pgrb2.1p00` files | Public domain (NOAA data "can be used as desired"; NOAA asks for attribution, which `/acknowledgments` gives) | Total cloud water (`CWAT`) draws the clouds; the 700 hPa wind (`UGRD`, `VGRD`) moves them between time steps |
+| [NOAA GFS on AWS Open Data](https://registry.opendata.aws/noaa-gfs-bdp-pds/) (`noaa-gfs-bdp-pds`), 1° `pgrb2.1p00` files | Public domain (NOAA data "can be used as desired"; NOAA asks for attribution, which `/acknowledgments` gives) | Total cloud water (`CWAT`) draws the main deck, less the ice above 450 hPa; the 700 hPa wind (`UGRD`, `VGRD`) moves it between time steps. The ice mixing ratio (`ICMR`) at 200, 300, and 400 hPa draws the high layer, and the 250 hPa wind moves it ([decisions.md](decisions.md#a-high-cloud-layer)) |
 
-- Each response is three GRIB2 messages cut from one forecast file by HTTP range request, about 240 KB. The Worker only fetches and caches them; the browser decodes them (`src/shared/weather/grib2.ts`).
+- Each response is eight GRIB2 messages cut from one forecast file by six HTTP range requests (adjacent messages merged), about 400–470 KB (it was three messages, about 190–245 KB, before the high layer). The Worker only fetches and caches them; the browser decodes them (`src/shared/weather/grib2.ts`). The high layer's five messages are optional: a file without them still draws its deck. The path changed from `/gfs/` to `/gfs-layers/` with the high layer, because responses are cached as immutable for a year.
 - Coverage: cycles from 12 UTC on 22 March 2021 (GFS v16; earlier files have a different layout and no analysis cloud fields) to 384 hours after the run a scene pinned when it was saved. Outside that, no clouds are drawn and agents get a `no_cloud_data` warning.
 - These are model fields, not observations: the analysis for past times and a forecast for later ones. The pages say so.
 

@@ -9,7 +9,10 @@ import { type Vec3, add, cross, dot, normalize, scale } from '../../shared/geo/v
 import { AIRCRAFT_DESIGNATORS, type AircraftType } from '../../shared/scene/aircraft';
 import { Aircraft } from './Aircraft';
 import { type EarthTextures, type Quality, currentSurfaceMonth, loadEarthTextures } from './assets';
-import { type CloudSet, Clouds, type WeatherStep, cloudFrameAt, loadWeatherStep, releaseWeatherStep } from './Clouds';
+import { CIRRUS_RADIUS, CLOUD_RADIUS, type CloudSet, Clouds, type WeatherStep, cloudFrameAt, loadWeatherStep, releaseWeatherStep } from './Clouds';
+import { craftLight } from './craftLight';
+import { dayAlbedo } from './dayAlbedo';
+import { LinearDisplay } from './display';
 import { Atmosphere, Earth } from './Earth';
 import { skyLights } from './lighting';
 import { Stars } from './Stars';
@@ -148,7 +151,7 @@ function LiveEarth({
   // 0 with the hero (the globe rising from the bottom), 1 beside the chat (the whole globe in the middle).
   const framing = useRef(centred ? 1 : 0);
   const globe = useRef<THREE.Group>(null);
-  // The camera's exposure, metered on the globe in view and adapting as a camera does (Reinhard tone mapping).
+  // The camera's exposure, metered on the globe in view and adapting as a camera does (applied by display.tsx).
   const exposure = useRef(0);
   // Stars and the Sun ride with the camera so they sit at infinity.
   const sky = useRef<THREE.Group>(null);
@@ -173,8 +176,6 @@ function LiveEarth({
   const drop = mix(heroDrop, 0, f);
   const reach = Math.hypot(distance, drop) - 1;
   const tools = useMemo(() => ({ ray: new THREE.Raycaster(), sphere: new THREE.Sphere(), ndc: new THREE.Vector2() }), []);
-  // Sunlight on the planes points at the Earth's center, which is only the world origin before the globe is moved.
-  const lightTarget = useMemo(() => new THREE.Object3D(), []);
 
   // Frame the view for the part of the canvas inside the window, and draw the rest of the canvas as more of it.
   useLayoutEffect(() => {
@@ -350,6 +351,10 @@ function LiveEarth({
     aloft: 1,
     weight: 1,
   }));
+  // The camera in the Earth's frame: the planes' night light is set in the frame's terms (craftLight.ts).
+  const turned = globe.current?.quaternion.clone().invert() ?? new THREE.Quaternion();
+  const screenUp = new THREE.Vector3(0, 1, 0).applyQuaternion(turned);
+  const eye = globe.current ? globe.current.worldToLocal(camera.position.clone()) : camera.position.clone();
   // Everything lives in the Earth's frame, so the Sun, Moon, stars, sunlight, and planes stay true
   // to the clock while the globe is turned to put the camera's place in front.
   return (
@@ -360,9 +365,6 @@ function LiveEarth({
           <Sun direction={sun} visible={sunVisible.current} />
         </group>
         <Moon position={moonPosition(utc)} sun={sun} />
-        <ambientLight intensity={0.5} />
-        <primitive object={lightTarget} />
-        <directionalLight position={scale(sun, 10) as [number, number, number]} target={lightTarget} intensity={2.4} />
         <Earth textures={textures} lights={lights} segments={128} clouds={clouds} shadows={shadows} />
         {clouds && <Clouds frame={clouds} lights={lights} night={textures.night} segments={128} shadows={shadows} />}
         <Atmosphere sun={sun} segments={96} shadows={shadows} />
@@ -374,7 +376,15 @@ function LiveEarth({
             heading={fl.circle.tangent(fl.f)}
             altitude={FLIGHT_ALTITUDE}
             size={planeSize}
-            sun={sun}
+            light={craftLight({
+              ground: fl.circle.at(fl.f),
+              altitude: FLIGHT_ALTITUDE,
+              lights,
+              eye: [eye.x, eye.y, eye.z],
+              screenUp: [screenUp.x, screenUp.y, screenUp.z],
+              albedo: dayAlbedo(gl, textures.day),
+              clouds: clouds && { frame: clouds, top: CLOUD_RADIUS, cirrus: CIRRUS_RADIUS },
+            })}
             clock={performance.now() / 1000}
           />
         ))}
@@ -538,18 +548,19 @@ export function IdleEarth({
         gl={{ antialias: true, toneMapping: THREE.ReinhardToneMapping }}
         aria-hidden="true"
       >
-        <color attach="background" args={['#02040a']} />
-        {textures && (
-          <LiveEarth
-            textures={textures}
-            horizon={horizon}
-            centred={centred}
-            view={view}
-            animate={!reduceMotion}
-            sunlitTarget={sunlitTarget}
-            sunlitFade={sunlitFade}
-          />
-        )}
+        <LinearDisplay background="#02040a">
+          {textures && (
+            <LiveEarth
+              textures={textures}
+              horizon={horizon}
+              centred={centred}
+              view={view}
+              animate={!reduceMotion}
+              sunlitTarget={sunlitTarget}
+              sunlitFade={sunlitFade}
+            />
+          )}
+        </LinearDisplay>
       </Canvas>
     </div>
   );

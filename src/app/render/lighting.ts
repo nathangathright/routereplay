@@ -87,6 +87,18 @@ uniform float moonlight;
 uniform float utcHours;
 `;
 
+/**
+ * Sunlight above the air relative to sunlight at the ground under a high Sun, which is what the ground's shading (and
+ * the aircraft's paint) takes as white: the inverse of one vertical column's transmittance, (1.05, 1.12, 1.31). The
+ * air, the clouds, and the sky light take their sunlight from above the air, so in linear light (LINEAR_SCENE) they
+ * multiply by this to be in the ground's units.
+ */
+export const SUN_ABOVE_AIR = [0.0058, 0.0135, 0.0331].map((b) => Math.exp(b * 8.0 + (0.003 / 0.9) * 1.2)) as [number, number, number];
+
+/** The share of haze's scattering (Henyey–Greenstein, g = 0.76) that goes into the backward hemisphere. */
+const HAZE_G = 0.76;
+export const HAZE_BACKSCATTER = ((1 - HAZE_G * HAZE_G) / (2 * HAZE_G)) * (1 / Math.sqrt(1 + HAZE_G * HAZE_G) - 1 / (1 + HAZE_G));
+
 const f = (x: number, digits = 6) => x.toFixed(digits);
 const v3 = (v: readonly number[], digits = 6) => `vec3(${v.map((x) => f(x, digits)).join(', ')})`;
 
@@ -104,9 +116,20 @@ const vec3 BETA_R = vec3(0.0058, 0.0135, 0.0331) * ${f(6371.0 / 7.2, 4)};
 const float BETA_M = 0.0030 * ${f(6371.0 / 7.2, 4)};
 const float BETA_ME = BETA_M / 0.9;
 const float SUN_RADIUS = ${f(((0.533 / 2) * Math.PI) / 180)};
-// Sunlight in the same units as the ground's shading, where a white surface facing the Sun reads 1: that is
-// an irradiance of pi. (The offline renderer uses 11.4 to suit its own exposure and tone mapping.)
-const float SOLAR_RADIANCE = PI;
+// One vertical column of air, undone: sunlight above the air relative to the light a high Sun gives at the ground. The
+// ground takes a white surface under a high Sun as 1 (groundLight), so above the air the same sunlight is brighter,
+// and bluer.
+const vec3 OVERHEAD_AIR = ${v3(SUN_ABOVE_AIR, 5)};
+#ifdef LINEAR_SCENE
+// Sunlight above the air, in the ground's units: the light the air, the cloud tops, and their sky are lit by.
+const vec3 SUN_ABOVE_AIR = OVERHEAD_AIR;
+#else
+// Drawn straight to the frame, with each layer tone mapped, they keep the light they were tuned with: pi above the air.
+const vec3 SUN_ABOVE_AIR = vec3(1.0);
+#endif
+// As an irradiance: a white surface facing the Sun reads 1 under an irradiance of pi. (The offline renderer uses 11.4
+// to suit its own exposure and tone mapping.)
+const vec3 SOLAR_RADIANCE = PI * SUN_ABOVE_AIR;
 
 // Scattering phase functions per steradian, for the cosine c of the angle between the light and the view ray:
 // air (Rayleigh) and haze (Henyey–Greenstein, g = 0.76).
@@ -164,6 +187,14 @@ vec3 extinction(vec2 col) {
   return BETA_R * col.x + BETA_ME * col.y;
 }
 
+// The same columns seen against a lit surface, the ground or a cloud deck: its diffuse transmittance. The air scatters
+// light out of the view ray, but the surface beside the ray, lit much like the point behind it, sends about as much
+// light into the ray. Only what the air turns back toward the surface, and what haze absorbs, is lost: half of what
+// air (Rayleigh) scatters, and ${(HAZE_BACKSCATTER * 100).toFixed(1)} % of what haze (Henyey–Greenstein, g = 0.76) scatters.
+vec3 surfaceExtinction(vec2 col) {
+  return BETA_R * col.x * 0.5 + (BETA_ME - BETA_M * ${(1 - HAZE_BACKSCATTER).toFixed(4)}) * col.y;
+}
+
 // Light from direction s reaching p: reddened by the air on its way and cut off by the planet.
 vec3 lightThroughAir(vec3 p, vec3 s) {
   float visible = discVisible(p, s);
@@ -174,7 +205,7 @@ vec3 lightThroughAir(vec3 p, vec3 s) {
 // The same at the ground, relative to the Sun overhead: the surface maps already show surface colour under a
 // high Sun, so only the extra air of a low Sun is applied.
 vec3 groundLight(vec3 g, vec3 s) {
-  return min(lightThroughAir(g, s) * exp(BETA_R * H_R + BETA_ME * H_M), vec3(1.0));
+  return min(lightThroughAir(g, s) * OVERHEAD_AIR, vec3(1.0));
 }
 `;
 

@@ -6,26 +6,118 @@ import { decodeGrib2 } from '../../shared/weather/grib2';
 import { HOLD_MINUTES } from '../../shared/scene/constants';
 import { AIR_GLSL, CITY_GLSL, LIGHT_GLSL, type SkyLights, lightUniforms, setLightUniforms } from './lighting';
 import { PLANE_SHADOW_GLSL, type ShadowCaster, planeShadowUniforms, setPlaneShadowUniforms } from './planeShadow';
-import { mulberry32 } from './Stars';
+import { COVER_LEVELS, EROSION, EROSION_OFFSET, EROSION_SCALE, LOBE_CORE, LOBE_EDGE, SHAPE_CELLS, SHAPE_SIZE, SHAPE_SLOPE_RANGE, cellularShapes, coverTables } from './cloudShapes';
+import { skyLightGlsl, skyTexture } from './skyLight';
+import { airAboveAlbedo } from './airLight';
+import { sceneDefines, useLinearScene } from './display';
 
 /** Cloud tops sit this far out (Earth radii): exaggerated about 10× so they read above the ground at globe scale. */
 export const CLOUD_RADIUS = 1.004;
-/** How bright a sunlit deck is, in scene units (a white surface facing the Sun reads 1): clouds outshine the ground. */
-const CLOUD_BRIGHTNESS = 2.4;
+/**
+ * How bright a sunlit deck is, in scene units (a white surface facing the Sun reads 1): clouds outshine the ground.
+ * Composited in linear light a deck has to carry its own brightness, with no air added over it in display values to
+ * lift it toward white, so it is brighter there than in the frame drawn the old way, each layer tone mapped.
+ */
+const CLOUD_BRIGHTNESS = { linear: 3.2, displayReferred: 2.4 };
+const CLOUD_BRIGHTNESS_GLSL = /* glsl */ `
+#ifdef LINEAR_SCENE
+const float CLOUD_BRIGHTNESS = ${CLOUD_BRIGHTNESS.linear.toFixed(3)};
+#else
+const float CLOUD_BRIGHTNESS = ${CLOUD_BRIGHTNESS.displayReferred.toFixed(3)};
+#endif
+`;
+/**
+ * The share of the deck's light that the clear air above it sends back down onto it, by colour (airAboveAlbedo):
+ * about (0.03, 0.06, 0.13). The deck reflects it again, so a bright deck under clear air comes out a little bluer
+ * than the light falling on it, as a white surface under air that only scatters returns all the light it gets.
+ */
+const DECK_RETURN = airAboveAlbedo(CLOUD_RADIUS);
 /** Opacity per kg/m² of cloud water: about 37 % of the globe then looks solid, as it does from space. */
 const OPACITY_PER_KG = 30;
 /** Wind is stored in 8 bits per component at this many m/s per step (±77 m/s). */
 const WIND_STEP = 0.6;
+/** The 250 hPa wind, near the jet stream, is stored at this many m/s per step (±152 m/s). */
+const JET_STEP = 1.2;
+/**
+ * The high layer (cirrus) sits this far out, 10.5 km up (the offline renderer's high layer) at the scene's 12×
+ * height exaggeration, as for the aircraft: just under a plane at cruise, and 95 km over the main deck.
+ */
+export const CIRRUS_RADIUS = 1 + (10_500 * 12) / 6_371_000;
+/**
+ * The same height in the air's own convention (heights spread 7.2×, lighting.ts AIR_GLSL), for the light that
+ * reaches the layer: at the drawn height it would sit above 89 % of the air and stay white through sunset.
+ */
+const CIRRUS_AIR_RADIUS = 1 + (10_500 * 7.2) / 6_371_000;
+/** The share of the high layer's light that the air above it sends back down onto it, as for the deck (DECK_RETURN). */
+const CIRRUS_RETURN = airAboveAlbedo(CIRRUS_AIR_RADIUS);
+/**
+ * Ice above the deck: GFS's ice mixing ratio at 200, 300 and 400 hPa, each standing for a 100 hPa slab (150–450
+ * hPa, about 6.5–13.5 km), gives the ice water path, Σ q × 10⁴ Pa / g. Optical depth is 3 IWP / (2 ρ r) for ice
+ * of density 917 kg/m³ and effective radius 30 µm, the offline renderer's assumption: 54.5 per kg/m².
+ */
+const ICE_LEVELS_PA = [20_000, 30_000, 40_000];
+const ICE_SLAB_KG = 10_000 / 9.81;
+const ICE_TAU_PER_KG = 1.5 / (917 * 30e-6);
+/**
+ * Ice scatters mostly forward, so a layer of optical depth τ turns back far less light than a water cloud of the
+ * same depth, and hides little of what lies below. The high layer's opacity is 1 − e^(−0.25 τ): thin cirrus
+ * (τ ≈ 0.3) a faint 7 % veil, τ ≈ 3 a half, thick anvils (τ ≈ 10 and more) opaque. Single scattering gives about
+ * (1 − g) / 2 ≈ 0.15 for ice's asymmetry g ≈ 0.75; 0.25 lets thin cirrus read at globe scale.
+ */
+const ICE_OPACITY_PER_TAU = 0.25;
+/** The high layer's texture repeats this many times per Earth radius: lobes about 130 km across. */
+const CIRRUS_SCALE = 3;
+/** Streaks: the texture averaged over three points this many seconds of 250 hPa wind apart. */
+const STREAK_S = 2400;
+/** Share of direct light that opaque cirrus takes away from what lies below it (the deck and the ground). */
+const CIRRUS_SHADOW = 0.5;
 /** Clouds are carried by the wind for at most this long from each field (routereplay caps wind history at 4 h). */
 const MAX_ADVECTION_S = 3 * 3600;
 /** The procedural detail is carried by the wind and renewed on this cycle, so it never stretches out. */
 const DETAIL_PERIOD_S = 3 * 3600;
 /**
- * Cloud-top relief for lighting only (the shell stays a sphere): tops rise this many Earth radii per unit of
- * cloud thickness (cloud water × billow noise), about 320 km. Like the shell's height, it is exaggerated far
- * beyond real cloud tops so billows read at globe scale.
+ * Cloud-top relief for lighting only (the shell stays a sphere): tops rise this many Earth radii per unit of the
+ * billow shape, times the lobes' thickness (their opacity before carving), about 38 km. A lobe stands about half a unit above its surroundings,
+ * some 19 km: 1.6 km of real cloud at the scene's 12× height exaggeration.
  */
-const CLOUD_RELIEF = 0.05;
+const CLOUD_RELIEF = 0.006;
+/** The billows' texture repeats this many times per Earth radius, so its lobes are about 100 km across. */
+const SHAPE_SCALE = 4;
+/**
+ * How the model's cloud opacity (water) splits into cover and thickness: lobes cover a fraction water^0.3 of the
+ * sky, each as opaque as water^0.7, so the area's mean opacity stays about the model's. Thin cloud breaks into
+ * faint, scattered lobes with clear sky between; thick cloud closes into a deck.
+ */
+const COVER_EXPONENT = 0.3;
+/**
+ * The billows' texture is turned by a fixed rotation (and its finer octave by another), so its texel grid lines up
+ * with neither north nor east, nor with each other: facets that survive filtering don't read as a grid.
+ */
+const SHAPE_ROTATION = rotation([0.36, 0.48, 0.8], 0.9);
+const EROSION_ROTATION = rotation([-0.62, 0.3, 0.72], 2.1);
+/**
+ * Detail fades toward its mean as it shrinks on screen, measured in pixels per lobe: the finer octave's over 3–8
+ * pixels per finer lobe, the lobes over 4–16. A whole-globe view (about 9 pixels per lobe) shows a soft deck where
+ * the lobes would otherwise alias into speckle.
+ */
+const FINE_PIXELS = [3, 8] as const;
+const LOBE_PIXELS = [4, 16] as const;
+
+/** Rotation by `angle` radians about `axis` (Rodrigues), as a GLSL mat3 literal (columns) and its transpose. */
+function rotation(axis: [number, number, number], angle: number): { glsl: string; inverse: string } {
+  const l = Math.hypot(...axis);
+  const [x, y, z] = axis.map((v) => v / l) as [number, number, number];
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const t = 1 - c;
+  const m = [
+    [t * x * x + c, t * x * y - s * z, t * x * z + s * y],
+    [t * x * y + s * z, t * y * y + c, t * y * z - s * x],
+    [t * x * z - s * y, t * y * z + s * x, t * z * z + c],
+  ];
+  const mat = (col: (j: number) => number[]) => `mat3(${[0, 1, 2].map((j) => col(j).map((v) => v.toFixed(6)).join(', ')).join(', ')})`;
+  return { glsl: mat((j) => m.map((row) => row[j]!)), inverse: mat((j) => m[j]!) };
+}
 /** Steepest cloud-top slope (rise over run), so the steepest billows in thick cloud never turn edge-on. */
 const MAX_CLOUD_SLOPE = 1.5;
 /**
@@ -34,7 +126,14 @@ const MAX_CLOUD_SLOPE = 1.5;
  */
 const CLOUD_SHADING = 2.5;
 
-/** One model time step: cloud opacity (R) and the 700 hPa wind (RG, east and north), both on the 1° grid. */
+/**
+ * One model time step on the 1° grid (rows from 90°N to 90°S, columns from 0° eastward):
+ * - `cloud`, RG8: R the main deck's opacity, from cloud water less the ice drawn in the high layer; G the high
+ *   layer's opacity, 1 − e^(−0.25 τ) for the optical depth τ of the ice above 450 hPa (ICE_OPACITY_PER_TAU).
+ * - `wind`, RGBA8: RG the 700 hPa wind that moves the deck, BA the 250 hPa wind that moves the high layer (east,
+ *   north). Two fields in each texture keep the ground's shader within the texture units a phone guarantees.
+ * Steps whose file lacks the ice or the 250 hPa wind have no high layer (G = 0, BA = calm).
+ */
 export interface WeatherStep {
   cloud: THREE.DataTexture;
   wind: THREE.DataTexture;
@@ -55,31 +154,47 @@ const stepCache = new Map<string, Promise<WeatherStep | null>>();
  * eastward). Resolves to null when the fields aren't available, so the scene draws without them.
  */
 export function loadWeatherStep(field: CloudField): Promise<WeatherStep | null> {
+  if (!shapes) setTimeout(cloudShapes, 0);
   const key = `${field.cycle}/${field.hour}`;
   let p = stepCache.get(key);
   if (!p) {
-    p = fetch(`/api/v1/weather/gfs/${key}`)
+    p = fetch(`/api/v1/weather/gfs-layers/${key}`)
       .then(async (res) => {
         if (!res.ok) return null;
         const fields = decodeGrib2(new Uint8Array(await res.arrayBuffer()));
-        // GRIB2 parameters: cloud water is meteorological 6/6, wind east 2/2 and north 2/3.
-        const find = (category: number, parameter: number) =>
-          fields.find((f) => f.discipline === 0 && f.category === category && f.parameter === parameter && f.nx === CLOUD_GRID.nx && f.ny === CLOUD_GRID.ny);
+        // GRIB2 parameters: cloud water is meteorological 6/6, ice mixing ratio 1/23, wind east 2/2 and north
+        // 2/3; isobaric levels (surface type 100) in Pa.
+        const find = (category: number, parameter: number, pa?: number) =>
+          fields.find(
+            (f) =>
+              f.discipline === 0 && f.category === category && f.parameter === parameter && f.nx === CLOUD_GRID.nx && f.ny === CLOUD_GRID.ny &&
+              (pa === undefined || (f.surfaceType === 100 && f.surfaceValue === pa)),
+          );
         const water = find(6, 6);
-        const u = find(2, 2);
-        const v = find(2, 3);
+        const u = find(2, 2, 70_000);
+        const v = find(2, 3, 70_000);
         if (!water || !u || !v) return null;
+        const ice = ICE_LEVELS_PA.map((pa) => find(1, 23, pa));
+        const ju = find(2, 2, 25_000);
+        const jv = find(2, 3, 25_000);
+        const high = ice.every(Boolean) && ju && jv;
         const n = CLOUD_GRID.nx * CLOUD_GRID.ny;
-        const cloud = new Uint8Array(n);
-        const wind = new Uint8Array(n * 2);
-        const quantize = (x: number) => Math.min(255, Math.max(0, Math.round(128 + (Number.isFinite(x) ? x : 0) / WIND_STEP)));
+        const cloud = new Uint8Array(n * 2);
+        const wind = new Uint8Array(n * 4);
+        const finite = (x: number | undefined) => (x !== undefined && Number.isFinite(x) ? x : 0);
+        const quantize = (x: number | undefined, step: number) => Math.min(255, Math.max(0, Math.round(128 + finite(x) / step)));
+        const opacity = (x: number) => Math.round(255 * (1 - Math.exp(-Math.max(0, x))));
         for (let i = 0; i < n; i++) {
-          const w = water.values[i]!;
-          cloud[i] = Number.isFinite(w) ? Math.round(255 * (1 - Math.exp(-OPACITY_PER_KG * Math.max(0, w)))) : 0;
-          wind[2 * i] = quantize(u.values[i]!);
-          wind[2 * i + 1] = quantize(v.values[i]!);
+          // Ice water path above 450 hPa (kg/m²); cloud water counts it too, so the deck keeps the rest.
+          const iwp = high ? ice.reduce((sum, f) => sum + Math.max(0, finite(f!.values[i])), 0) * ICE_SLAB_KG : 0;
+          cloud[2 * i] = opacity(OPACITY_PER_KG * (finite(water.values[i]) - iwp));
+          cloud[2 * i + 1] = opacity(ICE_OPACITY_PER_TAU * ICE_TAU_PER_KG * iwp);
+          wind[4 * i] = quantize(u.values[i], WIND_STEP);
+          wind[4 * i + 1] = quantize(v.values[i], WIND_STEP);
+          wind[4 * i + 2] = high ? quantize(ju.values[i], JET_STEP) : 128;
+          wind[4 * i + 3] = high ? quantize(jv.values[i], JET_STEP) : 128;
         }
-        return { cloud: gridTexture(cloud, THREE.RedFormat), wind: gridTexture(wind, THREE.RGFormat) };
+        return { cloud: gridTexture(cloud, THREE.RGFormat), wind: gridTexture(wind, THREE.RGBAFormat) };
       })
       .catch(() => null);
     // A missing step may be published later; only keep successes.
@@ -103,68 +218,42 @@ export function releaseWeatherStep(field: CloudField): void {
   });
 }
 
-let noise: THREE.Data3DTexture | null = null;
-
-/** Lattice points along each side of the noise texture. */
-const NOISE_SIZE = 32;
+interface Shapes {
+  texture: THREE.Data3DTexture;
+  /** Per level of cover (cloudShapes.ts coverTables): the cut-off with and without the finer octave, and the mean of each. */
+  levels: THREE.Vector4[];
+}
+let shapes: Shapes | null = null;
 
 /**
- * Seeded value noise on a 32³ lattice that tiles; trilinear filtering smooths it. Same on every device. R holds
- * the noise; G, B, and A its gradient along x, y, and z, so the cloud shader shapes billow tops without reading
- * the noise again. The gradient is a central difference smoothed across the other two axes (a 3D Sobel filter,
- * in noise units per lattice step, 128 = flat): plain differences turn the lattice's cells into facets under a
- * low Sun.
+ * The billows' cellular texture (cloudShapes.ts) and the levels that carve it to a given cover. Built once per
+ * page, the first time anything asks; loadWeatherStep asks early, so the work overlaps the download.
  */
-function noiseTexture(): THREE.Data3DTexture {
-  if (!noise) {
-    const size = NOISE_SIZE;
-    const rand = mulberry32(0xc10d);
-    const value = new Uint8Array(size * size * size).map(() => Math.floor(rand() * 256));
-    const at = (x: number, y: number, z: number) => value[(((z + size) % size) * size + ((y + size) % size)) * size + ((x + size) % size)]!;
-    const weight = [0.25, 0.5, 0.25];
-    // Along `step` (one lattice step) at x, y, z: (ahead − behind) / 2, averaged [1, 2, 1] / 4 along u and v.
-    type Step = [number, number, number];
-    const slope = (x: number, y: number, z: number, [sx, sy, sz]: Step, [ux, uy, uz]: Step, [vx, vy, vz]: Step) => {
-      let sum = 0;
-      for (let j = -1; j <= 1; j++) {
-        for (let k = -1; k <= 1; k++) {
-          const [cx, cy, cz] = [x + j * ux + k * vx, y + j * uy + k * vy, z + j * uz + k * vz];
-          sum += (weight[j + 1]! * weight[k + 1]! * (at(cx + sx, cy + sy, cz + sz) - at(cx - sx, cy - sy, cz - sz))) / 2;
-        }
-      }
-      return Math.round(128 + sum * (254 / 255));
-    };
-    const X: Step = [1, 0, 0];
-    const Y: Step = [0, 1, 0];
-    const Z: Step = [0, 0, 1];
-    const data = new Uint8Array(size * size * size * 4);
-    for (let z = 0, i = 0; z < size; z++) {
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++, i++) {
-          data[4 * i] = value[i]!;
-          data[4 * i + 1] = slope(x, y, z, X, Y, Z);
-          data[4 * i + 2] = slope(x, y, z, Y, X, Z);
-          data[4 * i + 3] = slope(x, y, z, Z, X, Y);
-        }
-      }
-    }
-    noise = new THREE.Data3DTexture(data, size, size, size);
-    noise.format = THREE.RGBAFormat;
-    noise.wrapS = noise.wrapT = noise.wrapR = THREE.RepeatWrapping;
-    noise.magFilter = noise.minFilter = THREE.LinearFilter;
-    noise.needsUpdate = true;
+function cloudShapes(): Shapes {
+  if (!shapes) {
+    const { rgba } = cellularShapes();
+    const t = coverTables(rgba);
+    const texture = new THREE.Data3DTexture(rgba, SHAPE_SIZE, SHAPE_SIZE, SHAPE_SIZE);
+    texture.format = THREE.RGBAFormat;
+    texture.wrapS = texture.wrapT = texture.wrapR = THREE.RepeatWrapping;
+    texture.magFilter = texture.minFilter = THREE.LinearFilter;
+    texture.needsUpdate = true;
+    const levels = t.full.map((cut, i) => new THREE.Vector4(cut, t.coarse[i]!, t.meanFull[i]!, t.meanCoarse[i]!));
+    shapes = { texture, levels };
   }
-  return noise;
+  return shapes;
 }
 
-let blank: THREE.DataTexture | null = null;
-/** Stand-in for missing fields: no cloud, no wind. */
-function blankTexture(): THREE.DataTexture {
-  if (!blank) {
-    blank = new THREE.DataTexture(new Uint8Array([0, 128, 128, 255]), 1, 1, THREE.RGBAFormat);
-    blank.needsUpdate = true;
+const blanks = new Map<number, THREE.DataTexture>();
+/** Stand-ins for missing fields, every channel `value`: 0 for no cloud, 128 for calm. */
+function blankTexture(value: 0 | 128): THREE.DataTexture {
+  let t = blanks.get(value);
+  if (!t) {
+    t = new THREE.DataTexture(new Uint8Array([value, value, value, value]), 1, 1, THREE.RGBAFormat);
+    t.needsUpdate = true;
+    blanks.set(value, t);
   }
-  return blank;
+  return t;
 }
 
 /**
@@ -189,9 +278,13 @@ vec2 gridUv(vec3 n) {
   return vec2(fract(lon / 360.0) + 0.5 / 360.0, (90.0 - lat + 0.5) / 181.0);
 }
 
-// Wind in m/s toward the east (x) and north (y).
+// Wind in m/s toward the east (x) and north (y): at 700 hPa, which moves the deck, and at 250 hPa, which moves the
+// high layer.
 vec2 windAt(sampler2D w, vec2 uv) {
   return (texture2D(w, uv).rg * 255.0 - 128.0) * ${WIND_STEP.toFixed(2)};
+}
+vec2 jetAt(sampler2D w, vec2 uv) {
+  return (texture2D(w, uv).ba * 255.0 - 128.0) * ${JET_STEP.toFixed(2)};
 }
 
 // Where air at n would be after drifting with the wind for the given seconds (negative: where it came from).
@@ -246,16 +339,35 @@ float cloudOpacity(vec3 n, bool smoothly) {
   float ob = smoothly ? smoothSample(cloudB, b) : texture2D(cloudB, b).r;
   return mix(oa, ob, cloudBlend) * cloudPresence;
 }
+
+// The high layer's opacity at n, carried by the 250 hPa wind between the two fields.
+float cirrusOpacity(vec3 n, bool smoothly) {
+  vec2 uv = gridUv(n);
+  vec2 a = gridUv(drift(n, jetAt(windA, uv), -cloudAgeA));
+  vec2 b = gridUv(drift(n, jetAt(windB, uv), cloudAgeB));
+  float oa = smoothly ? cubicSample(cloudA, a, vec2(360.0, 181.0), 0.0).g : texture2D(cloudA, a).g;
+  float ob = smoothly ? cubicSample(cloudB, b, vec2(360.0, 181.0), 0.0).g : texture2D(cloudB, b).g;
+  return mix(oa, ob, cloudBlend) * cloudPresence;
+}
+
+// Direct light the high layer lets through to a point p below it (Earth radii), toward the light s: where the
+// beam crosses the layer. Even an opaque layer passes ${Math.round(100 * (1 - CIRRUS_SHADOW))} % of it, scattered forward.
+float cirrusShadow(vec3 p, vec3 s) {
+  float ps = dot(p, s);
+  vec3 crossing = normalize(p + s * (-ps + sqrt(ps * ps - dot(p, p) + ${(CIRRUS_RADIUS * CIRRUS_RADIUS).toFixed(6)})));
+  return 1.0 - ${CIRRUS_SHADOW.toFixed(2)} * cirrusOpacity(crossing, false);
+}
 `;
 
 /** Uniforms for CLOUD_GLSL; merge them into a material's uniforms and keep them current with setCloudUniforms. */
 export function cloudUniforms(): Record<string, THREE.IUniform> {
-  const t = blankTexture();
+  const none = blankTexture(0);
+  const calm = blankTexture(128);
   return {
-    cloudA: { value: t },
-    cloudB: { value: t },
-    windA: { value: t },
-    windB: { value: t },
+    cloudA: { value: none },
+    cloudB: { value: none },
+    windA: { value: calm },
+    windB: { value: calm },
     cloudBlend: { value: 0 },
     cloudPresence: { value: 0 },
     cloudAgeA: { value: 0 },
@@ -264,11 +376,12 @@ export function cloudUniforms(): Record<string, THREE.IUniform> {
 }
 
 export function setCloudUniforms(u: Record<string, THREE.IUniform>, frame: CloudFrame | null): void {
-  const t = blankTexture();
-  u.cloudA!.value = frame?.a.cloud ?? t;
-  u.cloudB!.value = frame?.b.cloud ?? t;
-  u.windA!.value = frame?.a.wind ?? t;
-  u.windB!.value = frame?.b.wind ?? t;
+  const none = blankTexture(0);
+  const calm = blankTexture(128);
+  u.cloudA!.value = frame?.a.cloud ?? none;
+  u.cloudB!.value = frame?.b.cloud ?? none;
+  u.windA!.value = frame?.a.wind ?? calm;
+  u.windB!.value = frame?.b.wind ?? calm;
   u.cloudBlend!.value = frame?.blend ?? 0;
   u.cloudPresence!.value = frame?.presence ?? 0;
   u.cloudAgeA!.value = frame?.ageA ?? 0;
@@ -285,8 +398,9 @@ void main() {
 
 const cloudFragment = /* glsl */ `
 precision highp sampler3D;
-const float CLOUD_BRIGHTNESS = ${CLOUD_BRIGHTNESS.toFixed(3)};
+${CLOUD_BRIGHTNESS_GLSL}
 uniform sampler3D noise;
+uniform vec4 coverLevels[${COVER_LEVELS + 1}]; // cut-off with the finer octave, without it, and the mean of each
 uniform sampler2D nightMap;
 uniform vec4 detail; // x: phase of layer 1 (0–1), y: its cycle, z: cycle of layer 2 (half a period behind)
 varying vec3 vEarth;
@@ -295,17 +409,36 @@ ${AIR_GLSL}
 ${CITY_GLSL}
 ${CLOUD_GLSL}
 ${PLANE_SHADOW_GLSL}
+${skyLightGlsl(2)}
 
-// The noise texture's gradient, per unit of texture coordinate.
-vec3 noiseSlope(vec4 texel) {
-  return (texel.gba * 255.0 - 128.0) * ${(NOISE_SIZE / 254).toFixed(6)};
+// The shape texture's gradient, per unit of texture coordinate.
+vec3 shapeSlope(vec4 texel) {
+  return (texel.gba * 255.0 - 128.0) * ${(SHAPE_SLOPE_RANGE / 127).toFixed(6)};
 }
 
-// Two octaves of seeded noise (cells of roughly 100 km and 40 km) at a position (x), and their gradient (yzw).
-vec4 billows(vec3 p) {
-  vec4 a = texture(noise, p);
-  vec4 b = texture(noise, p * 2.6 + 0.37);
-  return vec4(0.6 * a.r + 0.4 * b.r, 0.6 * noiseSlope(a) + 1.04 * noiseSlope(b));
+const mat3 SHAPE_ROTATION = ${SHAPE_ROTATION.glsl};
+const mat3 SHAPE_UNROTATION = ${SHAPE_ROTATION.inverse};
+const mat3 EROSION_ROTATION = ${EROSION_ROTATION.glsl};
+const mat3 EROSION_UNROTATION = ${EROSION_ROTATION.inverse};
+
+// The two texels that shape the billows at p (Earth frame, drifted) for a copy with this seed: rounded lobes about
+// 100 km across (a), and the same lobes ${EROSION_SCALE}× finer (about 38 km) that erode their edges (b). Each octave is
+// turned its own way, so neither texel grid lines up with north, east, or the other.
+void shapeTexels(vec3 p, vec3 seed, out vec4 a, out vec4 b) {
+  a = texture(noise, SHAPE_ROTATION * p * ${SHAPE_SCALE.toFixed(1)} + seed);
+  b = texture(noise, EROSION_ROTATION * p * ${(SHAPE_SCALE * EROSION_SCALE).toFixed(2)} + seed + ${EROSION_OFFSET.toFixed(2)});
+}
+
+// How much of a lobe is at shape s, carved at cut: soft at the rim, opaque in the core. The rim's softness includes
+// what one pixel spans of the carved shape, so edges stay about a pixel soft at any distance.
+float lobe(float s, float cut, float edge) {
+  return smoothstep(cut - edge, cut + edge, s) * (0.6 + 0.4 * smoothstep(cut, cut + ${LOBE_CORE.toFixed(2)}, s));
+}
+
+// The cover's levels (cloudShapes.ts coverTables) at x = (1 − cover) × ${COVER_LEVELS}, between table entries.
+vec4 coverLevel(float x) {
+  int i = min(int(x), ${COVER_LEVELS - 1});
+  return mix(coverLevels[i], coverLevels[i + 1], x - float(i));
 }
 
 // Brightness of a cloud top with normal N on the shell at n, lit from direction l. A level deck catches light a
@@ -316,14 +449,30 @@ float deckLight(vec3 N, vec3 n, vec3 l) {
   return level * exp(${CLOUD_SHADING.toFixed(2)} * (dot(N, l) - dot(n, l)));
 }
 
-// Light reaching the deck from direction l, reddened by the air on its way. The deck has depth: its lowest
-// cloud loses the light at the ground's terminator and its top a few degrees later (where the planet's limb
-// hides the light from it), so the deck dims gradually instead of all at once.
+// Light reaching the deck from direction l, reddened by the air on its way, in the ground's units (SUN_ABOVE_AIR):
+// the deck sits above part of the air, so a high Sun is a little bluer there than on the ground. The deck has depth:
+// its lowest cloud loses the light at the ground's terminator and its top a few degrees later (where the planet's
+// limb hides the light from it), so the deck dims gradually instead of all at once.
 vec3 deckSunlight(vec3 n, vec3 l) {
   vec3 top = n * ${CLOUD_RADIUS.toFixed(4)};
   float altitude = asin(clamp(dot(n, l), -1.0, 1.0));
   float lit = smoothstep(-${Math.acos(1 / CLOUD_RADIUS).toFixed(5)}, 0.01, altitude);
-  return exp(-extinction(columnToLight(top, l))) * lit;
+  return exp(-extinction(columnToLight(top, l))) * SUN_ABOVE_AIR * lit;
+}
+
+// How much of the light from one sky direction (at cosine mu from the vertical) a cloud of optical depth tau
+// scatters back, per unit of its opacity: all of it in thin cloud, less in thick, where light from the sky is
+// lost on its way down to the depth the view reaches. The offline renderer's blend of direct penetration (80 %)
+// and a more diffuse one (20 %, at 0.35 of the optical depth). Thick cloud keeps about half from the zenith and
+// 45 % from the sides.
+float thinning(float tau, float mu, float k) {
+  float a = 1.0 + k / mu;
+  return tau < 1e-3 ? 1.0 : (1.0 - exp(-tau * a)) / (a * (1.0 - exp(-tau)));
+}
+vec3 skyThinning(float tau) {
+  float zenith = 0.8 * thinning(tau, 1.0, 1.0) + 0.2 * thinning(tau, 1.0, 0.35);
+  float side = 0.8 * thinning(tau, 0.7071, 1.0) + 0.2 * thinning(tau, 0.7071, 0.35);
+  return vec3(zenith, side, side);
 }
 
 void main() {
@@ -334,39 +483,153 @@ void main() {
   float phase2 = fract(detail.x + 0.5);
   vec3 seed1 = fract(vec3(0.173, 0.311, 0.457) * detail.y);
   vec3 seed2 = fract(vec3(0.173, 0.311, 0.457) * detail.z);
-  vec4 b1 = billows(drift(n, wind, -detail.x * ${DETAIL_PERIOD_S.toFixed(1)}) * 2.0 + seed1);
-  vec4 b2 = billows(drift(n, wind, -phase2 * ${DETAIL_PERIOD_S.toFixed(1)}) * 2.0 + seed2);
+  vec3 p1 = drift(n, wind, -detail.x * ${DETAIL_PERIOD_S.toFixed(1)});
+  vec3 p2 = drift(n, wind, -phase2 * ${DETAIL_PERIOD_S.toFixed(1)});
+  vec4 a1, b1, a2, b2;
+  shapeTexels(p1, seed1, a1, b1);
+  shapeTexels(p2, seed2, a2, b2);
   float w1 = 1.0 - abs(2.0 * detail.x - 1.0);
-  vec4 body = mix(b2, b1, w1);
 
-  // The model's cloud water sets where clouds are and how opaque; the noise breaks the 1° grid into texture.
+  // How many pixels a lobe spans here. Detail too small to draw fades toward its mean instead of aliasing: the finer
+  // octave first, then the lobes themselves, so a whole-globe view shows a soft deck rather than speckle.
+  vec3 q = SHAPE_ROTATION * p1 * ${SHAPE_SCALE.toFixed(1)};
+  float lobePixels = ${(1 / SHAPE_CELLS).toFixed(5)} / max(max(length(dFdx(q)), length(dFdy(q))), 1e-7);
+  float fine = smoothstep(${FINE_PIXELS[0].toFixed(1)}, ${FINE_PIXELS[1].toFixed(1)}, lobePixels / ${EROSION_SCALE.toFixed(2)});
+  float lobes = smoothstep(${LOBE_PIXELS[0].toFixed(1)}, ${LOBE_PIXELS[1].toFixed(1)}, lobePixels);
+
+  // The model's cloud opacity sets where clouds are; the billows carve it into lobes. They cover a fraction
+  // water^${COVER_EXPONENT} of the sky, so thin cloud breaks into puffs with clear sky between and thick cloud closes up. Each
+  // copy is carved before the two are blended, so cover never dips while one copy hands over to the other. Lobes
+  // are as opaque as keeps the area's mean opacity the model's, however much of their detail is drawn.
   float water = cloudOpacity(n, true);
-  float thickness = water * (0.6 + 0.8 * body.x);
-  float density = smoothstep(0.04, 0.9, thickness);
+  float cover = pow(water, ${COVER_EXPONENT.toFixed(2)});
+  vec4 cut = coverLevel(clamp(1.0 - cover, 0.0, 1.0) * ${COVER_LEVELS.toFixed(1)});
+  // Each copy: the lobes eroded by the finer octave, or, where that octave is too small to draw, the lobes alone
+  // at their own levels. Rims widen by a pixel's span of the shape (the copies' spans match; one is measured).
+  float eroded1 = a1.r - ${EROSION.toFixed(2)} * (1.0 - b1.r);
+  float eroded2 = a2.r - ${EROSION.toFixed(2)} * (1.0 - b2.r);
+  float edgeEroded = ${LOBE_EDGE.toFixed(3)} + fwidth(eroded1);
+  float edgeLobes = ${LOBE_EDGE.toFixed(3)} + fwidth(a1.r);
+  float o1 = mix(lobe(a1.r, cut.y, edgeLobes), lobe(eroded1, cut.x, edgeEroded), fine);
+  float o2 = mix(lobe(a2.r, cut.y, edgeLobes), lobe(eroded2, cut.x, edgeEroded), fine);
+  float mean = mix(cut.w, cut.z, fine);
+  float occupied = mix(mean, mix(o2, o1, w1), lobes);
+  float density = min(1.0, occupied * water / max(mean, 1e-3));
   float alpha = density * 0.95;
 
-  // Cloud tops stand as high as the cloud is thick, so they rise into billows where the noise peaks, and taller
-  // ones where there is more cloud water. Only the billows tilt the normal: the noise's gradient comes with it
-  // (its space is twice the Earth frame's), while the water's would need more reads of the cubic field.
-  vec3 rise = water * 1.6 * body.yzw;
+  // Cloud tops stand as high as the billow shape, scaled by the lobes' thickness, and flatten with the lobes as
+  // they fade. Only the billows tilt the normal: their gradient comes with the texture reads, while the water's
+  // would need more reads of the cubic field.
+  float thickness = water / max(cover, 1e-3);
+  vec3 lobeSlope = SHAPE_UNROTATION * mix(shapeSlope(a2), shapeSlope(a1), w1);
+  vec3 fineSlope = EROSION_UNROTATION * mix(shapeSlope(b2), shapeSlope(b1), w1);
+  vec3 rise = thickness * lobes * ${SHAPE_SCALE.toFixed(1)} * (lobeSlope + fine * ${(EROSION * EROSION_SCALE).toFixed(3)} * fineSlope);
   rise = (rise - n * dot(rise, n)) * ${CLOUD_RELIEF.toFixed(4)};
   vec3 N = normalize(n - rise * min(1.0, ${MAX_CLOUD_SLOPE.toFixed(2)} / max(length(rise), 1e-6)));
 
   // Sunlight reaching the cloud tops, reddened by the air and cut off by the planet: tops stay lit, in sunset
   // colours, a little past the ground's terminator. Thicker cloud reflects more. Aircraft shade the tops below.
-  float reflectance = CLOUD_BRIGHTNESS * (0.55 + 0.45 * density);
+  float albedo = 0.55 + 0.45 * density;
+  float reflectance = CLOUD_BRIGHTNESS * albedo;
   vec3 sun = normalize(sunDir);
-  vec3 color = deckSunlight(n, sun) * deckLight(N, n, sun) * reflectance * planeShadow(n);
-  if (moonlight > 0.0) color += moonlight * deckSunlight(n, moonDir) * deckLight(N, n, moonDir) * reflectance;
+  // The high layer shades the deck where the light crosses it on the way down.
+  vec3 top = n * ${CLOUD_RADIUS.toFixed(4)};
+  vec3 color = deckSunlight(n, sun) * deckLight(N, n, sun) * reflectance * planeShadow(n) * cirrusShadow(top, sun);
+
+  // Light from the clear sky above (skyLight.ts): blue, and lit for a while after the Sun has set on the deck.
+  // Slopes take more of the sky they face, so billow sides turned from the Sun take on its blue-grey. Thick cloud
+  // scatters back less of it per unit of opacity than thin cloud. It is reflected at the cloud's own albedo, not
+  // the sunlit deck's gain (CLOUD_BRIGHTNESS), which would turn the gold band along the terminator blue-grey. The
+  // Moon lights the same sky, scaled like its direct light.
+  float tau = -log(1.0 - min(alpha, 0.98));
+  vec3 thin = skyThinning(tau);
+  color += skyLight(n, sun, 0.0, N, ${CLOUD_SHADING.toFixed(2)}, thin) * albedo;
+  if (moonlight > 0.0) {
+    color += moonlight * (deckSunlight(n, moonDir) * deckLight(N, n, moonDir) * reflectance * cirrusShadow(top, moonDir) + skyLight(n, moonDir, 0.0, N, ${CLOUD_SHADING.toFixed(2)}, thin) * albedo);
+  }
+
+  // The clear air above sends part of the deck's light back down onto it, and the deck reflects that too.
+  #ifdef LINEAR_SCENE
+  color /= 1.0 - vec3(${DECK_RETURN.map((x) => x.toFixed(5)).join(', ')}) * albedo;
+  #endif
 
   // City light scattered up through the cloud from below (routereplay cityglow.py): spread a little, and
   // strongest through moderate cloud; thick cloud swallows it. The spread is the lights map two mip levels
   // down, sampled cubically: bilinear sampling there turns every town into a soft square.
   vec2 uv = vec2(atan(-n.z, n.x) / (2.0 * PI) + 0.5, asin(clamp(n.y, -1.0, 1.0)) / PI + 0.5);
-  float tau = -log(1.0 - min(alpha, 0.98));
   float penetration = 0.7 * exp(-tau) + 0.3 * exp(-0.4 * tau);
   float spread = cubicSample(nightMap, uv, vec2(textureSize(nightMap, 2)), 2.0).r;
   color += cityLights(n, spread) * 0.5 * penetration;
+
+  gl_FragColor = vec4(color, alpha);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}
+`;
+
+/** The sky table's layers (skyLight.ts): the deck, then the high layer. */
+const SKY_LAYERS = [CLOUD_RADIUS, CIRRUS_AIR_RADIUS];
+
+/**
+ * The high layer: thin ice clouds on their own shell, 10.5 km up (×12), moved by the 250 hPa wind. Its texture is
+ * the billows' lobes averaged along the wind (three points STREAK_S apart, a short line integral), which draws them
+ * out into streaks as long as the wind is fast: about 130 km wide and 300–500 km long under a 40–70 m/s jet,
+ * round where the air is still. Two copies drift and renew like the deck's.
+ */
+const cirrusFragment = /* glsl */ `
+precision highp sampler3D;
+uniform sampler3D noise;
+uniform vec4 detail;
+varying vec3 vEarth;
+${LIGHT_GLSL}
+${AIR_GLSL}
+${CLOUD_GLSL}
+${skyLightGlsl(2)}
+${CLOUD_BRIGHTNESS_GLSL}
+
+// Streaks at n: the lobes where the air at n was age seconds ago, averaged with where it was ${STREAK_S / 60} and ${(2 * STREAK_S) / 60}
+// minutes before that.
+float streaks(vec3 n, vec2 jet, float age, vec3 seed) {
+  float s = 0.0;
+  for (int k = 0; k < 3; k++) {
+    s += texture(noise, drift(n, jet, -(age + float(k) * ${STREAK_S.toFixed(1)})) * ${CIRRUS_SCALE.toFixed(1)} + seed).r;
+  }
+  return s / 3.0;
+}
+
+// Light reaching the layer from direction l, reddened by the air above it (in the ground's units, as for the deck),
+// and cut off by the planet a little later than for the deck below. Heights here are the air's (CIRRUS_AIR_RADIUS).
+vec3 layerLight(vec3 n, vec3 l) {
+  float altitude = asin(clamp(dot(n, l), -1.0, 1.0));
+  float lit = smoothstep(-${Math.acos(1 / CIRRUS_AIR_RADIUS).toFixed(5)}, 0.01, altitude);
+  float level = clamp((dot(n, l) + 0.15) / 1.15, 0.0, 1.0);
+  return exp(-extinction(columnToLight(n * ${CIRRUS_AIR_RADIUS.toFixed(5)}, l))) * SUN_ABOVE_AIR * lit * level;
+}
+
+void main() {
+  vec3 n = normalize(vEarth);
+  float ice = cirrusOpacity(n, true);
+  if (ice < 0.004) discard;
+  vec2 jet = mix(jetAt(windA, gridUv(n)), jetAt(windB, gridUv(n)), cloudBlend);
+  float phase2 = fract(detail.x + 0.5);
+  vec3 seed1 = fract(vec3(0.291, 0.137, 0.613) * detail.y);
+  vec3 seed2 = fract(vec3(0.291, 0.137, 0.613) * detail.z);
+  float s1 = streaks(n, jet, detail.x * ${DETAIL_PERIOD_S.toFixed(1)}, seed1);
+  float s2 = streaks(n, jet, phase2 * ${DETAIL_PERIOD_S.toFixed(1)}, seed2);
+  float w1 = 1.0 - abs(2.0 * detail.x - 1.0);
+  // Streaks thin the ice between them and gather it along them, keeping about the area's mean opacity.
+  float streak = mix(s2, s1, w1);
+  float alpha = clamp(ice * (0.15 + 1.7 * smoothstep(0.42, 0.68, streak)), 0.0, 0.95);
+
+  // Lit like the deck, without billows: sunlight reddened by the air above the layer, the sky above it (its own
+  // row of the table), and the Moon. Ice is white: it reflects like a thick deck, per unit of opacity.
+  vec3 sun = normalize(sunDir);
+  vec3 color = layerLight(n, sun) * CLOUD_BRIGHTNESS;
+  color += skyLight(n, sun, 1.0, n, 0.0, vec3(1.0));
+  if (moonlight > 0.0) color += moonlight * (layerLight(n, moonDir) * CLOUD_BRIGHTNESS + skyLight(n, moonDir, 1.0, n, 0.0, vec3(1.0)));
+  #ifdef LINEAR_SCENE
+  color /= 1.0 - vec3(${CIRRUS_RETURN.map((x) => x.toFixed(5)).join(', ')});
+  #endif
 
   gl_FragColor = vec4(color, alpha);
   #include <tonemapping_fragment>
@@ -443,15 +706,19 @@ export function Clouds({
   segments: number;
   shadows?: readonly ShadowCaster[];
 }) {
+  const linear = useLinearScene();
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
+        defines: sceneDefines(linear),
         uniforms: {
           ...cloudUniforms(),
           ...lightUniforms(),
           ...planeShadowUniforms(),
-          noise: { value: noiseTexture() },
+          noise: { value: cloudShapes().texture },
+          coverLevels: { value: cloudShapes().levels },
           nightMap: { value: night },
+          skyTable: { value: skyTexture(SKY_LAYERS) },
           detail: { value: new THREE.Vector4() },
         },
         vertexShader: cloudVertex,
@@ -462,18 +729,46 @@ export function Clouds({
         blendDst: THREE.OneMinusSrcAlphaFactor,
         depthWrite: false,
       }),
-    [night],
+    [night, linear],
+  );
+  const high = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        defines: sceneDefines(linear),
+        uniforms: {
+          ...cloudUniforms(),
+          ...lightUniforms(),
+          noise: { value: cloudShapes().texture },
+          skyTable: { value: skyTexture(SKY_LAYERS) },
+          detail: { value: new THREE.Vector4() },
+        },
+        vertexShader: cloudVertex,
+        fragmentShader: cirrusFragment,
+        blending: THREE.CustomBlending,
+        blendSrc: THREE.SrcAlphaFactor,
+        blendDst: THREE.OneMinusSrcAlphaFactor,
+        depthWrite: false,
+      }),
+    [linear],
   );
   useEffect(() => () => material.dispose(), [material]);
-  const u = material.uniforms;
-  setCloudUniforms(u, frame);
-  setLightUniforms(u, lights);
-  setPlaneShadowUniforms(u, shadows, lights.sun);
+  useEffect(() => () => high.dispose(), [high]);
   const cycles = frame.seconds / DETAIL_PERIOD_S;
-  (u.detail!.value as THREE.Vector4).set(cycles - Math.floor(cycles), Math.floor(cycles), Math.floor(cycles + 0.5), 0);
+  for (const m of [material, high]) {
+    const u = m.uniforms;
+    setCloudUniforms(u, frame);
+    setLightUniforms(u, lights);
+    (u.detail!.value as THREE.Vector4).set(cycles - Math.floor(cycles), Math.floor(cycles), Math.floor(cycles + 0.5), 0);
+  }
+  setPlaneShadowUniforms(material.uniforms, shadows, lights.sun);
   return (
-    <mesh material={material} renderOrder={0.5}>
-      <sphereGeometry args={[CLOUD_RADIUS, segments, Math.round(segments / 2)]} />
-    </mesh>
+    <>
+      <mesh material={material} renderOrder={0.5}>
+        <sphereGeometry args={[CLOUD_RADIUS, segments, Math.round(segments / 2)]} />
+      </mesh>
+      <mesh material={high} renderOrder={0.55}>
+        <sphereGeometry args={[CIRRUS_RADIUS, segments, Math.round(segments / 2)]} />
+      </mesh>
+    </>
   );
 }

@@ -7,6 +7,7 @@ import { buildTimeline } from '../../shared/timeline/evaluate';
 import { DETAIL_MAX_TILES, planNightDetail } from '../../shared/timeline/nightDetail';
 import { type EarthTextures, type Quality, journeySurfaceMonth, loadEarthTextures, loadLabelFont } from '../render/assets';
 import { type CloudSet, loadJourneyClouds } from '../render/Clouds';
+import { LinearDisplay } from '../render/display';
 import { JourneyScene, type SceneStats } from '../render/JourneyScene';
 import { NightDetail } from '../render/nightDetail';
 
@@ -20,6 +21,9 @@ export interface JourneyProps extends Record<string, unknown> {
   onContextLost?: () => void;
   onFrame?: (s: SceneStats) => void;
 }
+
+/** The empty sky's colour. */
+const SKY = '#02040a';
 
 /**
  * The one composition shared by playback (Remotion Player) and local export
@@ -131,7 +135,7 @@ export function JourneyComposition({ scene, quality, dpr = 1, capture = false, o
   );
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#02040a' }}>
+    <AbsoluteFill style={{ backgroundColor: SKY }}>
       {textures && detail && (
         <ThreeCanvas
           width={width}
@@ -142,16 +146,18 @@ export function JourneyComposition({ scene, quality, dpr = 1, capture = false, o
           gl={{ antialias: true, preserveDrawingBuffer: capture, powerPreference: 'high-performance', toneMapping: THREE.ReinhardToneMapping }}
           onCreated={onCreated}
         >
-          <JourneyScene
-            timeline={timeline}
-            textures={textures}
-            clouds={clouds}
-            detail={detail.textures}
-            detailVersion={detail.version}
-            segments={quality === 'low' ? 72 : 144}
-            aspect={width / height}
-            onFrame={onFrame}
-          />
+          <LinearDisplay background={SKY}>
+            <JourneyScene
+              timeline={timeline}
+              textures={textures}
+              clouds={clouds}
+              detail={detail.textures}
+              detailVersion={detail.version}
+              segments={quality === 'low' ? 72 : 144}
+              aspect={width / height}
+              onFrame={onFrame}
+            />
+          </LinearDisplay>
         </ThreeCanvas>
       )}
     </AbsoluteFill>

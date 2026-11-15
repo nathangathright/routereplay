@@ -104,12 +104,37 @@ describe('weather field endpoint', () => {
   const env = { DB: undefined as never };
   afterEach(() => vi.unstubAllGlobals());
 
-  it('finds cloud water and the 700 hPa wind, merging the adjacent wind messages', () => {
+  it('finds cloud water and the 700 hPa wind, in file order, merging the adjacent wind messages', () => {
     expect(fieldRanges(idx)).toEqual([
-      { start: 3000000, end: 3000000 + n - 1 },
       { start: 1000000, end: 1000000 + 2 * n - 1 },
+      { start: 3000000, end: 3000000 + n - 1 },
     ]);
     expect(fieldRanges('1:0:d=2026111100:PRMSL:mean sea level:anl:\n')).toBeNull();
+  });
+
+  it('adds the high layer’s ice and 250 hPa wind when the file has them', () => {
+    const high = [
+      `264:100:d=2026111100:ICMR:200 mb:6 hour fcst:`,
+      `265:200:d=2026111100:RWMR:200 mb:6 hour fcst:`,
+      `276:300:d=2026111100:UGRD:250 mb:6 hour fcst:`,
+      `277:400:d=2026111100:VGRD:250 mb:6 hour fcst:`,
+      `278:500:d=2026111100:VVEL:250 mb:6 hour fcst:`,
+      `296:600:d=2026111100:ICMR:300 mb:6 hour fcst:`,
+      `297:700:d=2026111100:RWMR:300 mb:6 hour fcst:`,
+      `328:800:d=2026111100:ICMR:400 mb:6 hour fcst:`,
+      `329:900:d=2026111100:RWMR:400 mb:6 hour fcst:`,
+    ].join('\n');
+    expect(fieldRanges(`${high}\n${idx}`)).toEqual([
+      { start: 100, end: 199 },
+      { start: 300, end: 499 },
+      { start: 600, end: 699 },
+      { start: 800, end: 899 },
+      { start: 1000000, end: 1000000 + 2 * n - 1 },
+      { start: 3000000, end: 3000000 + n - 1 },
+    ]);
+    // Without the deck's fields there is nothing to draw; without the high layer's, the deck still is.
+    expect(fieldRanges(high)).toBeNull();
+    expect(fieldRanges(`${high.split('\n').slice(0, 2).join('\n')}\n${idx}`)?.[0]).toEqual({ start: 100, end: 199 });
   });
 
   it('serves the fields for one step by range request and rejects anything else', async () => {
@@ -127,19 +152,19 @@ describe('weather field endpoint', () => {
       }
       return new Response('missing', { status: 404 });
     });
-    const res = await handle(new Request('https://rr.test/api/v1/weather/gfs/2026111100/6'), env);
+    const res = await handle(new Request('https://rr.test/api/v1/weather/gfs-layers/2026111100/6'), env);
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toMatch(/immutable/);
     expect(new Uint8Array(await res.arrayBuffer()).length).toBe(3 * n);
-    expect(ranges).toEqual([`bytes=3000000-${3000000 + n - 1}`, `bytes=1000000-${1000000 + 2 * n - 1}`]);
+    expect(ranges.sort()).toEqual([`bytes=1000000-${1000000 + 2 * n - 1}`, `bytes=3000000-${3000000 + n - 1}`]);
 
     // Not published yet: a short-lived 404.
-    const missing = await handle(new Request('https://rr.test/api/v1/weather/gfs/2026111106/6'), env);
+    const missing = await handle(new Request('https://rr.test/api/v1/weather/gfs-layers/2026111106/6'), env);
     expect(missing.status).toBe(404);
     expect(missing.headers.get('cache-control')).toMatch(/max-age=600/);
 
     for (const bad of ['2026111103/6', '2026111100/7', '2026111100/387', '2020010100/0', 'nonsense/0']) {
-      expect((await handle(new Request(`https://rr.test/api/v1/weather/gfs/${bad}`), env)).status).toBe(400);
+      expect((await handle(new Request(`https://rr.test/api/v1/weather/gfs-layers/${bad}`), env)).status).toBe(400);
     }
   });
 });

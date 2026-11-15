@@ -54,8 +54,9 @@ that lack one, filled in when the airport table is built
 
 WEATHER
 
-NOAA Global Forecast System (GFS): cloud water and 700 hPa wind, from the
-NOAA Open Data Dissemination Program on AWS. Public domain.
+NOAA Global Forecast System (GFS): cloud water, ice at 200-400 hPa, and the
+700 and 250 hPa winds, from the NOAA Open Data Dissemination Program on AWS.
+Public domain.
   https://registry.opendata.aws/noaa-gfs-bdp-pds/
 
 

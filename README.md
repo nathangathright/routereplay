@@ -9,8 +9,19 @@ A free web app where people use their own agent to create a journey, watch it pl
 - **Authoring is done by the visitor's existing agent** over a small HTTPS JSON API. The agent reads [`/agent-docs`](agent/workflow.md) and the JSON Schema at `/schemas/scene-v1.json`, then submits a compact scene spec. The landing page's Get Started prompt points agents there; there is nothing to install. Responses carry the next step (`next[]`) and advisory `warnings[]`, and storyboards (`/storyboard`, `/storyboard.svg`) let agents check what the animation shows without a GPU.
 - **The service** validates and normalizes the spec, then stores private drafts, revisions, and immutable publications in D1. It runs as one Cloudflare Worker that also serves the static app; a Durable Object per draft pushes changes to open previews over a WebSocket. The airport table converts airport codes into coordinates and IANA time zones; timestamps must carry the airport's real offset.
 - **Real weather:** clouds come from NOAA's GFS model (analysis for past times, forecast up to 16 days ahead), cut from NOAA's AWS archive by range request, decoded in the browser, and carried by the model's wind between 3-hour steps.
-- **The page** plays the scene with React Three Fiber inside a Remotion composition, edge to edge and framed for any screen; viewers choose 16:9, 1:1, or 9:16 when they export. That composition also renders local MP4 export through `@remotion/web-renderer`. Everything drawn is `evaluate(normalizedSpec, presentationTime)`: deterministic, seekable, and frame-exact between preview and export.
+- **The page** plays the scene with React Three Fiber inside a Remotion composition, edge to edge and framed for any screen; viewers choose 16:9, 1:1, or 9:16 when they export. That composition also renders local MP4 export through `@remotion/web-renderer`. Everything drawn is `evaluate(normalizedSpec, presentationTime)`: deterministic and seekable.
 - **Private previews** move the edit credential from the URL fragment into an HttpOnly session. They refresh as revisions land, tell the agent where the creator paused (so "slow down this part" resolves to a leg), follow the agent's "show me" seeks, and show "Your agent is working" while it reports activity. In WebMCP-capable browsers they also expose `get_scene`, `set_scene`, `seek_scene`, and `publish_scene` (owner only).
+
+## Roadmap
+
+Realism work not yet started, mostly adapted from the offline renderer:
+
+- **Real stars:** the Yale Bright Star Catalogue to magnitude 6.5, with real colours, in place of seeded random stars. Check its licence first.
+- **Moonlit air:** the night limb glowing faintly under a bright Moon, which also lets water reflect a moonlit sky. Airglow, the thin green line at the night limb, would go in the same shader; the offline renderer doesn't draw it.
+- **Higher-quality exports:** more atmosphere steps, supersampling, a sharper aircraft shadow, and motion blur from averaged sub-frames. Exports aren't real-time, so they can afford it. Clocks, geometry and seeds stay the same as playback, as with the offline renderer's quality settings, so an export shows the same moments as the preview but not identical pixels.
+- **Snow and sea ice for the trip's date,** from GFS, in place of the monthly 2004 snow. Sea ice also stops the ocean glint.
+- **Recorded flight tracks** (GPX, KML, CSV, IGC): real route shapes, banking in turns, pacing that lingers on climbs, descents and turns, and an optional distance, altitude and speed readout. Needs a schema field and a legitimate source of tracks for agents.
+- **Photo and video cards** at moments in the trip. Needs uploads and storage, which Route Replay avoids today, so it's a product decision first.
 
 ## Develop
 

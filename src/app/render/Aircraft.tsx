@@ -1,11 +1,11 @@
 import { useThree } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { type Vec3, cross, dot, normalize, smoothstep } from '../../shared/geo/vec';
+import { type Vec3, cross, normalize } from '../../shared/geo/vec';
 import type { AircraftType } from '../../shared/scene/aircraft';
 import { aircraftRadius, airframeModel } from './airframe';
-
-const DEG = Math.PI / 180;
+import type { CraftLight } from './craftLight';
+import { CraftLighting, enableCraftShadows } from './craftPaint';
 
 const lampVertex = /* glsl */ `
 uniform float uPixelRatio;
@@ -38,28 +38,31 @@ void main() {
 }
 `;
 
-/** Albedo multiplier for the airframe at night: a faint cool light instead of sunlight through the planet. */
-const NIGHT_TINT = new THREE.Color(0.16, 0.18, 0.24);
-const WHITE = new THREE.Color(1, 1, 1);
+/** Hides a slot of the shared airframe geometry from one of its meshes. */
+const HIDDEN = new THREE.MeshBasicMaterial({ visible: false });
 
 interface Plane {
+  /** In the Earth's frame: the airframe, and the lights that cast its shadow on itself. */
+  root: THREE.Object3D;
   group: THREE.Group;
-  /** Body, trim, and tail materials with their daylight colours: this plane's own. */
-  materials: THREE.MeshStandardMaterial[];
-  colors: THREE.Color[];
+  lighting: CraftLighting;
   prop: THREE.MeshBasicMaterial;
   lamps: THREE.ShaderMaterial;
+  /** The airframe's bounding sphere, model units. */
+  bounds: THREE.Sphere;
 }
 
 const PROP_OPACITY = 0.28;
 
 function buildPlane(type: AircraftType): Plane {
   const model = airframeModel(type);
-  // Hashed alpha dissolves one type into the next at a connection without sorting the model's own faces.
-  const paint = (color: string, roughness: number, metalness: number) =>
-    new THREE.MeshStandardMaterial({ color, roughness, metalness, alphaHash: true });
-  const materials = [paint('#f3f5f8', 0.45, 0.15), paint('#9aa4b2', 0.5, 0.3), paint('#2e8cff', 0.5, 0.1)];
-  // Spinning propellers read as a faint disc.
+  const lighting = new CraftLighting(true);
+  const materials = [
+    lighting.paint({ color: '#f3f5f8', roughness: 0.45, metalness: 0.15 }),
+    lighting.paint({ color: '#9aa4b2', roughness: 0.5, metalness: 0.3 }),
+    lighting.paint({ color: '#2e8cff', roughness: 0.5, metalness: 0.1 }),
+  ];
+  // Spinning propellers read as a faint disc. They are their own mesh, so they cast no shadow on the airframe.
   const prop = new THREE.MeshBasicMaterial({
     color: '#1b1f26',
     transparent: true,
@@ -67,13 +70,18 @@ function buildPlane(type: AircraftType): Plane {
     side: THREE.DoubleSide,
     depthWrite: false,
   });
+  const body = new THREE.Mesh(model.geometry, [...materials, HIDDEN]);
+  lighting.attach(body, true);
+  const discs = new THREE.Mesh(model.geometry, [HIDDEN, HIDDEN, HIDDEN, prop]);
   const group = new THREE.Group();
-  group.add(new THREE.Mesh(model.geometry, [...materials, prop]));
+  group.add(body, discs);
   const lamps = new THREE.ShaderMaterial({
     uniforms: { uPixelRatio: { value: 1 }, uNight: { value: 0 }, uTime: { value: 0 } },
     vertexShader: lampVertex,
     fragmentShader: lampFragment,
     blending: THREE.AdditiveBlending,
+    // Display values, not light: transparent, so they draw after tone mapping, with the graphics (display.tsx).
+    transparent: true,
     depthWrite: false,
   });
   const points = new THREE.Points(model.lampGeometry, lamps);
@@ -82,14 +90,17 @@ function buildPlane(type: AircraftType): Plane {
   group.add(points);
   // Drawn after the cloud layer, so a plane always shows above the clouds.
   group.renderOrder = 1;
-  return { group, materials, colors: materials.map((m) => m.color.clone()), prop, lamps };
+  const root = new THREE.Object3D();
+  root.add(group, lighting.root);
+  if (!model.geometry.boundingSphere) model.geometry.computeBoundingSphere();
+  return { root, group, lighting, prop, lamps, bounds: model.geometry.boundingSphere!.clone() };
 }
 
 /**
- * One aircraft of the given type, one unit long before `size` scales it. `sun` (Earth frame) dims the airframe
- * once the Sun has set for the plane, which at cruise height is a few degrees after it sets on the ground below,
- * and lights its navigation lights after dusk. `clock` (seconds) times the beacon: pass presentation time where
- * frames must be reproducible. `opacity` below 1 dissolves the plane, for changing aircraft at a connection.
+ * One aircraft of the given type, one unit long before `size` scales it, lit by `light` (craftLight.ts): the Sun
+ * through the air, the Moon and the night rig after dark, the sky above and what lies below, and its own shadow.
+ * Its navigation lights show after dusk. `clock` (seconds) times the beacon: pass presentation time where frames
+ * must be reproducible. `opacity` below 1 dissolves the plane, for changing aircraft at a connection.
  */
 export function Aircraft({
   type,
@@ -97,7 +108,7 @@ export function Aircraft({
   heading,
   altitude,
   size,
-  sun,
+  light,
   clock = 0,
   opacity = 1,
 }: {
@@ -106,34 +117,27 @@ export function Aircraft({
   heading: Vec3;
   altitude: number;
   size: number;
-  sun?: Vec3;
+  light: CraftLight;
   clock?: number;
   opacity?: number;
 }) {
   const plane = useMemo(() => buildPlane(type), [type]);
-  const { group: model, materials, colors, prop, lamps } = plane;
-  const pixelRatio = useThree((state) => state.gl.getPixelRatio());
-  // A plane that leaves frees its own materials; the shared geometry stays for the next one.
+  const { group: model, lighting, prop, lamps, bounds } = plane;
+  const gl = useThree((state) => state.gl);
+  const pixelRatio = gl.getPixelRatio();
+  enableCraftShadows(gl);
+  // A plane that leaves frees its own materials and shadow maps; the shared geometry stays for the next one.
   useEffect(
     () => () => {
-      for (const m of plane.materials) m.dispose();
+      plane.lighting.dispose();
       plane.prop.dispose();
       plane.lamps.dispose();
     },
     [plane],
   );
-  const sunHeight = sun ? dot(ground, sun) : 1;
-  // The Sun's centre sets for the plane when it falls acos(1/r) below its horizontal; ease over about 1°.
-  const sunlit = smoothstep(-0.5 * DEG, 0.5 * DEG, Math.asin(sunHeight) + Math.acos(1 / (1 + altitude)));
-  const tint = NIGHT_TINT.clone().lerp(WHITE, sunlit);
-  materials.forEach((m, i) => {
-    m.color.copy(colors[i]!).multiply(tint);
-    m.opacity = opacity;
-  });
   prop.opacity = PROP_OPACITY * opacity;
-  // Lights show from civil dusk (Sun 2° below the ground's horizon) and are full by 12° below.
   const uniforms = lamps.uniforms;
-  uniforms.uNight!.value = (1 - smoothstep(Math.sin(-12 * DEG), Math.sin(-2 * DEG), sunHeight)) * opacity;
+  uniforms.uNight!.value = light.lamps * opacity;
   uniforms.uTime!.value = clock;
   uniforms.uPixelRatio!.value = pixelRatio;
   const matrix = model.matrix;
@@ -150,5 +154,7 @@ export function Aircraft({
   matrix.scale(new THREE.Vector3(size, size, size));
   matrix.setPosition(up[0] * r, up[1] * r, up[2] * r);
   model.matrixWorldNeedsUpdate = true;
-  return <primitive object={model} />;
+  const center = bounds.center.clone().applyMatrix4(matrix);
+  lighting.update(light, opacity, { center: [center.x, center.y, center.z], radius: bounds.radius * size * 1.02 });
+  return <primitive object={plane.root} />;
 }

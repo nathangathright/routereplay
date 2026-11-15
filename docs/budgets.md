@@ -46,7 +46,7 @@ An airport takes about 40–60 tiles: 0.35–1.4 MiB at standard (Tokyo's is lig
 
 In Chrome's phone emulation (390×844, low quality, Fast 4G), JFK → BOS showed its first frame after 3.23 s instead of 2.86 s (median of three cold loads each), for the 311 KiB of tiles it needed first (322 KiB since the November 13 rebuild).
 
-**Clouds** add about 240 KB per model step (cloud water plus 700 hPa wind, as GRIB2), cached for a year in the browser and at the edge: about 0.5–0.7 MB when the homepage opens, then about 10 KB/s while it stays on screen, and about 1 MB for a short journey (24 steps, about 5.8 MB, at most). These figures are from November 12, 2026 and were not part of the earlier device measurements below.
+**Clouds** add about 430 KB per model step (400–470 KB: cloud water, the 700 hPa wind, and since November 13, 2026 the high layer's ice at three levels and the 250 hPa wind, as GRIB2), cached for a year in the browser and at the edge. That is about 0.9–1.4 MB when the homepage opens, then about 18 KB/s while it stays on screen, about 2 MB for a short journey, and at most about 10.5 MB (24 steps). Before the high layer a step was about 240 KB (190–245 KB): 0.5–0.7 MB on opening the homepage, 10 KB/s after, and 5.8 MB at most. The high layer adds 210–225 KB per step ([decisions.md](decisions.md#a-high-cloud-layer)). These figures were not part of the earlier device measurements below.
 
 **Relief** (November 12, 2026) is heavy: on standard its 1,871 KiB is more than the day texture and roughly doubles the set, and on low its 393 KiB adds 55–68 %. It was not part of the device measurements above; [assets.md](assets.md) explains the size.
 
@@ -73,6 +73,51 @@ Airport labels add little per frame: each split-flap panel is a canvas texture r
 
 Run-to-run spread is about ±10 %. The cloud shader dropped an extra cubic read of the cloud field per light (10 texture reads, 20 under moonlight) and gained about 30 arithmetic operations. The shadow adds a few uniform tests per ground, cloud, and air pixel, plus one texture read near the aircraft.
 
+**One linear composite** (November 13, 2026; [decisions.md](decisions.md#one-linear-composite-tone-mapped-once)) costs about 3 ms a frame at 2560×1440 and 0.2–0.3 ms at a phone's 390×844 on this laptop's GPU (a third run of the shipped build alone gave +2.2 and +0.27 ms). Measured with the GPU's timer in headless Chrome on the M1 Max, over the same 36 frames (2–9 s, every 0.2 s) of the three test journeys, seeked one by one on a paused watch page. Playback wasn't used, because the slower variants made the player step down to low quality. Each figure is the mean over the three journeys of the median frame, from two passes run in turn. Another agent's browser shared the GPU during these runs, so absolute times are higher than in the table above and vary by about ±10 %; compare within the table.
+
+| Variant | 1280×720 at DPR 2 (2560×1440) | 390×844 at DPR 3, low quality (390×844) |
+| --- | --- | --- |
+| Before: each layer tone mapped | 11.2 ms | 1.38 ms |
+| Fallback in the new build (`?display-referred`) | 10.6 ms | 1.31 ms |
+| Linear, air as one grey draw | 13.3 ms | 1.53 ms |
+| **Linear, air's transmittance per colour (shipped)** | **14.2 ms** | **1.59 ms** |
+| Linear, air split at the cloud deck (four draws) | 16.4 ms | 1.99 ms |
+| The same without multisampling the half-float target | 13.4 ms | — |
+
+- **Where the time goes:**
+  - The half-float target, its resolve, and the tone-map pass: about 2.7 ms at 2560×1440 (one grey draw against the fallback). Dropping the target's multisampling saves about 3 ms (the last two rows), so nearly all of that cost is the 4× multisampled half-float target.
+  - The transmittance draw: 0.9 ms.
+  - Restoring the depth: too little to measure.
+- **iPhone:** not measured. The real-device budget above (17 ms frames, 29.8 of 30 composition frames) predates this. At the phone's resolution the change adds about 15 % of GPU time on this laptop. Check it with `?measure` on a device before relying on it.
+
+**The aircraft in the scene's own light** (November 13, 2026; [decisions.md](decisions.md#the-aircraft-in-the-scenes-own-light)) adds one shadow pass of the airframe per aircraft and a heavier paint shader. Measured as above, but with the builds before and after served side by side and alternated in one browser session, so both see the same load. Each figure is the median over rounds of the median frame of 6 seconds of playback. The machine was shared with other renders, and the same build varied by up to ±1.5 ms between rounds.
+
+| Journey | 1280×720 at DPR 1: before | after | 1280×720 at DPR 2: before | after | 390×844 phone: before | after |
+| --- | --- | --- | --- | --- | --- | --- |
+| London–Frankfurt, through sunset | 7.0 ms | 7.1 ms | 9.3 ms | 10.1 ms | 1.5 ms | 1.8 ms |
+| Singapore–Hong Kong, midday over cloud | 6.0 ms | 5.7 ms | 10.7 ms | 9.9 ms | 1.3 ms | 1.4 ms |
+| New York–London, full Moon | 6.5 ms | 6.5 ms | | | | |
+| London–Frankfurt–Munich, the stop where an A320 dissolves into a 787 | 6.6 ms | 6.6 ms | 10.8 ms | 11.9 ms | 1.4 ms | 1.6 ms |
+| Auckland–Wellington, then the ferry to Picton at dusk | 6.3 ms | 5.5 ms | | | | |
+
+The one consistent difference is at DPR 2 at a stop where one type dissolves into the next: about +1 ms, in two sessions. There, two airframes draw large at the airport's zoom, each with its own shadow pass. Freezing the shadow maps in the page to isolate their passes moved GPU time by less than this machine's run-to-run spread, so the cost isn't pinned down. The phone viewport is the player's own choice of quality at 390×844, DPR 3. On the CPU the light costs about 4 µs a frame, and reading the day map's colour back from the GPU about 10 ms once per texture. Re-measure on the iPhone.
+
+**Sky light, cellular billows, and the high cloud layer** (November 13, 2026; [decisions.md](decisions.md#sky-light-on-clouds)). GPU time per rendered frame from the GPU's own timer, measured as above but timing everything a frame's `requestAnimationFrame` callbacks submit, on a shared M1 Max under heavy load from other work (load average 6–65). So compare within this table, not with the one above. Each range covers four 7-second plays (frames 2–9 s): two in each of two rounds, with the four builds run in turn and then in reverse.
+
+| Journey (frames 2–9 s), 1280×720 at DPR 2 | Before | + sky light | + cellular billows | + high layer |
+| --- | --- | --- | --- | --- |
+| London–Frankfurt, low Sun over broken cloud | 10.1–12.6 ms | 12.4–13.6 ms¹ | 12.1–12.7 ms | 12.3–14.4 ms |
+| Singapore–Hong Kong, midday over cloud | 12.1–12.9 ms | 10.4–14.2 ms | 13.4–13.8 ms | 12.5–13.7 ms |
+| London–Johannesburg, whole globe mid-flight | 9.9–12.3 ms | 10.8–11.1 ms | 13.2–14.3 ms | 12.6–16.1 ms |
+
+¹ Two of the four plays (3.4 and 4.8 ms) are left out: that load drew no clouds.
+
+The 95th percentiles went from 15–35 ms before to 22–32 ms with all three. Sky light didn't measurably change GPU time. The billows cost about 1–2 ms in the whole-globe view, where the 1 MiB texture is read at many scales at once. The high layer adds 0–2 ms to the median, one more blended shell over the globe. In Chrome's phone emulation (390×844 at DPR 3) the medians went from 1.3–2.4 ms to 1.7–2.5 ms and the 95th percentiles from 2.6–7.8 ms to 2.9–9.4 ms. Re-measure on the iPhone before relying on these numbers.
+
+**Carving without the grid** (November 14, 2026; [decisions.md](decisions.md#cellular-billows-with-real-gaps)). The same journeys, measured the same way, interleaved against the build above (four desktop plays and four phone plays each). Desktop medians stayed within run-to-run spread: low Sun 14.4–15.7 ms (before 13.9–15.9), midday 13.3–16.0 ms (13.4–17.0), whole globe 12.7–15.4 ms (15.8–16.7). In phone emulation they rose 0–0.4 ms, from 1.6–1.9 ms to 1.7–2.1 ms. A first version kept four separate uniform tables, looked up per copy, and nudged the finer octave with a dependent texture read. It cost 0.5–0.9 ms more in phone emulation, so the tables were packed into one vec4 per level and the nudge was dropped.
+
+**The air and clouds in the ground's units** (November 14, 2026; [decisions.md](decisions.md#the-air-and-clouds-in-the-grounds-units)) add a few operations per pixel to the air's transmittance draw and one division per cloud pixel. Measured as above (7 seconds of playback from 2 s, everything a frame's `requestAnimationFrame` callbacks submit), the builds before and after alternated four times in one browser, with the machine's load average at 15–17. Medians stayed within run-to-run spread. At 1280×720, DPR 2: Singapore–Hong Kong 13.1–14.8 ms before and 13.7–14.8 ms after; London–Frankfurt at low Sun 13.8–14.8 and 13.9–14.8 ms. In phone emulation (390×844, DPR 3), Singapore–Hong Kong went from 1.91–1.96 to 1.92–1.99 ms. Export of the same 10.3 s journey at 720p took 6.1 s, as before.
+
 CPU throttling does not slow the GPU, so the emulated-phone frame times are optimistic. The player steps down from standard to low automatically if playback stays below 20 fps for 3 seconds. Timing is unaffected.
 
 ## GPU memory (estimated, not measured)
@@ -84,8 +129,11 @@ The textures are the dominant allocation. RGBA8 plus mipmaps is about 1.33 × wi
 - The water mask has the day texture's size but keeps one channel (`RedFormat`), a quarter of RGBA: 11 MiB at 4096×2048 and 43 MiB at 8192×4096.
 - The relief map is uploaded as two channels (RG8): 24 MiB standard (4320×2160), 6 MiB low (2160×1080).
 - Night-detail tiles share one texture array, one channel (R8) with mipmaps: 0.47 MiB per tile at standard (608×608), 0.12 MiB at low (304×304). An airport's 40–60 tiles take 19–28 MiB at standard and 5–7 MiB at low; the 128-tile cap is 60 MiB and 15 MiB. three.js also keeps a copy of the array in JavaScript memory, three quarters of those figures. Journeys allocate exactly the tiles they plan; the homepage allocates none.
+- Clouds: each loaded weather step holds an RG8 cloud texture and an RGBA8 wind texture on the 1° grid, 382 KiB (191 KiB before the high layer). A journey keeps at most 24 steps, 9.0 MiB; the homepage frees each step it has passed. The cellular billow texture is 64³ RGBA8, 1 MiB (the value noise it replaced was 128 KiB), and the sky-light table 3 KiB.
 - The homepage shows the low set first. Two seconds after the standard set is on screen it frees the low set's GPU copies.
-- Framebuffers at 1280×720 with DPR 2 add about 30 MiB.
+- Framebuffers at 1280×720 with DPR 2 add about 30 MiB (without counting multisampling).
+- The linear composite's half-float target (November 13, 2026): RGBA16F with 4× multisampling, a multisampled depth buffer, and the resolved colour and depth textures. That is about 211 MiB at 2560×1440 (1280×720 at DPR 2), 119 MiB for a 1080p export's context, 53 MiB at 720p, and 19 MiB on a phone at 390×844 and DPR 1. Without multisampling it would be about a fifth of that.
+- Each aircraft's self-shadow maps are 512² (a 32-bit depth texture and an RGBA8 colour attachment: 2 MiB a map), one for the Sun and one for the night key once it is used: 2–4 MiB per aircraft, up to 12 MiB on the homepage. They are freed with their plane.
 - During export, a second WebGL context temporarily holds a standard set as well.
 
 Phones start at low quality.
@@ -98,6 +146,7 @@ Phones start at low quality.
 | 19 s, 720×720, follow camera | 570 | 9 s |
 | 20 s, 1280×720, globe camera | 600 | 9 s |
 | **20 s, 720×1280, follow camera, real iPhone** | 600 | 10.3 s render and encode (11.1 s with check and probe), 3.1 MB |
+| 10.3 s, 1280×720, Singapore–Hong Kong, headless Chrome, linear composite (November 13, 2026) | 309 | 6.2 s (the build before it: 6.1–6.4 s) |
 
 Export runs faster than real time on this laptop. Slower devices may take longer than the clip's length; the panel shows progress and supports cancellation.
 
@@ -199,6 +248,8 @@ An airport lookup (`GET /api/v1/airports/AKL`) sent after 20 s to 4 minutes of i
 | Weather fields from NOAA, warm (code unchanged; a smaller heap or noise) | 6.3 ms | 3.7 ms |
 
 Production figures after the change: not yet measured (needs a deploy).
+
+**Weather fields with the high cloud layer** (November 13, 2026; [decisions.md](decisions.md#a-high-cloud-layer)): a step is now eight messages in six range requests, made in parallel, about 430 KB instead of 240 KB. Measured the coarse way, as the CPU time of the local workerd process (`wrangler dev`) over 12 requests for steps it hadn't cached, both versions took about 3.3 ms per request, and 1.7–2.5 ms once cached. At that resolution (±1 ms) the change didn't show. Process time includes the runtime's own I/O, which Cloudflare doesn't bill, so this bounds the Worker's share from above. The index search is unchanged (five more patterns over the same 743 lines). Buffering and joining the larger body is the part that grows with size. If production `cpuTime` shows weather requests near 10 ms, piping the ranges into the response as a stream would avoid copying them in JavaScript. Not yet measured in production.
 
 **Storyboards and seeks lay out airport labels** (renderer 2.2): one pass over every frame of the journey, about 1 ms for 18–30 s journeys and 3–4 ms for the 120 s maximum, warm, in Node. A storyboard, a seek, or an agent's read of a draft with an open preview pays it once per request. Not yet measured in workerd or production.
 

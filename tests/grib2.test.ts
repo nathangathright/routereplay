@@ -65,6 +65,8 @@ describe('decodeGrib2: GFS 1° total cloud cover', () => {
       category: reference.category,
       parameter: reference.parameter,
       productTemplate: 0,
+      surfaceType: 10, // entire atmosphere
+      surfaceValue: 0,
       referenceTime: reference.referenceTime,
       forecastHours: reference.forecastHours,
       forecastEndHours: reference.forecastHours,
@@ -164,5 +166,36 @@ describe('decodeGrib2: errors', () => {
   it('rejects truncated input and non-GRIB bytes', () => {
     expect(() => decodeGrib2(gfs.subarray(0, 1000))).toThrow(/declares 70567 bytes but only 1000 are present/);
     expect(() => decodeGrib2(new TextEncoder().encode('<Error>NoSuchKey</Error>'))).toThrow(/no "GRIB" message/);
+  });
+});
+
+describe('decodeGrib2: an isobaric level (GFS 1° ice mixing ratio at 200 hPa)', () => {
+  const ice = new Uint8Array(readFileSync(new URL('./fixtures/gfs-icmr-200mb-1p00.grb2', import.meta.url).pathname));
+  const iceReference = JSON.parse(readFileSync(new URL('./fixtures/gfs-icmr-200mb-1p00.reference.json', import.meta.url).pathname, 'utf8')) as {
+    category: number;
+    parameter: number;
+    surfaceType: number;
+    surfaceValue: number;
+    mean: number;
+    max: number;
+    samples: [number, number][];
+  };
+  const [field] = decodeGrib2(ice);
+
+  it('reports the parameter and its level (type 100, in Pa) as eccodes does', () => {
+    expect(field).toMatchObject({
+      discipline: 0,
+      category: iceReference.category,
+      parameter: iceReference.parameter,
+      surfaceType: iceReference.surfaceType,
+      surfaceValue: iceReference.surfaceValue,
+    });
+  });
+
+  it('matches eccodes values', () => {
+    let sum = 0;
+    for (const v of field!.values) sum += v;
+    expect(sum / field!.values.length).toBeCloseTo(iceReference.mean, 9);
+    for (const [i, v] of iceReference.samples) expect(field!.values[i]!).toBeCloseTo(v, 9);
   });
 });

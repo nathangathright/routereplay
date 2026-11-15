@@ -834,7 +834,7 @@ function index(origin: string): Response {
       'GET /api/v1/publications/{id}',
       'GET /api/v1/publications/{id}/storyboard',
       'GET /api/v1/publications/{id}/storyboard.svg',
-      'GET /api/v1/weather/gfs/{cycle}/{hour}',
+      'GET /api/v1/weather/gfs-layers/{cycle}/{hour}',
     ],
     next: [`Read ${origin}/agent-docs before creating a journey.`],
   }, 200, { 'cache-control': 'public, max-age=300' });
@@ -958,7 +958,7 @@ export async function routeApi(request: Request, env: Env, ctx: Ctx, now = Date.
     if (m !== 'GET' && m !== 'HEAD') throw methodNotAllowed(['GET']);
     return readPublication(request, env, id, origin);
   }
-  if (resource === 'weather' && id === 'gfs' && sub && subId && parts.length === 6) {
+  if (resource === 'weather' && id === 'gfs-layers' && sub && subId && parts.length === 6) {
     if (m !== 'GET' && m !== 'HEAD') throw methodNotAllowed(['GET']);
     return weatherFieldsOp(request, sub, subId, now, ctx.waitUntil?.bind(ctx));
   }

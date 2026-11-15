@@ -1,20 +1,14 @@
 import { useThree } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { cross, dot, normalize, smoothstep, sub } from '../../shared/geo/vec';
+import { cross, normalize, smoothstep, sub } from '../../shared/geo/vec';
 import type { SurfaceMode } from '../../shared/scene/constants';
 import type { SceneState, Timeline } from '../../shared/timeline/evaluate';
 import { bodyOnPath, vehiclePlace } from '../../shared/timeline/journeyPath';
+import { type CraftLight, levelLight } from './craftLight';
+import { CraftLighting } from './craftPaint';
 import { vehicleModel } from './vehicles';
 
-const DEG = Math.PI / 180;
-/** Albedo multiplier at night, as the aircraft's: a faint cool light instead of sunlight through the planet. */
-const NIGHT_TINT = new THREE.Color(0.16, 0.18, 0.24);
-/**
- * In daylight, a little brighter than the paint: the aircraft is drawn before the atmosphere, which adds sky
- * light over it, and the vehicles after it (to cover the airport dots), so this keeps white roofs as white.
- */
-const DAY_TINT = new THREE.Color(1.2, 1.2, 1.2);
 const FOAM = new THREE.Color(0.9, 0.94, 1);
 /** Radius the vehicles stand at: on the route ribbon (1.0015). */
 const GROUND = 1.0016;
@@ -65,7 +59,7 @@ interface Kit {
   root: THREE.Object3D;
   bodies: THREE.Object3D[];
   lampPoints: THREE.Points[];
-  paint: THREE.MeshStandardMaterial;
+  lighting: CraftLighting;
   lamps: THREE.ShaderMaterial;
   shadow: THREE.MeshBasicMaterial;
   wake: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial> | null;
@@ -73,21 +67,22 @@ interface Kit {
 
 function buildKit(mode: SurfaceMode): Kit {
   const model = vehicleModel(mode);
-  // Hashed alpha dissolves one craft into the next without sorting faces, as on the aircraft. The material is
-  // `transparent` only to draw in the same pass as the label sprites, between the airport dots and the label
-  // panels; its blending writes colour opaquely and leaves the frame's alpha alone.
-  const paint = new THREE.MeshStandardMaterial({
-    vertexColors: true,
-    roughness: 0.5,
-    metalness: 0.1,
-    alphaHash: true,
-    transparent: true,
-    blending: THREE.CustomBlending,
-    blendSrc: THREE.OneFactor,
-    blendDst: THREE.ZeroFactor,
-    blendSrcAlpha: THREE.ZeroFactor,
-    blendDstAlpha: THREE.OneFactor,
-  });
+  // Lit as the aircraft are (craftPaint.ts), without shadow maps: a vehicle is a few dozen pixels long. Hashed alpha
+  // dissolves one craft into the next without sorting faces. The material is `transparent` only to draw in the same
+  // pass as the label sprites, between the airport dots and the label panels; its blending writes colour opaquely and
+  // leaves the frame's alpha alone.
+  const lighting = new CraftLighting(false);
+  const paint = lighting.paint(
+    { vertexColors: true, roughness: 0.5, metalness: 0.1 },
+    {
+      transparent: true,
+      blending: THREE.CustomBlending,
+      blendSrc: THREE.OneFactor,
+      blendDst: THREE.ZeroFactor,
+      blendSrcAlpha: THREE.ZeroFactor,
+      blendDstAlpha: THREE.OneFactor,
+    },
+  );
   const lamps = new THREE.ShaderMaterial({
     uniforms: { uNight: { value: 0 }, uShortSide: { value: 1 } },
     vertexShader: lampVertex,
@@ -100,11 +95,13 @@ function buildKit(mode: SurfaceMode): Kit {
   const shadow = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, toneMapped: false });
   // An Object3D rather than a Group, so the parts sort with the label sprites by their own render order.
   const root = new THREE.Object3D();
+  root.add(lighting.root);
   const lampPoints: THREE.Points[] = [];
   const bodies = model.bodies.map((b) => {
     const o = new THREE.Object3D();
     o.matrixAutoUpdate = false;
     const mesh = new THREE.Mesh(b.geometry, paint);
+    lighting.attach(mesh, false);
     mesh.renderOrder = ORDER.body;
     mesh.frustumCulled = false;
     const points = new THREE.Points(b.lamps, lamps);
@@ -138,7 +135,7 @@ function buildKit(mode: SurfaceMode): Kit {
     wake.frustumCulled = false;
     root.add(wake);
   }
-  return { root, bodies, lampPoints, paint, lamps, shadow, wake };
+  return { root, bodies, lampPoints, lighting, lamps, shadow, wake };
 }
 
 /**
@@ -146,7 +143,7 @@ function buildKit(mode: SurfaceMode): Kit {
  * is the frame's short side in world units at the ground, the unit the models are built in. Each body stands
  * with its front and rear on its own leg's route, so it points along the road, rail, or ferry line, and a
  * train's cars follow its locomotive; at a connection it carries straight on past the station rather than onto
- * the next leg's line. Lit by the Sun (`state.sun`) like the aircraft, with lamps after dusk.
+ * the next leg's line. Lit by `light` like the aircraft (craftLight.ts), with lamps after dusk.
  * `opacity` below 1 dissolves it into or out of the next craft at a connection.
  */
 export function Vehicle({
@@ -154,12 +151,14 @@ export function Vehicle({
   timeline,
   state,
   shortSide,
+  light,
   opacity = 1,
 }: {
   mode: SurfaceMode;
   timeline: Timeline;
   state: SceneState;
   shortSide: number;
+  light: CraftLight;
   opacity?: number;
 }) {
   const kit = useMemo(() => buildKit(mode), [mode]);
@@ -167,7 +166,7 @@ export function Vehicle({
   // A vehicle that leaves frees what it owns; the shared model geometry stays for the next one.
   useEffect(
     () => () => {
-      kit.paint.dispose();
+      kit.lighting.dispose();
       kit.lamps.dispose();
       kit.shadow.dispose();
       kit.wake?.geometry.dispose();
@@ -177,14 +176,10 @@ export function Vehicle({
   );
 
   const model = vehicleModel(mode);
-  const sunHeight = dot(state.aircraft.ground, state.sun);
-  const sunlit = smoothstep(-0.5 * DEG, 0.5 * DEG, Math.asin(Math.max(-1, Math.min(1, sunHeight))));
-  const tint = NIGHT_TINT.clone().lerp(DAY_TINT, sunlit);
-  kit.paint.color.copy(tint);
-  kit.paint.opacity = opacity;
+  kit.lighting.update(light, opacity);
   kit.shadow.opacity = opacity;
   // Lamps show from civil dusk (Sun 2° below the horizon) and are full by 12° below, as the aircraft's.
-  const night = (1 - smoothstep(Math.sin(-12 * DEG), Math.sin(-2 * DEG), sunHeight)) * opacity;
+  const night = light.lamps * opacity;
   kit.lamps.uniforms.uNight!.value = night;
   kit.lamps.uniforms.uShortSide!.value = shortSidePx;
   for (const p of kit.lampPoints) p.visible = night > 0.002;
@@ -223,7 +218,8 @@ export function Vehicle({
       const pos = kit.wake.geometry.getAttribute('position') as THREE.BufferAttribute;
       const col = kit.wake.geometry.getAttribute('color') as THREE.BufferAttribute;
       const rows = Array.from({ length: WAKE_ROWS + 1 }, (_, j) => path.at(stern - (j / WAKE_ROWS) * reach));
-      const foam = FOAM.clone().multiply(tint);
+      // Foam is lit as level white water: the light falling on it from above.
+      const foam = FOAM.clone().multiply(new THREE.Color(...levelLight(light)));
       const k = WAKE_PROFILE.length;
       rows.forEach((c, j) => {
         const ahead = rows[Math.max(0, j - 1)]!;

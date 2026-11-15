@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import type { Vec3 } from '../../shared/geo/vec';
 import type { EarthTextures } from './assets';
 import { CLOUD_GLSL, CLOUD_RADIUS, type CloudFrame, cloudUniforms, setCloudUniforms } from './Clouds';
+import { sceneDefines, useLinearScene } from './display';
 import { AIR_GLSL, ATMOSPHERE_TOP, CITY_GLSL, LIGHT_GLSL, type SkyLights, lightUniforms, setLightUniforms } from './lighting';
 import { NIGHT_DETAIL_GLSL, type NightDetailTextures, nightDetailUniforms, setNightDetailUniforms } from './nightDetail';
 import { PLANE_SHADOW_GLSL, type ShadowCaster, planeShadowUniforms, setPlaneShadowUniforms } from './planeShadow';
@@ -85,12 +86,12 @@ vec3 skyRadiance(vec3 n, vec3 r, vec3 s, vec3 sunTau) {
   return SOLAR_RADIANCE * (BETA_R * col.x * airPhase(c) + BETA_M * col.y * hazePhase(c)) * exp(-sunTau) * along;
 }
 
-// Cloud between this ground point g and a light in direction s: where the beam crosses the cloud layer.
-// Direct light keeps at least 46 % under thick cloud, as in routereplay's cloud_shadow.
+// Cloud between this ground point g and a light in direction s: where the beam crosses the cloud layer, and the
+// high layer above it. Direct light keeps at least 46 % under thick cloud, as in routereplay's cloud_shadow.
 float cloudShadow(vec3 g, vec3 s) {
   float gs = dot(g, s);
   vec3 shell = normalize(g + s * (-gs + sqrt(gs * gs + ${(CLOUD_RADIUS * CLOUD_RADIUS - 1).toFixed(6)})));
-  return 1.0 - 0.54 * cloudOpacity(shell, false);
+  return (1.0 - 0.54 * cloudOpacity(shell, false)) * cirrusShadow(g, s);
 }
 
 // The ground's normal tilted by its relief, from NOAA ETOPO 2022 heights exaggerated 12× as in the offline renderer
@@ -177,6 +178,28 @@ void main() {
 `;
 
 /**
+ * The view ray's path through the air, in Earth radii along it: from where it enters the air to its lowest point
+ * (x to y), and from there to the ground or out to space (y to z). Splitting at the lowest point means every column
+ * is taken looking up. A ray that meets the ground ends before its lowest point. False where the ray misses the air.
+ */
+const AIR_PATH_GLSL = /* glsl */ `
+bool airPath(vec3 ro, vec3 rd, out vec3 path, out float tGround) {
+  vec2 shell = sphere(ro, rd, TOP);
+  tGround = -1.0;
+  if (shell.y <= 0.0) return false;
+  float t0 = max(shell.x, 0.0);
+  float t1 = shell.y;
+  vec2 ground = sphere(ro, rd, 1.0);
+  if (ground.y > ground.x && ground.x > 0.0) {
+    tGround = ground.x;
+    t1 = min(t1, tGround);
+  }
+  path = vec3(t0, clamp(-dot(ro, rd), t0, t1), t1);
+  return true;
+}
+`;
+
+/**
  * Single scattering by air (Rayleigh) and haze (Mie) with the offline renderer's constants (routereplay
  * atmosphere.py): heights spread 7.2× with extinction divided by 7.2, so vertical optical depth stays
  * physical; Henyey–Greenstein haze with g = 0.76; sunlight reddened by its path and blocked by the Earth with
@@ -190,20 +213,19 @@ uniform vec3 sunDir;
 varying vec3 vPos;
 varying vec3 vCamera;
 ${AIR_GLSL}
+${AIR_PATH_GLSL}
 ${PLANE_SHADOW_GLSL}
 
 void main() {
   vec3 ro = vCamera;
   vec3 rd = normalize(vPos - vCamera);
   vec3 s = normalize(sunDir);
-  vec2 shell = sphere(ro, rd, TOP);
-  if (shell.y <= 0.0) discard;
-  float t0 = max(shell.x, 0.0);
-  float t1 = shell.y;
-  vec2 ground = sphere(ro, rd, 1.0);
-  if (ground.y > ground.x && ground.x > 0.0) t1 = min(t1, ground.x);
-  // Split the path at its lowest point, so every column is taken looking up.
-  float tLow = clamp(-dot(ro, rd), t0, t1);
+  vec3 path;
+  float tGround;
+  if (!airPath(ro, rd, path, tGround)) discard;
+  float t0 = path.x;
+  float tLow = path.y;
+  float t1 = path.z;
 
   float mu = dot(rd, s);
   float phaseR = airPhase(mu);
@@ -239,13 +261,45 @@ void main() {
   light *= SOLAR_RADIANCE;
   // The air over an aircraft's shadow is shaded with it (a stylized shadow volume), so the shadow shows through
   // the haze instead of being washed out by it.
-  if (ground.y > ground.x && ground.x > 0.0) light *= planeShadow(normalize(ro + rd * ground.x));
-  // What lies behind (ground, clouds, stars) shows through the air's transmittance.
+  if (tGround > 0.0) light *= planeShadow(normalize(ro + rd * tGround));
+  // In linear light this is added over what the transmittance draw let through (display.tsx). Drawn straight to the
+  // frame, what lies behind (ground, clouds, stars) shows through one grey transmittance instead: the alpha.
   vec3 through = exp(-tau);
   float cover = 1.0 - dot(through, vec3(0.2126, 0.7152, 0.0722));
   gl_FragColor = vec4(light, cover);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
+}
+`;
+
+/**
+ * The air's transmittance along each view ray, colour by colour, which multiplies what lies behind it before the
+ * in-scattered light is added. The march sums its segments' optical depth; the segments telescope, so the total is
+ * four Chapman columns, two on each side of the ray's lowest point, without the march's sunlight.
+ *
+ * Where the ray ends on the ground or a cloud, the air dims what lies behind by its diffuse transmittance
+ * (surfaceExtinction in AIR_GLSL): light it scatters forward out of the ray is made up by the surface's light from
+ * beside the ray. Rays that pass over the limb, to the stars and the Moon, lose all of it. The two meet over the
+ * cloud deck's height, so clouds standing above the limb change smoothly.
+ */
+const transmittanceFragment = /* glsl */ `
+varying vec3 vPos;
+varying vec3 vCamera;
+${AIR_GLSL}
+${AIR_PATH_GLSL}
+
+void main() {
+  vec3 ro = vCamera;
+  vec3 rd = normalize(vPos - vCamera);
+  vec3 path;
+  float tGround;
+  if (!airPath(ro, rd, path, tGround)) discard;
+  vec3 low = ro + rd * path.y;
+  vec2 down = path.y > path.x ? max(columnUp(low, -rd) - columnUp(ro + rd * path.x, -rd), vec2(0.0)) : vec2(0.0);
+  vec2 up = path.z > path.y ? max(columnUp(low, rd) - columnUp(ro + rd * path.z, rd), vec2(0.0)) : vec2(0.0);
+  vec2 col = down + up;
+  float surface = tGround > 0.0 ? 1.0 : 1.0 - smoothstep(1.0, ${CLOUD_RADIUS.toFixed(4)}, length(low));
+  gl_FragColor = vec4(exp(-mix(extinction(col), surfaceExtinction(col), surface)), 1.0);
 }
 `;
 
@@ -270,9 +324,11 @@ export function Earth({
   detail?: NightDetailTextures | null;
   shadows?: readonly ShadowCaster[];
 }) {
+  const linear = useLinearScene();
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
+        defines: sceneDefines(linear),
         uniforms: {
           dayMap: { value: textures.day },
           nightMap: { value: textures.night },
@@ -286,7 +342,7 @@ export function Earth({
         vertexShader: earthVertex,
         fragmentShader: earthFragment,
       }),
-    [textures],
+    [textures, linear],
   );
   setLightUniforms(material.uniforms, lights);
   setCloudUniforms(material.uniforms, clouds);
@@ -303,30 +359,62 @@ export function Earth({
  * The air around the Earth, drawn over the ground, clouds, and sky behind it (and under planes, routes, and
  * labels): blue by day, white toward the limb, red where sunlight grazes through the terminator, with the
  * Earth's shadow cast on it, and the aircraft's (`shadows`, see planeShadow.ts). `sun` is in the Earth's own frame.
+ *
+ * In linear light (display.tsx) it takes two draws: its transmittance multiplies what lies behind, colour by colour,
+ * then its in-scattered light is added. Drawn straight to the frame instead, it is one premultiplied draw with a grey
+ * transmittance, since blending can't multiply by one colour and add another in one pass.
  */
 export function Atmosphere({ sun, segments, shadows = [] }: { sun: Vec3; segments: number; shadows?: readonly ShadowCaster[] }) {
-  const material = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        uniforms: { sunDir: { value: new THREE.Vector3() }, ...planeShadowUniforms() },
-        vertexShader: atmosphereVertex,
-        fragmentShader: atmosphereFragment,
-        side: THREE.BackSide,
-        // Drawn over the ground and clouds wherever the air is, so it ignores their depth; premultiplied:
-        // in-scattered light plus what shows through.
-        depthTest: false,
-        depthWrite: false,
-        blending: THREE.CustomBlending,
-        blendSrc: THREE.OneFactor,
-        blendDst: THREE.OneMinusSrcAlphaFactor,
-      }),
-    [],
-  );
-  (material.uniforms.sunDir!.value as THREE.Vector3).set(sun[0], sun[1], sun[2]);
-  setPlaneShadowUniforms(material.uniforms, shadows, sun);
+  const linear = useLinearScene();
+  const draws = useMemo(() => atmosphereDraws(linear), [linear]);
+  const geometry = useMemo(() => new THREE.SphereGeometry(ATMOSPHERE_TOP, segments, Math.round(segments / 2)), [segments]);
+  useEffect(() => () => draws.forEach((d) => d.material.dispose()), [draws]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  const light = draws[draws.length - 1]!.material;
+  (light.uniforms.sunDir!.value as THREE.Vector3).set(sun[0], sun[1], sun[2]);
+  setPlaneShadowUniforms(light.uniforms, shadows, sun);
   return (
-    <mesh material={material} renderOrder={0.75}>
-      <sphereGeometry args={[ATMOSPHERE_TOP, segments, Math.round(segments / 2)]} />
-    </mesh>
+    <>
+      {draws.map((d) => (
+        <mesh key={d.order} geometry={geometry} material={d.material} renderOrder={d.order} />
+      ))}
+    </>
   );
+}
+
+/** The atmosphere's draws, in order: in linear light its transmittance, then its light; otherwise its light alone. */
+function atmosphereDraws(linear: boolean): { order: number; material: THREE.ShaderMaterial }[] {
+  const base = {
+    vertexShader: atmosphereVertex,
+    side: THREE.BackSide,
+    // Drawn over the ground and clouds wherever the air is, so it ignores their depth.
+    depthTest: false,
+    depthWrite: false,
+    blending: THREE.CustomBlending,
+  } as const;
+  const light = new THREE.ShaderMaterial({
+    ...base,
+    defines: sceneDefines(linear),
+    uniforms: { sunDir: { value: new THREE.Vector3() }, ...planeShadowUniforms() },
+    fragmentShader: atmosphereFragment,
+    // In linear light the in-scattered light is added; otherwise premultiplied: light plus what shows through.
+    blendSrc: THREE.OneFactor,
+    blendDst: linear ? THREE.OneFactor : THREE.OneMinusSrcAlphaFactor,
+    blendSrcAlpha: linear ? THREE.ZeroFactor : null,
+    blendDstAlpha: linear ? THREE.OneFactor : null,
+  });
+  if (!linear) return [{ order: 0.75, material: light }];
+  const transmittance = new THREE.ShaderMaterial({
+    ...base,
+    fragmentShader: transmittanceFragment,
+    // What lies behind, times the transmittance; the alpha is left alone.
+    blendSrc: THREE.ZeroFactor,
+    blendDst: THREE.SrcColorFactor,
+    blendSrcAlpha: THREE.ZeroFactor,
+    blendDstAlpha: THREE.OneFactor,
+  });
+  return [
+    { order: 0.74, material: transmittance },
+    { order: 0.75, material: light },
+  ];
 }

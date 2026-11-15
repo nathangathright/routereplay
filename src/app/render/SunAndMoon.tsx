@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import { EARTH_RADIUS_KM } from '../../shared/geo/greatCircle';
 import { type Vec3, scale } from '../../shared/geo/vec';
+import { SCENE_FROM_DISPLAY_GLSL, displayReferred, sceneFromDisplayUniforms } from './display';
 
 const DEG = Math.PI / 180;
 /** The Sun is drawn this far from the camera (Earth radii): beyond the stars, inside the far plane. */
@@ -104,6 +105,7 @@ void main() {
 `;
 
 const moonFragment = /* glsl */ `
+${SCENE_FROM_DISPLAY_GLSL}
 varying vec3 vNormalW;
 varying vec3 vPosW;
 varying vec3 vSunW;
@@ -116,7 +118,8 @@ void main() {
   float r = mu0 > 0.0 ? 0.65 * 2.0 * mu0 / (mu0 + mu + 1e-4) + 0.35 * mu0 : 0.0;
   // A trace of earthshine keeps the dark side from vanishing completely.
   vec3 color = vec3(1.0, 0.98, 0.94) * min(r * 0.72, 1.0) + vec3(0.010, 0.012, 0.018);
-  gl_FragColor = vec4(color, 1.0);
+  // A display value, like the stars': the Moon skips the camera's exposure and is dimmed only by the air in front.
+  gl_FragColor = vec4(sceneFromDisplay(color), 1.0);
   #include <colorspace_fragment>
 }
 `;
@@ -125,11 +128,13 @@ void main() {
 export function Moon({ position, sun }: { position: Vec3; sun: Vec3 }) {
   const material = useMemo(
     () =>
-      new THREE.ShaderMaterial({
-        uniforms: { sunDir: { value: new THREE.Vector3() } },
-        vertexShader: moonVertex,
-        fragmentShader: moonFragment,
-      }),
+      displayReferred(
+        new THREE.ShaderMaterial({
+          uniforms: { sunDir: { value: new THREE.Vector3() }, ...sceneFromDisplayUniforms() },
+          vertexShader: moonVertex,
+          fragmentShader: moonFragment,
+        }),
+      ),
     [],
   );
   (material.uniforms.sunDir!.value as THREE.Vector3).set(sun[0], sun[1], sun[2]);

@@ -30,6 +30,8 @@ Renderer 2.3 (November 13, 2026) draws a control tower at each airport and stops
 
 Renderer 2.4 (November 13, 2026) changes only the picture: airports go back to the ringed dot, the arrival ring is gone, the accent is an electric blue, and the aircraft's shadow softens with height ([decisions.md](decisions.md#no-towers-an-electric-blue-accent-and-shadows-that-soften-with-height)). The golden states and the storyboard fixture are unchanged. `evaluate` no longer returns arrival pulses or marks which labels are airports; neither was in the golden states.
 
+Renderer 2.5 (November 14, 2026) also changes only the picture: one linear composite tone mapped once, with the air's transmittance per colour ([decisions.md](decisions.md#one-linear-composite-tone-mapped-once)); sky light on clouds, cellular billows, and a high cloud layer from GFS ice ([decisions.md](decisions.md#sky-light-on-clouds)); and the aircraft and vehicles lit by the scene's own light, with self-shadows ([decisions.md](decisions.md#the-aircraft-in-the-scenes-own-light)). The golden states and the storyboard fixture are unchanged. Weather steps moved to `/api/v1/weather/gfs-layers/…`, because the old responses are cached as immutable.
+
 Pixel-identical output across GPUs is not promised. The golden states pin what is drawn, not how a GPU rasterizes it.
 
 ## Browsers

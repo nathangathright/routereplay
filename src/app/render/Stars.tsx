@@ -1,6 +1,7 @@
 import { useThree } from '@react-three/fiber';
 import { useMemo } from 'react';
 import * as THREE from 'three';
+import { SCENE_FROM_DISPLAY_GLSL, displayReferred, sceneFromDisplayUniforms } from './display';
 
 /** Mulberry32: small seeded PRNG so decorative randomness is reproducible. */
 export function mulberry32(seed: number) {
@@ -42,6 +43,7 @@ void main() {
 `;
 
 const starFragment = /* glsl */ `
+${SCENE_FROM_DISPLAY_GLSL}
 varying vec3 vColor;
 varying float vSigma;
 varying float vHalo;
@@ -51,7 +53,8 @@ void main() {
   float r2 = dot(p, p);
   float s2 = 2.0 * vSigma * vSigma;
   float intensity = exp(-r2 / s2) + vHalo * exp(-r2 / (25.0 * s2));
-  gl_FragColor = vec4(vColor * intensity, 1.0);
+  // A display value: stars skip the camera's exposure and tone mapping, and are dimmed only by the air in front.
+  gl_FragColor = vec4(sceneFromDisplay(vColor * intensity), 1.0);
   #include <colorspace_fragment>
 }
 `;
@@ -95,13 +98,15 @@ export function Stars({ seed, utcMs, count = 1600 }: { seed: number; utcMs: numb
   }, [seed, count]);
   const material = useMemo(
     () =>
-      new THREE.ShaderMaterial({
-        uniforms: { uPixelRatio: { value: 1 } },
-        vertexShader: starVertex,
-        fragmentShader: starFragment,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
+      displayReferred(
+        new THREE.ShaderMaterial({
+          uniforms: { uPixelRatio: { value: 1 }, ...sceneFromDisplayUniforms() },
+          vertexShader: starVertex,
+          fragmentShader: starFragment,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        }),
+      ),
     [],
   );
   material.uniforms.uPixelRatio!.value = pixelRatio;
