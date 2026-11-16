@@ -46,8 +46,22 @@ export type ExportPhase =
   | { kind: 'checking' }
   | { kind: 'exporting'; progress: number }
   | { kind: 'unsupported'; reasons: string[] }
-  /** `width` and `height`: the video's frame, in pixels. */
-  | { kind: 'done'; url: string; name: string; size: number; width: number; height: number }
+  /**
+   * `width` and `height`: the video's frame, in pixels. `samples`: jittered samples drawn per frame. `msPerFrame`:
+   * each frame's drawing and encoding; `seconds` the whole render and `projectedSeconds` what the probe expected.
+   */
+  | {
+      kind: 'done';
+      url: string;
+      name: string;
+      size: number;
+      width: number;
+      height: number;
+      samples: number;
+      msPerFrame: number;
+      seconds: number;
+      projectedSeconds: number;
+    }
   | { kind: 'cancelled' }
   | { kind: 'failed'; message: string };
 
@@ -63,18 +77,33 @@ export async function runExport(scene: NormalizedSceneV1, choice: ExportChoice, 
     const mod = await import('./export');
     const check: ExportCheck = await mod.checkExportSupport(choice);
     if (!check.ok) return report({ kind: 'unsupported', reasons: check.reasons });
-    if (!(await mod.probeExport(scene, check, signal))) {
+    const probe = await mod.probeExport(scene, check, signal);
+    if (!probe.ok) {
       return report({ kind: 'unsupported', reasons: ['A short test export did not produce a playable video on this device.'] });
     }
+    const { timing } = probe;
+    console.info(
+      `Export probe: ${timing.msAtBase.toFixed(1)} ms a frame at ${timing.base} sample(s)` +
+        (timing.msAtTop === null ? '' : `, ${timing.msAtTop.toFixed(1)} ms at ${timing.top} (the slower of the start and mid-journey)`) +
+        `; ${probe.samples} sample(s), projected ${probe.projectedSeconds.toFixed(1)} s of a ${probe.budgetSeconds} s budget.`,
+    );
     report({ kind: 'exporting', progress: 0 });
-    const blob = await mod.exportVideo(scene, check, (p) => report({ kind: 'exporting', progress: p }), signal);
+    const result = await mod.exportVideo(scene, check, (p) => report({ kind: 'exporting', progress: p }), signal, probe.samples);
+    console.info(
+      `Export: ${result.frames} frames at ${result.samples} sample(s) in ${(result.totalMs / 1000).toFixed(1)} s ` +
+        `(setup ${(result.setupMs / 1000).toFixed(1)} s, then ${result.msPerFrame.toFixed(1)} ms a frame).`,
+    );
     report({
       kind: 'done',
-      url: URL.createObjectURL(blob),
+      url: URL.createObjectURL(result.blob),
       name: fileName(scene, choice.aspect, check.container),
-      size: blob.size,
+      size: result.blob.size,
       width: check.width,
       height: check.height,
+      samples: result.samples,
+      msPerFrame: Math.round(result.msPerFrame * 10) / 10,
+      seconds: Math.round(result.totalMs / 100) / 10,
+      projectedSeconds: Math.round(probe.projectedSeconds * 10) / 10,
     });
   } catch (e) {
     report(signal.aborted ? { kind: 'cancelled' } : { kind: 'failed', message: e instanceof Error ? e.message : String(e) });

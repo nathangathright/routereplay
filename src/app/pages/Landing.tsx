@@ -1,6 +1,7 @@
 import { type RefObject, useLayoutEffect, useRef, useState } from 'react';
 import { IdleEarth } from '../render/IdleEarth';
-import { initialQuality, webglAvailable } from '../device';
+import { webglAvailable } from '../device';
+import { TIERS, tierDecision } from '../tier';
 
 /**
  * The homepage's stage: the live Earth with the hero over it. Get started opens the chat beside it; the hero then
@@ -19,7 +20,8 @@ export function LandingStage({
   getStarted: RefObject<HTMLButtonElement | null>;
 }) {
   const [webgl] = useState(webglAvailable);
-  const [quality] = useState(initialQuality);
+  // The homepage's Earth textures follow the device's tier; the rest of its globe is its own (IdleEarth.tsx).
+  const [quality] = useState(() => TIERS[tierDecision().tier].textures);
   const page = useRef<HTMLElement>(null);
   const hero = useRef<HTMLElement>(null);
   const [horizon, setHorizon] = useState(0.5);

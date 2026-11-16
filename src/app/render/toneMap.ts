@@ -9,6 +9,17 @@ export function reinhard(light: number, exposure: number): number {
   return x / (1 + x);
 }
 
+/**
+ * Several samples of one pixel (jittered exports, display.tsx): each tone mapped, then averaged, before the sRGB
+ * encoding. Tone mapping first keeps a bright edge (glint, a city light) as bright as the share of the pixel it
+ * covers; averaging the light first would let one bright sample whiten the whole pixel. One sample is reinhard().
+ */
+export function averageDisplay(lights: readonly number[], exposure: number): number {
+  let sum = 0;
+  for (const light of lights) sum += reinhard(light, exposure);
+  return sum / Math.max(1, lights.length);
+}
+
 /** The brightest display value the inverse reaches: 1 would need unbounded light. It still encodes to 255. */
 export const DISPLAY_LIMIT = 0.996;
 

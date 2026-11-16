@@ -4,11 +4,11 @@ import { RENDER_SIZES } from '../../shared/scene/constants';
 import type { NormalizedSceneV1 } from '../../shared/scene/types';
 import { buildTimeline } from '../../shared/timeline/evaluate';
 import { JourneyComposition, type JourneyProps } from '../remotion/JourneyComposition';
-import type { Quality } from '../render/assets';
-import { initialQuality } from '../device';
 import type { SceneStats } from '../render/JourneyScene';
+import { TIERS, type Tier, pixelRatio, rememberStepDown, stepDown, tierDecision } from '../tier';
 
-export type QualityMode = 'auto' | Quality;
+/** 'auto' follows the device's tier (tier.ts) and steps down if playback is slow; a tier holds it there. */
+export type QualityMode = 'auto' | Tier;
 
 export interface JourneyPlayerHandle {
   seekSeconds(seconds: number, pause?: boolean): number;
@@ -20,9 +20,11 @@ export interface JourneyPlayerHandle {
   isPlaying(): boolean;
   /** Resolves once a frame of the given scene object has rendered with loaded assets. */
   whenRendered(scene: NormalizedSceneV1, timeoutMs?: number): Promise<boolean>;
+  /** The hardware tier playback is drawing at now. */
+  tier(): Tier;
 }
 
-export { initialQuality, webglAvailable } from '../device';
+export { webglAvailable } from '../device';
 
 interface Props {
   scene: NormalizedSceneV1;
@@ -65,8 +67,12 @@ export const JourneyPlayer = forwardRef<JourneyPlayerHandle, Props>(function Jou
   const playerRef = useRef<PlayerRef>(null);
   const shell = useRef<HTMLDivElement>(null);
   const fillSize = useElementSize(shell, fill);
-  const [autoQuality, setAutoQuality] = useState<Quality>(() => initialQuality());
-  const quality: Quality = qualityMode === 'auto' ? autoQuality : qualityMode;
+  const [decision] = useState(tierDecision);
+  const [autoTier, setAutoTier] = useState<Tier>(decision.tier);
+  const tier: Tier = qualityMode === 'auto' ? autoTier : qualityMode;
+  const settings = TIERS[tier];
+  const currentTier = useRef(tier);
+  currentTier.current = tier;
   const timeline = useMemo(() => buildTimeline(scene), [scene]);
   // Boxed players show the default 16:9 frame; a filling player takes the shape of its parent.
   const size = fill ? fillSize : RENDER_SIZES['16:9'];
@@ -90,16 +96,20 @@ export const JourneyPlayer = forwardRef<JourneyPlayerHandle, Props>(function Jou
 
   // ?debug renders at export pixel ratio with a readable drawing buffer for frame comparison checks.
   const debugCapture = useMemo(() => new URLSearchParams(location.search).has('debug'), []);
-  const dpr = debugCapture ? 1 : quality === 'standard' ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+  const dpr = debugCapture ? 1 : pixelRatio(settings, window.devicePixelRatio);
+  // ?samples=N draws each frame N times, jittered and averaged, as an export does (for comparisons).
+  const samples = decision.samples ?? 1;
   const inputProps: JourneyProps = useMemo(
-    () => ({ scene, quality, dpr, capture: debugCapture, onContextLost, onFrame: handleFrame }),
-    [scene, quality, dpr, debugCapture, onContextLost, handleFrame],
+    () => ({ scene, settings, samples, dpr, capture: debugCapture, onContextLost, onFrame: handleFrame }),
+    [scene, settings, samples, dpr, debugCapture, onContextLost, handleFrame],
   );
 
-  // Quality fallback: if playback runs well below real time at standard quality, step down.
+  // Fallback: if playback runs well below real time, step down a tier (desktop, laptop, phone), and remember it for
+  // the next visit. Timing is unaffected; only fidelity drops.
   useEffect(() => {
     const p = playerRef.current;
-    if (!p || qualityMode !== 'auto' || autoQuality === 'low') return;
+    const next = stepDown(autoTier);
+    if (!p || qualityMode !== 'auto' || decision.pinned || !next) return;
     let frames = 0;
     let start = 0;
     const onUpdate = () => {
@@ -115,7 +125,8 @@ export const JourneyPlayer = forwardRef<JourneyPlayerHandle, Props>(function Jou
       if (elapsed > 3000) {
         const fps = (frames * 1000) / elapsed;
         if (fps < 20) {
-          setAutoQuality('low');
+          setAutoTier(next);
+          rememberStepDown(autoTier, next);
           onQualityDowngrade?.();
         }
         frames = 0;
@@ -124,7 +135,7 @@ export const JourneyPlayer = forwardRef<JourneyPlayerHandle, Props>(function Jou
     };
     p.addEventListener('frameupdate', onUpdate);
     return () => p.removeEventListener('frameupdate', onUpdate);
-  }, [qualityMode, autoQuality, onQualityDowngrade, size !== null]);
+  }, [qualityMode, autoTier, decision.pinned, onQualityDowngrade, size !== null]);
 
   // Report play and pause so custom controls can follow along.
   useEffect(() => {
@@ -178,6 +189,7 @@ export const JourneyPlayer = forwardRef<JourneyPlayerHandle, Props>(function Jou
           }, timeoutMs);
         });
       },
+      tier: () => currentTier.current,
     }),
     [timeline],
   );

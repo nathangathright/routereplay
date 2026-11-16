@@ -4,16 +4,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AbsoluteFill, useDelayRender, useVideoConfig } from 'remotion';
 import type { NormalizedSceneV1 } from '../../shared/scene/types';
 import { buildTimeline } from '../../shared/timeline/evaluate';
-import { DETAIL_MAX_TILES, planNightDetail } from '../../shared/timeline/nightDetail';
-import { type EarthTextures, type Quality, journeySurfaceMonth, loadEarthTextures, loadLabelFont } from '../render/assets';
+import { planNightDetail } from '../../shared/timeline/nightDetail';
+import { type EarthTextures, journeySurfaceMonth, loadEarthTextures, loadLabelFont } from '../render/assets';
 import { type CloudSet, loadJourneyClouds } from '../render/Clouds';
 import { LinearDisplay } from '../render/display';
 import { JourneyScene, type SceneStats } from '../render/JourneyScene';
 import { NightDetail } from '../render/nightDetail';
+import { SceneSettingsProvider } from '../render/sceneSettings';
+import type { TierSettings } from '../tier';
 
 export interface JourneyProps extends Record<string, unknown> {
   scene: NormalizedSceneV1;
-  quality: Quality;
+  /** The hardware tier's settings (tier.ts): textures, segments, steps, shadow maps, city-light tiles. */
+  settings: TierSettings;
+  /** Jittered samples per frame, averaged (display.tsx); 1 draws each frame once. */
+  samples?: number;
   /** Device pixel ratio for the WebGL backing store; 1 during export. */
   dpr?: number;
   /** True during export so the canvas can be captured. */
@@ -27,9 +32,10 @@ const SKY = '#02040a';
 
 /**
  * The one composition shared by playback (Remotion Player) and local export
- * (@remotion/web-renderer). Only quality and pixel ratio differ between them.
+ * (@remotion/web-renderer). Only the tier's settings, samples, and pixel ratio differ between them.
  */
-export function JourneyComposition({ scene, quality, dpr = 1, capture = false, onContextLost, onFrame }: JourneyProps) {
+export function JourneyComposition({ scene, settings, samples = 1, dpr = 1, capture = false, onContextLost, onFrame }: JourneyProps) {
+  const quality = settings.textures;
   const { width, height } = useVideoConfig();
   const timeline = useMemo(() => buildTimeline(scene), [scene]);
   const [textures, setTextures] = useState<EarthTextures | null>(null);
@@ -79,7 +85,7 @@ export function JourneyComposition({ scene, quality, dpr = 1, capture = false, o
   // the new plan's first frame's are in. Tiles are the same imagery whichever plan fetched them, so they are never
   // wrong, only incomplete, and the canvas never has to be torn down for them. Like clouds, the detail is
   // optional: a tile that fails to load leaves the global map in its cell rather than failing the journey.
-  const plan = useMemo(() => planNightDetail(timeline, DETAIL_MAX_TILES[quality]), [timeline, quality]);
+  const plan = useMemo(() => planNightDetail(timeline, settings.nightDetailCap), [timeline, settings.nightDetailCap]);
   useEffect(() => {
     const night = new NightDetail(plan, quality);
     const controller = new AbortController();
@@ -146,18 +152,20 @@ export function JourneyComposition({ scene, quality, dpr = 1, capture = false, o
           gl={{ antialias: true, preserveDrawingBuffer: capture, powerPreference: 'high-performance', toneMapping: THREE.ReinhardToneMapping }}
           onCreated={onCreated}
         >
-          <LinearDisplay background={SKY}>
-            <JourneyScene
-              timeline={timeline}
-              textures={textures}
-              clouds={clouds}
-              detail={detail.textures}
-              detailVersion={detail.version}
-              segments={quality === 'low' ? 72 : 144}
-              aspect={width / height}
-              onFrame={onFrame}
-            />
-          </LinearDisplay>
+          <SceneSettingsProvider value={settings}>
+            <LinearDisplay background={SKY} samples={samples}>
+              <JourneyScene
+                timeline={timeline}
+                textures={textures}
+                clouds={clouds}
+                detail={detail.textures}
+                detailVersion={detail.version}
+                segments={settings.segments}
+                aspect={width / height}
+                onFrame={onFrame}
+              />
+            </LinearDisplay>
+          </SceneSettingsProvider>
         </ThreeCanvas>
       )}
     </AbsoluteFill>

@@ -233,6 +233,48 @@ Limits:
 - **Clouds are still seen through the whole column of air,** including the 36 % below the deck ([not done above](#one-linear-composite-tone-mapped-once)).
 - **Low-Sun daylight frames carry 15–20 % less light than before.** Their clouds were clipped to white then.
 
+## Hardware tiers, and cleaner exports
+
+*Decided November 15, 2026; phase 1 of the hardware-tiers design.* The app now recognises how capable a device is, in three tiers, and exports from laptops and desktops draw several jittered samples per frame. A tier changes fidelity only: every tier draws the same moment, from the same `evaluate(timeline, t)`, exposure, and seeds, with nothing carried from one frame to the next. Nobody's playback changes in this phase.
+
+| | Phone | Laptop | Desktop |
+| --- | --- | --- | --- |
+| Was | `low` | `standard` | new |
+| Earth textures | low | standard | standard |
+| Pixel ratio | 1 | the screen's, at most 2 | the screen's, at most 3 |
+| Globe segments | 72 | 144 | 144 |
+| Atmosphere march | 8 steps | 8 | 12 |
+| Aircraft self-shadow maps | 512² | 512² | 1024² |
+| City-light tiles per journey | 128 | 128 | 256 |
+| Export samples per frame | 1 | up to 16 | up to 16 |
+
+- **Phone and laptop are the old constants, one for one** (`src/app/tier.ts`; a test pins each). At one sample the paused preview renders pixel for pixel as the build before it, at both tiers: 0 differing pixels in 56 frames of five journeys, including the airport close-up and city lights at night ([verification.md](verification.md#hardware-tiers-phase-1)).
+- **Desktop is reached only with `?tier=desktop`** for now, so its cost can be measured before anything promotes a device to it. A startup benchmark and automatic promotion are phase 2.
+- **Choosing a tier.** The old phone rule (screen's short side under 600 px, 4 GB of memory or less, 4 cores or fewer), plus the GPU: a software renderer (SwiftShader, llvmpipe, the Basic Render Driver, or a browser that refuses a context with `failIfMajorPerformanceCaveat`), or no complete RGBA16F framebuffer, also means phone. Everything else starts at laptop. The renderer string is used only to spot software rendering, never as a list of good GPUs: Safari answers "Apple GPU" and lists go stale. One throwaway context answers all of it, and also gives the largest texture size, which `maxTextureSize()` used to make its own context for.
+- **Stepping down.** Playback below 20 fps for 3 seconds steps one tier down, desktop to laptop to phone, as `standard` stepped to `low`, and is now remembered in `localStorage` (`rr.tier`) for that GPU and renderer version, for a week. Before, a laptop that had to step down started at `standard` again on the next visit and stuttered for 3 seconds again.
+- **Overrides:** `?tier=phone|laptop|desktop` starts there; `?samples=N` (1–32) draws previews and exports with N samples; `?debug` pins laptop (or the `?tier` given) and one sample, so frame comparisons don't drift with the machine. `?measure` shows the tier and why it was chosen.
+- **No tier in the timeline.** `buildTimeline`, `evaluate`, `exposureAt`, label layout and storyboards take no tier, and nothing under `src/shared` imports the app (a test reads every file). `planNightDetail` takes only a cap, and its order doesn't depend on it. The golden states and the storyboard fixture are unchanged.
+
+**Exports: jittered samples, averaged after tone mapping.**
+
+- **How** (`display.tsx`): the scene light is drawn N times at the same moment, the image shifted by a sub-pixel offset each time (a fixed Halton (2, 3) table inside ±½ pixel, the centre last; `jitter.ts`). Each sample is tone mapped and added at 1/N into one more half-float target, and that average is encoded to sRGB once. Labels, routes and the other graphics are drawn once, unjittered, over the result, tested against the centre sample's depth, as before. World matrices and the aircraft's shadow maps update on the first sample only. One sample is the old path, untouched; without half floats it is always one.
+- **Tone mapped before averaging,** so a bright edge stays as bright as the share of the pixel it covers: a glint over one eighth of a pixel adds an eighth of its display value, where averaging the light first would turn the whole pixel white (`toneMap.test.ts`).
+- **No temporal antialiasing.** It feeds each frame from the one before, so seeking and playing would draw different pixels.
+- **How many samples.** Every export already began with a 15-frame probe export. It still does, at one sample, and the probe must still decode. Where the tier offers more than one sample, two more 8-frame renders at the most samples offered (16), one from the start and one mid-journey, time a sample; the slower of the two stands for the journey. The export takes the most samples whose projected length, times 1.5, fits the budget: the larger of 90 s and three times the clip. A phone offers one sample, so it probes and exports exactly as before.
+  - **Why two ranges.** The first version timed 16 samples mid-journey only, as the design proposed, to catch whole-globe flight frames that the start hold under-predicts. In all three test journeys it was the other way round: at 16 samples the start's close airport framing cost 34–42 ms a frame at 720p, mid-journey 24–34 ms. Projections came out at 0.56–0.80 of the actual export, outside the margin. With both ranges they came out at 0.70–1.24 of it, inside.
+  - The page's export report (`page.export` for browser tools) carries `samples` and `msPerFrame`, and the console logs the probe's timing and choice.
+- **What it changes.** Mostly city lights, which lose their pixel speckle, and the airframe's and clouds' edges, which 4× multisampling already smoothed. The paused preview at 8 samples against 1 differs at 44.6–55.5 dB, a mean of 0.1–0.4 levels; 16 against 8 only at 55–59 dB. H.264 hides part of it in the file.
+- **Cost** ([budgets.md](budgets.md#export-duration)): on the M1 Max a 10-second journey that took 6 s from Export to file now takes about 18 s at 720p and 31 s at 1080p, at the 16 samples the probe chooses for it. Eight samples would take 8–9 s and 15–17 s. One more half-float target the size of the frame: 7 MiB at 720p, 16 MiB at 1080p.
+
+**Desktop.**
+
+- **12 atmosphere steps, not the design's 16.** More steps change the air's light only where sunlight grazes the terminator, and there the 8-step march is a little too bright. At deep dusk over Johannesburg, 16 steps made the frame 3.4 % darker than laptop's 8, outside the ±3 % that tiers may differ by; 12 steps made it 2.5 % darker. The march converges to about 4 % darker than 8 steps, so phase 2 has to choose: retune the art direction to the converged air on every tier, or keep 8 as the look and give desktop no extra steps.
+- **1024² aircraft shadow maps** keep the same soft radius on the airframe in twice the texels, and 256 city-light tiles (WebGL 2's least `MAX_ARRAY_TEXTURE_LAYERS`) keep more airports sharp on long trips.
+
+Not done (later phases of the design):
+- A startup benchmark that promotes capable devices to desktop, a GPU-timer governor that steps down earlier than frame rate, and a WebGPU adapter hint.
+- An export budget override (`?export-budget=`), the samples in the MP4's metadata, more atmosphere steps in exports, and motion blur from the same accumulation loop with a time offset per sample.
+
 ## Terrain relief lit by the Sun and Moon
 
 *Decided November 12, 2026.* The ground is shaded with a normal tilted by real terrain, as in the offline renderer (`routereplay` `render.py`, `terrain()` and its shading). Mountains catch a low Sun on one side and fall into shade on the other, and the shading turns as the Sun moves. Before this, the globe was lit as a smooth sphere and mountains showed only through the day map's colours.

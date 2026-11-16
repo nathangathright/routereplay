@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import type { NormalizedSceneV1 } from '../../shared/scene/types';
+import { probeCapabilities, tierDecision } from '../tier';
 import type { JourneyPlayerHandle } from './JourneyPlayer';
 
 /**
  * Device budget measurement, shown only with ?measure on a watch page. Records load and
- * first-frame times, transfer, rendered frame rate during playback, GPU details, and a full
- * local export, and displays them on the page so they can be read off a real device.
- * Nothing is sent anywhere.
+ * first-frame times, transfer, rendered frame rate during playback, GPU details, the hardware
+ * tier and why it was chosen, and a full local export with its samples per frame and timing,
+ * and displays them on the page so they can be read off a real device. Nothing is sent anywhere.
  */
 type Result = Record<string, string | number | boolean | null>;
 
@@ -18,19 +19,21 @@ declare global {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-function gpuInfo(): Result {
-  try {
-    const gl = document.createElement('canvas').getContext('webgl2');
-    if (!gl) return { webgl2: false };
-    const ext = gl.getExtension('WEBGL_debug_renderer_info');
-    return {
-      webgl2: true,
-      gpu: ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : String(gl.getParameter(gl.RENDERER)),
-      maxTexture: Number(gl.getParameter(gl.MAX_TEXTURE_SIZE)),
-    };
-  } catch {
-    return { webgl2: false };
-  }
+/** The GPU as the tier probe saw it, and the tier it led to. */
+function tierInfo(): Result {
+  const caps = probeCapabilities();
+  const decision = tierDecision();
+  return {
+    webgl2: caps.webgl2,
+    gpu: caps.renderer || null,
+    maxTexture: caps.maxTextureSize,
+    halfFloatTarget: caps.halfFloatTarget,
+    performanceCaveat: caps.performanceCaveat,
+    tier: decision.tier,
+    tierReason: decision.reason,
+    tierPinned: decision.pinned,
+    samplesOverride: decision.samples,
+  };
 }
 
 export function MeasurePanel({ scene, player }: { scene: NormalizedSceneV1; player: RefObject<JourneyPlayerHandle | null> }) {
@@ -50,7 +53,7 @@ export function MeasurePanel({ scene, player }: { scene: NormalizedSceneV1; play
         cores: navigator.hardwareConcurrency ?? null,
         memoryGB: nav2.deviceMemory ?? null,
         videoEncoder: typeof VideoEncoder !== 'undefined',
-        ...gpuInfo(),
+        ...tierInfo(),
       });
       for (let i = 0; i < 300 && !player.current; i++) await sleep(100);
       const p = player.current;
@@ -67,7 +70,6 @@ export function MeasurePanel({ scene, player }: { scene: NormalizedSceneV1; play
         domContentLoadedMs: nav ? Math.round(nav.domContentLoadedEventEnd) : null,
         transferKiB: Math.round(transfer / 1024),
         textures: textures.join(', '),
-        quality: (document.querySelector('#quality') as HTMLSelectElement | null)?.value ?? null,
       });
 
       // Playback: count frames the scene actually rendered while playing for 6 s.
@@ -100,7 +102,7 @@ export function MeasurePanel({ scene, player }: { scene: NormalizedSceneV1; play
         playbackSpeed: +(advanced / elapsed).toFixed(2),
         rafMedianMs: q(0.5),
         rafP95Ms: q(0.95),
-        qualityAfterPlayback: (document.querySelector('#quality') as HTMLSelectElement | null)?.value ?? null,
+        tierAfterPlayback: p.tier(),
       });
 
       // Export: capability check, probe, full render (kept in memory, not downloaded).
@@ -110,16 +112,26 @@ export function MeasurePanel({ scene, player }: { scene: NormalizedSceneV1; play
         const check = await mod.checkExportSupport({ aspect: '16:9', quality: 'standard' });
         if (!check.ok) return set({ status: 'done', exportSupported: false, exportReason: check.reasons.join('; ') });
         const probe = await mod.probeExport(scene, check);
-        set({ exportSupported: true, exportContainer: check.container, exportCodec: check.codec, probeOk: probe });
-        if (!probe) return set({ status: 'done' });
+        set({
+          exportSupported: true,
+          exportContainer: check.container,
+          exportCodec: check.codec,
+          probeOk: probe.ok,
+          probeMsPerFrame: `${probe.timing.msAtBase.toFixed(1)} at ${probe.timing.base} sample(s)${probe.timing.msAtTop === null ? '' : `, ${probe.timing.msAtTop.toFixed(1)} at ${probe.timing.top}`}`,
+          exportSamples: probe.samples,
+          exportProjectedSeconds: +probe.projectedSeconds.toFixed(1),
+          exportBudgetSeconds: probe.budgetSeconds,
+        });
+        if (!probe.ok) return set({ status: 'done' });
         const f0 = performance.now();
-        const blob = await mod.exportVideo(scene, check, () => undefined, new AbortController().signal);
-        const decoded = await mod.decodeCheck(blob, check.width, check.height);
+        const result = await mod.exportVideo(scene, check, () => undefined, new AbortController().signal, probe.samples);
+        const decoded = await mod.decodeCheck(result.blob, check.width, check.height);
         set({
           status: 'done',
           exportSeconds: +((performance.now() - f0) / 1000).toFixed(1),
           exportTotalSeconds: +((performance.now() - e0) / 1000).toFixed(1),
-          exportMB: +(blob.size / 1_048_576).toFixed(1),
+          exportMsPerFrame: +result.msPerFrame.toFixed(1),
+          exportMB: +(result.blob.size / 1_048_576).toFixed(1),
           exportDecodes: decoded,
           clipSeconds: scene.presentation.durationSeconds,
         });

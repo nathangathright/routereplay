@@ -275,7 +275,7 @@ const Stage = forwardRef<JourneyPlayerHandle, StageProps>(function Stage({ scene
               className="btn primary"
               onClick={() => {
                 setContextLost(false);
-                setQualityMode('low');
+                setQualityMode('phone');
                 setMountKey((k) => k + 1);
               }}
             >

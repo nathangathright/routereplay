@@ -14,11 +14,15 @@ import * as THREE from 'three';
 import type { Vec3 } from '../../shared/geo/vec';
 import { type CraftLight, luminance } from './craftLight';
 
-/** Shadow maps are this many texels square: the airframe's bounding sphere spans them, about 400 texels per length. */
-const SHADOW_MAP_SIZE = 512;
 /**
- * Soft-shadow radius in texels: the Sun's disc gives sharp shadows; the night rig's key is a broad light (12° in the
- * offline renderer), so its shadows are soft.
+ * Shadow maps are this many texels square by default (the phone and laptop tiers; tier.ts may ask for more): the
+ * airframe's bounding sphere spans them, about 400 texels per length.
+ */
+export const SHADOW_MAP_SIZE = 512;
+/**
+ * Soft-shadow radius in texels of a SHADOW_MAP_SIZE map: the Sun's disc gives sharp shadows; the night rig's key is a
+ * broad light (12° in the offline renderer), so its shadows are soft. A larger map keeps the same radius on the
+ * airframe, in more texels.
  */
 const SUN_SHADOW_RADIUS = 1.2;
 const KEY_SHADOW_RADIUS = 4;
@@ -164,10 +168,10 @@ void main() {
 const freeLayers = Array.from({ length: 31 }, (_, i) => 31 - i);
 
 /** A zero-intensity directional light whose shadow map holds one craft as seen from one light. */
-function shadowLight(layer: number): THREE.DirectionalLight {
+function shadowLight(layer: number, size: number): THREE.DirectionalLight {
   const light = new THREE.DirectionalLight(0xffffff, 0);
   light.castShadow = false;
-  light.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
+  light.shadow.mapSize.set(size, size);
   light.shadow.camera.layers.set(layer);
   light.shadow.autoUpdate = true;
   return light;
@@ -225,8 +229,14 @@ export class CraftLighting {
   private readonly casters: THREE.Mesh[] = [];
   private readonly rotation = new THREE.Matrix3();
 
-  /** `shadows`: whether this craft shades itself (the aircraft do; the vehicles, at a few dozen pixels, don't). */
-  constructor(private readonly shadows: boolean) {}
+  /**
+   * `shadows`: whether this craft shades itself (the aircraft do; the vehicles, at a few dozen pixels, don't).
+   * `shadowMapSize`: texels across each of its shadow maps.
+   */
+  constructor(
+    private readonly shadows: boolean,
+    private readonly shadowMapSize: number = SHADOW_MAP_SIZE,
+  ) {}
 
   /**
    * Take a layer and make the shadow lights on the first frame drawn, not when built: React may build a craft and
@@ -237,8 +247,8 @@ export class CraftLighting {
     const layer = freeLayers.pop();
     if (layer === undefined) return; // All 31 taken: this craft goes without its own shadow.
     this.layer = layer;
-    this.sunLight = shadowLight(layer);
-    this.keyLight = shadowLight(layer);
+    this.sunLight = shadowLight(layer, this.shadowMapSize);
+    this.keyLight = shadowLight(layer, this.shadowMapSize);
     this.root.add(this.sunLight, this.sunLight.target, this.keyLight, this.keyLight.target);
     for (const mesh of this.casters) mesh.layers.enable(layer);
   }
@@ -290,11 +300,13 @@ export class CraftLighting {
     if (this.sunLight && bounds) this.aim(this.sunLight, light.sunDir, bounds, sunOn);
     if (this.keyLight && bounds) this.aim(this.keyLight, light.keyDir, bounds, keyOn);
     const r = bounds?.radius ?? 0;
-    const texel = 1 / SHADOW_MAP_SIZE;
-    (this.shared.uSunShadow!.value as THREE.Vector4).set(sunOn && this.sunLight ? 1 : 0, SUN_SHADOW_RADIUS, -0.0004, texel);
-    (this.shared.uKeyShadow!.value as THREE.Vector4).set(keyOn && this.keyLight ? light.keyShadow : 0, KEY_SHADOW_RADIUS, -0.0004, texel);
+    const size = this.shadowMapSize;
+    const texel = 1 / size;
+    const scale = size / SHADOW_MAP_SIZE;
+    (this.shared.uSunShadow!.value as THREE.Vector4).set(sunOn && this.sunLight ? 1 : 0, SUN_SHADOW_RADIUS * scale, -0.0004, texel);
+    (this.shared.uKeyShadow!.value as THREE.Vector4).set(keyOn && this.keyLight ? light.keyShadow : 0, KEY_SHADOW_RADIUS * scale, -0.0004, texel);
     // About one texel of the map, in world units.
-    this.shared.uNormalBias!.value = (2 * r) / SHADOW_MAP_SIZE;
+    this.shared.uNormalBias!.value = (2 * r) / size;
   }
 
   /** Fit a light's shadow camera around the craft, looking along the light. */

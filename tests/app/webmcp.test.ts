@@ -49,6 +49,7 @@ function fakePlayer() {
     currentSeconds: () => t,
     isPlaying: () => playing,
     whenRendered: async () => true,
+    tier: () => 'laptop' as const,
   } satisfies JourneyPlayerHandle;
 }
 

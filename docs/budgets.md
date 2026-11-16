@@ -136,7 +136,17 @@ The 95th percentiles went from 15–35 ms before to 22–32 ms with all three. S
 - **Memory and downloads:** nothing added. The veil reads the deck's textures. It is one more shader program, or two with a surface leg, since a vehicle's veil is tone mapped as a graphic.
 - **Re-measure on the iPhone** before relying on these numbers.
 
-CPU throttling does not slow the GPU, so the emulated-phone frame times are optimistic. The player steps down from standard to low automatically if playback stays below 20 fps for 3 seconds. Timing is unaffected.
+**The desktop tier** (November 15, 2026; only with `?tier=desktop` so far; [decisions.md](decisions.md#hardware-tiers-and-cleaner-exports)): 12 atmosphere steps, 1024² aircraft shadow maps, and up to 256 city-light tiles. Measured as above (7 seconds of playback from 2 s, everything a frame's `requestAnimationFrame` callbacks submit, 1280×720 at DPR 2), laptop and desktop alternated four times in one browser, load average about 14. Phone and laptop are unchanged: they render pixel for pixel as the build before.
+
+| Journey (frames 2–9 s), 1280×720 at DPR 2 | Laptop | Desktop |
+| --- | --- | --- |
+| London–Frankfurt, low Sun over broken cloud | 13.8–15.6 ms | 15.4–16.0 ms |
+| Singapore–Hong Kong, midday over cloud | 13.8–14.6 ms | 15.2–15.8 ms |
+| London–Johannesburg, whole globe mid-flight | 13.2–13.6 ms | 14.9–15.5 ms |
+
+About 1.1–1.7 ms more a frame, most where the air covers the most of the frame. This is the figure phase 2's startup benchmark will be calibrated against. With 16 atmosphere steps the whole-globe frames at dusk came out 3.4 % darker than laptop's, so 16 wasn't timed further.
+
+CPU throttling does not slow the GPU, so the emulated-phone frame times are optimistic. The player steps down a tier automatically (desktop to laptop to phone; laptop and phone are the old standard and low) if playback stays below 20 fps for 3 seconds, and remembers it for a week on that GPU ([decisions.md](decisions.md#hardware-tiers-and-cleaner-exports)). Timing is unaffected.
 
 ## GPU memory (estimated, not measured)
 
@@ -151,10 +161,11 @@ The textures are the dominant allocation. RGBA8 plus mipmaps is about 1.33 × wi
 - The homepage shows the low set first. Two seconds after the standard set is on screen it frees the low set's GPU copies.
 - Framebuffers at 1280×720 with DPR 2 add about 30 MiB (without counting multisampling).
 - The linear composite's half-float target (November 13, 2026): RGBA16F with 4× multisampling, a multisampled depth buffer, and the resolved colour and depth textures. That is about 211 MiB at 2560×1440 (1280×720 at DPR 2), 119 MiB for a 1080p export's context, 53 MiB at 720p, and 19 MiB on a phone at 390×844 and DPR 1. Without multisampling it would be about a fifth of that.
-- Each aircraft's self-shadow maps are 512² (a 32-bit depth texture and an RGBA8 colour attachment: 2 MiB a map), one for the Sun and one for the night key once it is used: 2–4 MiB per aircraft, up to 12 MiB on the homepage. They are freed with their plane.
+- Each aircraft's self-shadow maps are 512² (a 32-bit depth texture and an RGBA8 colour attachment: 2 MiB a map), one for the Sun and one for the night key once it is used: 2–4 MiB per aircraft, up to 12 MiB on the homepage. They are freed with their plane. At the desktop tier (only with `?tier=desktop` so far) they are 1024², 8 MiB a map.
 - During export, a second WebGL context temporarily holds a standard set as well.
+- An export with more than one sample per frame (November 15, 2026) adds one RGBA16F target the size of the frame, without depth or multisampling, for the average: 7.0 MiB at 1280×720, 15.8 MiB at 1920×1080 (and for 1080×1920), 3.5 MiB at 720×720 (width × height × 8 bytes). Playback allocates it only with `?samples`. The desktop tier's 256 city-light tiles may take up to 120 MiB, against 60 MiB at 128.
 
-Phones start at low quality.
+Phones start at the phone tier, the old low quality.
 
 ## Export duration
 
@@ -166,7 +177,29 @@ Phones start at low quality.
 | **20 s, 720×1280, follow camera, real iPhone** | 600 | 10.3 s render and encode (11.1 s with check and probe), 3.1 MB |
 | 10.3 s, 1280×720, Singapore–Hong Kong, headless Chrome, linear composite (November 13, 2026) | 309 | 6.2 s (the build before it: 6.1–6.4 s) |
 
-Export runs faster than real time on this laptop. Slower devices may take longer than the clip's length; the panel shows progress and supports cancellation.
+Export runs faster than real time on this laptop at one sample per frame. Slower devices may take longer than the clip's length; the panel shows progress and supports cancellation.
+
+**Samples per frame** (November 15, 2026; [decisions.md](decisions.md#hardware-tiers-and-cleaner-exports)). Headless Chrome 157 on the M1 Max's GPU (`--use-angle=metal`), the watch page's own Export (capability check, probe, export) through its browser tool, 16:9, for the three test journeys, all 309 frames (10.3 s). The machine was shared: load average about 10, with an iOS simulator and other agents' work running. Wall time from Export to the file, with the samples forced by `?samples=N` (then the probe runs once, at N), and in brackets the median time a frame took in the export:
+
+| Journey | 720p: 1 sample | 4 | 8 | 16 | 1080p: 1 sample | 4 | 8 | 16 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Singapore–Hong Kong, midday over cloud | 6.1 s (15.5 ms) | 6.4 s (16.1) | 8.2 s (17.3) | 14.1 s (34.0) | 6.1 s (14.4) | 8.8 s (17.8) | 14.7 s (35.8) | 27.0 s (82.1) |
+| London–Frankfurt, low Sun | 6.1 s (14.2) | 6.3 s (14.9) | 8.7 s (17.6) | 15.4 s (40.3) | 6.3 s (15.4) | 9.9 s (22.0) | 16.4 s (48.6) | 29.9 s (85.1) |
+| London–Johannesburg, whole globe | 6.2 s (14.3) | 6.4 s (15.0) | 8.6 s (16.9) | 14.3 s (33.7) | 6.2 s (13.6) | 9.7 s (20.7) | 16.9 s (46.1) | 27.5 s (81.9) |
+
+- **One sample is unchanged:** Singapore–Hong Kong at 720p took 6.0–6.3 s in three runs alternated with the build before, which took 6.2–6.3 s.
+- **At 720p, up to 4 samples are almost free.** A frame's time is mostly capturing and encoding it (about 14 ms), and the GPU's samples overlap with that. From 8 samples the GPU sets the pace: about 2 ms a sample at 720p, 5 ms at 1080p.
+- **Chosen automatically,** every one of the six took 16 samples (a 10-second clip has a 90-second budget). The probe's two extra renders at 16 samples add about 3 s at 720p and 3.5 s at 1080p:
+
+| Journey | 720p: projected | export | with check and probe | 1080p: projected | export | with check and probe |
+| --- | --- | --- | --- | --- | --- | --- |
+| Singapore–Hong Kong | 11.3 s | 13.8 s | 17.9 s | 31.0 s | 28.0 s | 32.7 s |
+| London–Frankfurt | 10.6 s | 15.1 s | 19.0 s | 20.3 s | 26.4 s | 30.9 s |
+| London–Johannesburg | 10.9 s | 13.6 s | 17.6 s | 31.9 s | 25.8 s | 30.6 s |
+
+  Projections came out at 0.70–1.24 of the export's own time, inside the 1.5 margin. The first version, which timed 16 samples mid-journey only, projected 0.56–0.80 of it: in these journeys the start's airport framing is the costlier part ([decisions.md](decisions.md#hardware-tiers-and-cleaner-exports)).
+- **No per-frame timeouts** at 16 samples and 1080p: the slowest frames took about 85 ms, against Remotion's 30-second limit for a frame to be ready.
+- **Phones:** one sample, probed and exported as before. Not re-measured on the iPhone.
 
 ## Request budget (Cloudflare free tier)
 

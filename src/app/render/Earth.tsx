@@ -7,6 +7,7 @@ import { sceneDefines, useLinearScene } from './display';
 import { AIR_GLSL, ATMOSPHERE_TOP, CITY_GLSL, LIGHT_GLSL, type SkyLights, lightUniforms, setLightUniforms } from './lighting';
 import { NIGHT_DETAIL_GLSL, type NightDetailTextures, nightDetailUniforms, setNightDetailUniforms } from './nightDetail';
 import { PLANE_SHADOW_GLSL, type ShadowCaster, planeShadowUniforms, setPlaneShadowUniforms } from './planeShadow';
+import { useSceneSettings } from './sceneSettings';
 
 export { ATMOSPHERE_TOP };
 
@@ -206,7 +207,8 @@ bool airPath(vec3 ro, vec3 rd, out vec3 path, out float tGround) {
  * a finite solar disc; and the same bounded secondary-scattering term. Lengths are in Earth radii.
  *
  * Each step's optical depth is exact: the Chapman function gives the column from a point to space, and a
- * segment is the difference of two columns taken looking up. So 8 steps per pixel suffice for the light.
+ * segment is the difference of two columns taken looking up. So 8 steps per pixel suffice for the light
+ * (AIR_STEPS, set by the hardware tier: half of them down to the ray's lowest point, half back up).
  */
 const atmosphereFragment = /* glsl */ `
 uniform vec3 sunDir;
@@ -234,10 +236,12 @@ void main() {
 
   vec3 light = vec3(0.0);
   vec3 tau = vec3(0.0);
-  for (int i = 0; i < 8; i++) {
-    bool descending = i < 4;
-    float a = descending ? mix(t0, tLow, float(i) / 4.0) : mix(tLow, t1, float(i - 4) / 4.0);
-    float b = descending ? mix(t0, tLow, float(i + 1) / 4.0) : mix(tLow, t1, float(i - 3) / 4.0);
+  const int HALF = AIR_STEPS / 2;
+  const float SPAN = float(HALF);
+  for (int i = 0; i < AIR_STEPS; i++) {
+    bool descending = i < HALF;
+    float a = descending ? mix(t0, tLow, float(i) / SPAN) : mix(tLow, t1, float(i - HALF) / SPAN);
+    float b = descending ? mix(t0, tLow, float(i + 1) / SPAN) : mix(tLow, t1, float(i + 1 - HALF) / SPAN);
     if (b <= a) continue;
     vec3 pa = ro + rd * a;
     vec3 pb = ro + rd * b;
@@ -366,7 +370,8 @@ export function Earth({
  */
 export function Atmosphere({ sun, segments, shadows = [] }: { sun: Vec3; segments: number; shadows?: readonly ShadowCaster[] }) {
   const linear = useLinearScene();
-  const draws = useMemo(() => atmosphereDraws(linear), [linear]);
+  const { airSteps } = useSceneSettings();
+  const draws = useMemo(() => atmosphereDraws(linear, airSteps), [linear, airSteps]);
   const geometry = useMemo(() => new THREE.SphereGeometry(ATMOSPHERE_TOP, segments, Math.round(segments / 2)), [segments]);
   useEffect(() => () => draws.forEach((d) => d.material.dispose()), [draws]);
   useEffect(() => () => geometry.dispose(), [geometry]);
@@ -383,8 +388,11 @@ export function Atmosphere({ sun, segments, shadows = [] }: { sun: Vec3; segment
   );
 }
 
-/** The atmosphere's draws, in order: in linear light its transmittance, then its light; otherwise its light alone. */
-function atmosphereDraws(linear: boolean): { order: number; material: THREE.ShaderMaterial }[] {
+/**
+ * The atmosphere's draws, in order: in linear light its transmittance, then its light; otherwise its light alone.
+ * `steps`: the march's steps, an even number.
+ */
+function atmosphereDraws(linear: boolean, steps: number): { order: number; material: THREE.ShaderMaterial }[] {
   const base = {
     vertexShader: atmosphereVertex,
     side: THREE.BackSide,
@@ -395,7 +403,7 @@ function atmosphereDraws(linear: boolean): { order: number; material: THREE.Shad
   } as const;
   const light = new THREE.ShaderMaterial({
     ...base,
-    defines: sceneDefines(linear),
+    defines: { ...sceneDefines(linear), AIR_STEPS: String(2 * Math.max(1, Math.round(steps / 2))) },
     uniforms: { sunDir: { value: new THREE.Vector3() }, ...planeShadowUniforms() },
     fragmentShader: atmosphereFragment,
     // In linear light the in-scattered light is added; otherwise premultiplied: light plus what shows through.

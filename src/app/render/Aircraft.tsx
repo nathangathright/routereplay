@@ -9,6 +9,7 @@ import { veilStrength } from './cloudCrossing';
 import type { CraftLight } from './craftLight';
 import { CraftLighting, enableCraftShadows } from './craftPaint';
 import { useLinearScene } from './display';
+import { useSceneSettings } from './sceneSettings';
 
 const lampVertex = /* glsl */ `
 uniform float uPixelRatio;
@@ -59,9 +60,9 @@ interface Plane {
 
 const PROP_OPACITY = 0.28;
 
-function buildPlane(type: AircraftType): Plane {
+function buildPlane(type: AircraftType, shadowMapSize: number): Plane {
   const model = airframeModel(type);
-  const lighting = new CraftLighting(true);
+  const lighting = new CraftLighting(true, shadowMapSize);
   const materials = [
     lighting.paint({ color: '#f3f5f8', roughness: 0.45, metalness: 0.15 }),
     lighting.paint({ color: '#9aa4b2', roughness: 0.5, metalness: 0.3 }),
@@ -138,7 +139,8 @@ export function Aircraft({
   opacity?: number;
   deck?: DeckLook | null;
 }) {
-  const plane = useMemo(() => buildPlane(type), [type]);
+  const { craftShadowSize } = useSceneSettings();
+  const plane = useMemo(() => buildPlane(type, craftShadowSize), [type, craftShadowSize]);
   const linear = useLinearScene();
   const veil = useMemo(() => {
     const material = veilMaterial(linear, false);

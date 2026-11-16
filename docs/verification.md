@@ -16,6 +16,7 @@ What was checked against each milestone's completion evidence in [PLAN.md](../PL
 | Live channel rules | `tests/live.test.ts` | Viewer report validation, latest report wins, activity expiry and events, activity message cleaning |
 | Compatibility | `tests/compat.test.ts` | Saved published v1 fixture still plays, its connection animation, golden evaluated states at fixed frames, its pinned 12-keyframe storyboard, rejection of a different renderer major |
 | Headers | `tests/headers.test.ts` | Static `_headers` CSP equals Function CSP |
+| Hardware tiers | `tests/app/tier.test.ts`, `tests/toneMap.test.ts` | Phone exactly where the old rule gave low, software renderers and missing half floats at phone, overrides, the remembered step down, phone and laptop settings equal to the old constants, the jitter table, the export sample chooser, no app import under `src/shared`, and averaging tone-mapped samples ([below](#hardware-tiers-phase-1)) |
 
 The API tests also cover weak ETag comparison, which Cloudflare compression requires.
 
@@ -346,6 +347,21 @@ Safari 27.3 (WebKit 605.1.15) on the same Apple M1 Max laptop, opened normally w
 | Export | MP4/H.264, probe decoded; full 20 s 720×1280 export in 8.4 s (9.1 s with check and probe); 6.2 MB; decodes |
 
 Together with Chrome on the laptop and Chrome/WebKit on the iPhone, Remotion browser rendering and export are verified on both target device classes and in both major engines (Blink and WebKit).
+
+## Hardware tiers (phase 1)
+
+November 15, 2026 ([decisions.md](decisions.md#hardware-tiers-and-cleaner-exports)). Headless Chrome 157 on the M1 Max's GPU (`--use-angle=metal`), against a local Worker from this branch, with the build before it (9357a8b) served beside it from a second worktree. The machine was shared with other agents' work.
+
+- **Tests:** `tests/app/tier.test.ts` checks that the tier is phone exactly where the old `initialQuality` gave low (over 1,080 combinations of screen, memory and cores), that software renderers, a performance caveat, no half-float target or no WebGL 2 give phone, the overrides and the remembered step down (GPU, build, a week, never a promotion), that phone and laptop settings are the old constants (pixel ratio included, at ratios from 0 to 3), the jitter table (fixed, centred to under 1/N of a pixel, inside ±½, centre last), the sample chooser against its budget and margin, and that nothing under `src/shared` imports the app. `tests/toneMap.test.ts` checks the average of tone-mapped samples (one sample is the old value; a bright edge stays in proportion and inside the display range).
+- **Playback unchanged, pixel for pixel.** The paused preview (`?debug`) at 2–9 s of the three test journeys, and four moments each of the London–Amsterdam close-up and New York–Boston at night, against the build before: 0 differing pixels in all 32 laptop frames. At phone tier (`?tier=phone`, against the old build with 4 cores, so low quality): 0 in all 24. Both fetched the same textures.
+- **Same moment at every tier** (`scripts/browser/tier-compare.mjs`, at 1/8 resolution against laptop): phone 33.9 dB or more, mean luminance within 0.996–1.004; desktop 43.9 dB or more, within 0.975–1.000, over five journeys at 1 and 8 samples. Desktop with 16 atmosphere steps failed it once: 3.4 % darker at dusk over Johannesburg, hence 12.
+- **Export against preview at the same tier and samples:** 34.5–48.2 dB over the five journeys, laptop and desktop, 1 and 8 samples. That is below milestone one's 41 dB in some frames, but for the three test journeys the build before gives the same figures at the same frames (36.0–47.8 dB at one sample): H.264 softening dense city lights and fine cloud, at the same moment. Eight-sample exports match eight-sample previews as closely as one matches one, so the preview and the export accumulate alike.
+- **What samples change:** the preview at 8 samples against 1 differs at 44.6–55.5 dB, a mean of 0.10–0.43 levels, most at city lights, the airframe's edges and cloud edges. 16 against 8: 55.3–59.2 dB.
+- **Labels and routes beside the aircraft** at the airport close-up, 1 against 16 samples: the route line stops at the fuselage in the same place, and nothing shows around the airframe's softened edges.
+- **Export times, projections and GPU time:** [budgets.md](budgets.md#export-duration).
+- **`?measure`:** shows the GPU string, the half-float check, the tier and why, and the export's probe timing, samples, projection and actual time. With 4 cores faked it chose phone ("4 cores"), the low textures, and one sample: the export took 4.7 s, 6.0 s with check and probe, as before.
+
+**Not covered here:** the iPhone and Safari. On the iPhone, `?measure` should show `tier: phone`, the low textures, one export sample and a 20 s 9:16 export in about 10.3 s, as in [the phone record](#representative-phone-real-device). In desktop Safari, laptop, and an export that chooses its samples.
 
 ## Optional hardening beyond PLAN.md
 

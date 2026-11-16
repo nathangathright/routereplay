@@ -1,7 +1,9 @@
 /**
  * Browser check: compare decoded frames of an exported video with the live preview
- * at the same frame numbers. Run in a preview page opened with ?debug (dpr 1, readable
- * canvas), after an export finished, with WebMCP tools captured in window.__tools.
+ * at the same frame numbers. Run in a watch or draft page opened with ?debug (dpr 1, readable
+ * canvas, one sample unless ?samples=N, laptop tier unless ?tier=…), after an export finished,
+ * with the page's WebMCP tools captured in window.__tools (control_playback seeks).
+ * Compare at the same tier and samples as the export: ?debug pins both.
  *
  * Usage (devtools/evaluate): await compareFrames([0, 120, 300])
  * Returns per-frame mean absolute difference (0–255) and PSNR (dB).
@@ -21,9 +23,10 @@ async function compareFrames(frames) {
     video.currentTime = (f + 0.5) / 30;
     await new Promise((r) => { video.onseeked = r; });
     a.drawImage(video, 0, 0, W, H);
-    await window.__tools.seek_scene.execute({ seconds: f / 30 });
-    await new Promise((r) => setTimeout(r, 700));
-    const canvas = document.querySelector('.player-shell canvas');
+    await window.__tools.control_playback.execute({ seconds: f / 30, playing: false });
+    await new Promise((r) => setTimeout(r, 1500));
+    // The journey's canvas: the largest on the page.
+    const canvas = [...document.querySelectorAll('canvas')].sort((x, y) => y.width * y.height - x.width * x.height)[0];
     b.drawImage(canvas, 0, 0, W, H);
     const da = a.getImageData(0, 0, W, H).data, db = b.getImageData(0, 0, W, H).data;
     let sum = 0, sq = 0, n = 0;

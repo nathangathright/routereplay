@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { ASSET_MANIFEST_VERSION } from '../../shared/scene/constants';
 import { type Quality, dayTextureWidth } from '../../shared/scene/surface';
+import { probeCapabilities } from '../tier';
 
 export type { Quality };
 export { currentSurfaceMonth, journeySurfaceMonth } from '../../shared/scene/surface';
@@ -27,23 +28,9 @@ export interface EarthTextures {
   month: number;
 }
 
-let maxSize: number | null = null;
-
-/** The largest texture this device's WebGL 2 accepts, probed once with a throwaway context. */
+/** The largest texture this device's WebGL 2 accepts, from the throwaway context the tier probe makes once (tier.ts). */
 export function maxTextureSize(): number {
-  if (maxSize === null) {
-    maxSize = 4096;
-    try {
-      const gl = document.createElement('canvas').getContext('webgl2');
-      if (gl) {
-        maxSize = Number(gl.getParameter(gl.MAX_TEXTURE_SIZE)) || 4096;
-        gl.getExtension('WEBGL_lose_context')?.loseContext();
-      }
-    } catch {
-      // Keep the safe default.
-    }
-  }
-  return maxSize;
+  return probeCapabilities().maxTextureSize;
 }
 
 const textureCache = new Map<string, Promise<THREE.Texture>>();

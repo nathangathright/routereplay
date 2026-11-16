@@ -46,7 +46,7 @@ function exportReport(p: ExportPhase | null) {
     case 'exporting':
       return { state: 'exporting', progress: Math.round(p.progress * 100) / 100 };
     case 'done':
-      return { state: 'done', fileName: p.name, sizeBytes: p.size, width: p.width, height: p.height };
+      return { state: 'done', fileName: p.name, sizeBytes: p.size, width: p.width, height: p.height, samples: p.samples, msPerFrame: p.msPerFrame };
     case 'unsupported':
       return { state: 'unsupported', reasons: p.reasons };
     case 'failed':
