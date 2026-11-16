@@ -246,7 +246,7 @@ Limits:
 | Atmosphere march | 8 steps | 8 | 12 |
 | Aircraft self-shadow maps | 512² | 512² | 1024² |
 | City-light tiles per journey | 128 | 128 | 256 |
-| Export samples per frame | 1 | up to 16 | up to 16 |
+| Export samples per frame | 1 | up to 8 | up to 8 |
 
 - **Phone and laptop are the old constants, one for one** (`src/app/tier.ts`; a test pins each). At one sample the paused preview renders pixel for pixel as the build before it, at both tiers: 0 differing pixels in 56 frames of five journeys, including the airport close-up and city lights at night ([verification.md](verification.md#hardware-tiers-phase-1)).
 - **Desktop is reached only with `?tier=desktop`** for now, so its cost can be measured before anything promotes a device to it. A startup benchmark and automatic promotion are phase 2.
@@ -260,11 +260,12 @@ Limits:
 - **How** (`display.tsx`): the scene light is drawn N times at the same moment, the image shifted by a sub-pixel offset each time (a fixed Halton (2, 3) table inside ±½ pixel, the centre last; `jitter.ts`). Each sample is tone mapped and added at 1/N into one more half-float target, and that average is encoded to sRGB once. Labels, routes and the other graphics are drawn once, unjittered, over the result, tested against the centre sample's depth, as before. World matrices and the aircraft's shadow maps update on the first sample only. One sample is the old path, untouched; without half floats it is always one.
 - **Tone mapped before averaging,** so a bright edge stays as bright as the share of the pixel it covers: a glint over one eighth of a pixel adds an eighth of its display value, where averaging the light first would turn the whole pixel white (`toneMap.test.ts`).
 - **No temporal antialiasing.** It feeds each frame from the one before, so seeking and playing would draw different pixels.
-- **How many samples.** Every export already began with a 15-frame probe export. It still does, at one sample, and the probe must still decode. Where the tier offers more than one sample, two more 8-frame renders at the most samples offered (16), one from the start and one mid-journey, time a sample; the slower of the two stands for the journey. The export takes the most samples whose projected length, times 1.5, fits the budget: the larger of 90 s and three times the clip. A phone offers one sample, so it probes and exports exactly as before.
+- **How many samples.** Every export already began with a 15-frame probe export. It still does, at one sample, and the probe must still decode. Where the tier offers more than one sample, two more 8-frame renders at the most samples offered (8), one from the start and one mid-journey, time a sample; the slower of the two stands for the journey. The export takes the most samples whose projected length, times 1.5, fits the budget: the larger of 90 s and three times the clip. A phone offers one sample, so it probes and exports exactly as before.
   - **Why two ranges.** The first version timed 16 samples mid-journey only, as the design proposed, to catch whole-globe flight frames that the start hold under-predicts. In all three test journeys it was the other way round: at 16 samples the start's close airport framing cost 34–42 ms a frame at 720p, mid-journey 24–34 ms. Projections came out at 0.56–0.80 of the actual export, outside the margin. With both ranges they came out at 0.70–1.24 of it, inside.
   - The page's export report (`page.export` for browser tools) carries `samples` and `msPerFrame`, and the console logs the probe's timing and choice.
 - **What it changes.** Mostly city lights, which lose their pixel speckle, and the airframe's and clouds' edges, which 4× multisampling already smoothed. The paused preview at 8 samples against 1 differs at 44.6–55.5 dB, a mean of 0.1–0.4 levels; 16 against 8 only at 55–59 dB. H.264 hides part of it in the file.
-- **Cost** ([budgets.md](budgets.md#export-duration)): on the M1 Max a 10-second journey that took 6 s from Export to file now takes about 18 s at 720p and 31 s at 1080p, at the 16 samples the probe chooses for it. Eight samples would take 8–9 s and 15–17 s. One more half-float target the size of the frame: 7 MiB at 720p, 16 MiB at 1080p.
+- **Cost** ([budgets.md](budgets.md#export-duration)): on the M1 Max a 10-second journey that took 6 s from Export to file takes about 8–9 s at 720p and 15–17 s at 1080p at 8 samples. One more half-float target the size of the frame: 7 MiB at 720p, 16 MiB at 1080p.
+- **At most 8 samples** (the owner's decision, November 16, 2026). The tiers first offered 16, and the probe chose 16 for every test journey: about 18 s at 720p and 31 s at 1080p, 1.7–2× the time of 8, for a difference of 55–59 dB, part of which H.264 hides. `?samples=16` (up to 32) still draws more for a comparison.
 
 **Desktop.**
 
@@ -450,7 +451,7 @@ The owner's decisions:
 
 Where else it applies:
 
-- **Train, bus, car, and ferry legs** are always on the ground, so under the deck, and take the same rule and cap. Their veil draws as graphics between the body and its lamps, tone mapped as it draws, like the vehicle itself. Their drop shadow, wake, and lamps fade by the veil's average.
+- **Train, bus, car, and ferry legs** are always on the ground, so under the deck, and take the same rule with a lighter cap, `VEHICLE_VEIL_MAX` = 0.35 (the owner's decision, November 16, 2026). A vehicle stays under the deck for its whole leg while its route line and labels stay crisp over the cloud, so at the planes' 0.65 it read as a ghost for the whole video. At 0.35 a ferry under Helsinki's overcast on 12 November reads as a solid boat under thin cloud, with its shadow showing; its hull is about 15 levels darker than at 0.65. Their veil draws as graphics between the body and its lamps, tone mapped as it draws, like the vehicle itself. Their drop shadow, wake, and lamps fade by the veil's average.
 - **The homepage's planes** fly at 0.006 Earth radii, above the deck's top (0.004). They carry the same veil, which never shows, and still shade the deck's tops.
 - **The high layer veils nothing.** A plane is under it (10.5 km, 126 km as drawn) until it is 40 % of the way to cruise, almost half of every leg (u ≈ 0.45), so a veil would hide planes under anvils for half the flight. Over the tropics a plane at the gate therefore still sits on the anvils. At Singapore on 12 November the deck's opacity at the airport was 0–0.09 and the high layer's 0.48–0.99, and the before and after frames look the same.
 
@@ -466,7 +467,7 @@ Cost: per veiled pixel, the deck's shader once more and a ray–sphere intersect
 Limits:
 
 - **The veil has no air in front of it.** The plane is drawn after the air, so its veil is the deck as it leaves the cloud, not as seen through the air. Composited in linear light the difference is small: the veil's cloud comes out at (221, 221, 220) beside the deck's (213, 213, 213) at London's gate. In the fallback without half floats (`?display-referred`) the air is one premultiplied draw in display values that tints the deck to (210, 228, 247), while the veil stays (198, 197, 191). There a veiled plane reads as a grey shape rather than as cloud, and looks less sunk. Sharing the atmosphere's march as a function and adding its light over the veil would fix it.
-- **A vehicle under an overcast stays veiled for the whole leg,** while its route line, markers, and labels stay crisp above the cloud. On a New York–Philadelphia train under a full deck, the train is a faint shape the whole way.
+- **A vehicle under an overcast stays veiled for the whole leg,** while its route line, markers, and labels stay crisp above the cloud. On a New York–Philadelphia train under a full deck, the train was a faint shape the whole way at the planes' cap; the lighter vehicle cap keeps it the subject, though still under the cloud.
 - **The crossing is brief:** about 0.26 s on a default leg.
 - **The deck's top is the drawn shell,** at 2.1 km real, not the real cloud top. GFS's cloud ceiling and liquid-water profile could place real tops for the steps near airports, about 0.5–1 MB more for a one-leg trip.
 - **Lamps fade by the average veil over the plane,** not lamp by lamp, so a lamp over a gap in broken cloud fades too.

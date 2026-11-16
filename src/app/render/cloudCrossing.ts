@@ -27,6 +27,12 @@ export const DECK_DEPTH = 1000 * DISPLAY_PER_METRE;
  * Thinner cloud veils less, in proportion to its opacity.
  */
 export const VEIL_MAX = 0.65;
+/**
+ * The most of a train, bus, car, or ferry the thickest deck hides. A vehicle is under the deck for its whole leg, while
+ * its route line and labels stay crisp over the cloud, so it takes a lighter veil than a plane at the gate: it reads as
+ * under the cloud and stays the subject.
+ */
+export const VEHICLE_VEIL_MAX = 0.35;
 
 /**
  * How far under the deck a craft at display altitude `altitude` is (Earth radii above the ground), for a deck whose top
@@ -37,11 +43,11 @@ export function submersion(altitude: number, top: number): number {
 }
 
 /**
- * The veil's strength for a craft this far under the deck: what an opaque deck over it hides. The shader multiplies it
- * by the cloud's density there (0–1), carved into lobes and gaps as the deck draws it.
+ * The veil's strength for a craft this far under the deck: what an opaque deck over it hides, at most `max`. The shader
+ * multiplies it by the cloud's density there (0–1), carved into lobes and gaps as the deck draws it.
  */
-export function veilStrength(under: number): number {
-  return VEIL_MAX * clamp(under, 0, 1);
+export function veilStrength(under: number, max = VEIL_MAX): number {
+  return max * clamp(under, 0, 1);
 }
 
 /** How much of a craft at `altitude` the deck hides where its density (opacity before its 0.95 ceiling) is `density`. */

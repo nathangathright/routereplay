@@ -6,7 +6,7 @@ import type { SurfaceMode } from '../../shared/scene/constants';
 import type { SceneState, Timeline } from '../../shared/timeline/evaluate';
 import { bodyOnPath, vehiclePlace } from '../../shared/timeline/journeyPath';
 import { type DeckLook, aimVeil, setVeil, veilMaterial } from './Clouds';
-import { veilStrength } from './cloudCrossing';
+import { VEHICLE_VEIL_MAX, VEIL_MAX, veilStrength } from './cloudCrossing';
 import { type CraftLight, levelLight } from './craftLight';
 import { CraftLighting } from './craftPaint';
 import { useLinearScene } from './display';
@@ -161,8 +161,8 @@ function buildKit(mode: SurfaceMode): Kit {
  * `opacity` below 1 dissolves it into or out of the next craft at a connection.
  *
  * `deck`: the cloud deck drawn this frame, if any. A vehicle is always on the ground, under the deck, so wherever the
- * deck's lobes cover it, the deck is drawn over it again, up to VEIL_MAX, as for an aircraft at the gate
- * (cloudCrossing.ts). Its lamps, shadow, and wake fade by the veil's average.
+ * deck's lobes cover it, the deck is drawn over it again, as over an aircraft at the gate, but only up to
+ * VEHICLE_VEIL_MAX (cloudCrossing.ts). Its lamps, shadow, and wake fade by the veil's average.
  */
 export function Vehicle({
   mode,
@@ -209,11 +209,11 @@ export function Vehicle({
 
   const model = vehicleModel(mode);
   kit.lighting.update(light, opacity);
-  const veiling = deck ? veilStrength(light.submersion) : 0;
+  const veiling = deck ? veilStrength(light.submersion, VEHICLE_VEIL_MAX) : 0;
   for (const mesh of kit.veils) mesh.visible = veiling > 0;
   if (deck && veiling > 0) setVeil(veil, deck, veiling, opacity);
-  // Graphics the veil can't cover pixel by pixel fade by its average.
-  const shown = 1 - (deck ? light.veil : 0);
+  // Graphics the veil can't cover pixel by pixel fade by its average (light.veil is a plane's, up to VEIL_MAX).
+  const shown = 1 - (deck ? (light.veil * VEHICLE_VEIL_MAX) / VEIL_MAX : 0);
   kit.shadow.opacity = opacity * shown;
   // Lamps show from civil dusk (Sun 2° below the horizon) and are full by 12° below, as the aircraft's.
   const night = light.lamps * opacity * shown;

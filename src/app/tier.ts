@@ -42,8 +42,8 @@ export interface TierSettings {
  */
 export const TIERS: Readonly<Record<Tier, Readonly<TierSettings>>> = {
   phone: { textures: 'low', dprCap: 1, segments: 72, airSteps: 8, craftShadowSize: 512, nightDetailCap: 128, exportSamples: [1] },
-  laptop: { textures: 'standard', dprCap: 2, segments: 144, airSteps: 8, craftShadowSize: 512, nightDetailCap: 128, exportSamples: [16, 8, 4, 1] },
-  desktop: { textures: 'standard', dprCap: 3, segments: 144, airSteps: 12, craftShadowSize: 1024, nightDetailCap: 256, exportSamples: [16, 8, 4, 1] },
+  laptop: { textures: 'standard', dprCap: 2, segments: 144, airSteps: 8, craftShadowSize: 512, nightDetailCap: 128, exportSamples: [8, 4, 1] },
+  desktop: { textures: 'standard', dprCap: 3, segments: 144, airSteps: 12, craftShadowSize: 1024, nightDetailCap: 256, exportSamples: [8, 4, 1] },
 };
 
 /** The playback canvas's pixel ratio: 1 at a cap of 1 (whatever the screen, as `low` always was), else the screen's up to the cap. */

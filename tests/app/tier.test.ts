@@ -192,7 +192,9 @@ describe('tier settings', () => {
     expect(exportTier('laptop')).toBe('laptop');
     expect(exportTier('desktop')).toBe('desktop');
     expect(exportSampleCandidates({ tier: 'phone', samples: null })).toEqual([1]);
-    expect(exportSampleCandidates({ tier: 'laptop', samples: null })).toEqual([16, 8, 4, 1]);
+    // At most 8: 16 against 8 differed only at 55–59 dB, for 1.7–2× the export time (docs/budgets.md).
+    expect(exportSampleCandidates({ tier: 'laptop', samples: null })).toEqual([8, 4, 1]);
+    expect(exportSampleCandidates({ tier: 'desktop', samples: null })).toEqual([8, 4, 1]);
     expect(exportSampleCandidates({ tier: 'phone', samples: 8 })).toEqual([8]);
   });
 });

@@ -189,7 +189,7 @@ Export runs faster than real time on this laptop at one sample per frame. Slower
 
 - **One sample is unchanged:** Singapore–Hong Kong at 720p took 6.0–6.3 s in three runs alternated with the build before, which took 6.2–6.3 s.
 - **At 720p, up to 4 samples are almost free.** A frame's time is mostly capturing and encoding it (about 14 ms), and the GPU's samples overlap with that. From 8 samples the GPU sets the pace: about 2 ms a sample at 720p, 5 ms at 1080p.
-- **Chosen automatically,** every one of the six took 16 samples (a 10-second clip has a 90-second budget). The probe's two extra renders at 16 samples add about 3 s at 720p and 3.5 s at 1080p:
+- **Chosen automatically,** every one of the six took 16 samples (a 10-second clip has a 90-second budget). Since November 16, 2026 the tiers offer at most 8, so these exports take the 8-sample times above, and the probe's extra renders run at 8. The probe's two extra renders at 16 samples add about 3 s at 720p and 3.5 s at 1080p:
 
 | Journey | 720p: projected | export | with check and probe | 1080p: projected | export | with check and probe |
 | --- | --- | --- | --- | --- | --- | --- |

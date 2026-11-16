@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { CLOUD_RADIUS, DECK_GLSL, veilMaterial } from '../../src/app/render/Clouds';
-import { DECK_DEPTH, VEIL_MAX, submersion, veil, veilStrength } from '../../src/app/render/cloudCrossing';
+import { DECK_DEPTH, VEHICLE_VEIL_MAX, VEIL_MAX, submersion, veil, veilStrength } from '../../src/app/render/cloudCrossing';
 import { type CloudsBelow, craftLight, luminance } from '../../src/app/render/craftLight';
 import { skyLights } from '../../src/app/render/lighting';
 import { type ShadowCaster, shadowOn } from '../../src/app/render/planeShadow';
@@ -71,6 +71,14 @@ describe('a craft crossing the cloud deck', () => {
     for (let a = 0; a <= TOP + 0.001; a += TOP / 40) {
       for (const d of [0, 0.3, 0.7, 1]) expect(veil(a, TOP, d)).toBeLessThanOrEqual(VEIL_MAX);
     }
+  });
+
+  it('veils a ground vehicle more lightly, since it stays under the deck for its whole leg', () => {
+    expect(VEHICLE_VEIL_MAX).toBeGreaterThan(0);
+    expect(VEHICLE_VEIL_MAX).toBeLessThan(VEIL_MAX);
+    expect(veilStrength(1, VEHICLE_VEIL_MAX)).toBe(VEHICLE_VEIL_MAX);
+    expect(veilStrength(1.5, VEHICLE_VEIL_MAX)).toBe(VEHICLE_VEIL_MAX);
+    expect(veilStrength(0.5, VEHICLE_VEIL_MAX)).toBeCloseTo(VEHICLE_VEIL_MAX / 2, 12);
   });
 
   it('is veiled in proportion to the deck’s opacity, so thin or broken cloud veils less', () => {
