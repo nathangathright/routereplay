@@ -243,6 +243,8 @@ describe('route lookups', () => {
     const cases: [string, Partial<RoutingDeps>, (url: string) => Response | Promise<Response>][] = [
       ['network error', {}, () => Promise.reject(new TypeError('fetch failed'))],
       ['server error', {}, () => new Response('busy', { status: 503 })],
+      // brouter.de gives up on searches when busy, with a 400 like a missing route.
+      ['time limit', {}, () => new Response('operation killed by thread-priority-watchdog after 3 seconds', { status: 400 })],
       ['budget', { allow: async () => false }, () => new Response(brouter())],
     ];
     for (const [, extra, respond] of cases) {

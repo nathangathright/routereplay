@@ -6,6 +6,7 @@
  * randomness is consulted, so seeking in any order reproduces the same state.
  */
 import { GreatCircle } from '../geo/greatCircle';
+import { SmoothPath } from '../geo/smoothPath';
 import { sunDirection } from '../geo/solar';
 import { PathTrack, type Track } from '../geo/track';
 import {
@@ -58,11 +59,16 @@ interface TimelineLeg {
   circle: GreatCircle;
   /** The line travelled: the great circle, or a surface leg's looked-up route. */
   track: Track;
+  /** A surface leg's route, smoothed for the camera to glide over; null on flights and on legs drawn straight. */
+  glide: SmoothPath | null;
   depMs: number;
   arrMs: number;
   /** Display altitude at mid-flight in Earth radii (artistic, not physical); 0 on surface legs. */
   cruise: number;
-  /** This leg's length as a fraction of the trip's longest: how far the camera pulls back on it. */
+  /**
+   * This leg's length as a fraction of the trip's longest, surface legs included: how far the camera pulls back
+   * on a flight. Surface legs don't pull back by it.
+   */
   height: number;
   flightStart: number;
   flightEnd: number;
@@ -138,6 +144,13 @@ export const DEFAULT_ASPECT = ASPECT_VALUE['16:9'];
  * Zoom is the globe's apparent radius on a 1080-pixel short side seen through a 70° field: 1300 px at the
  * airports, easing out by 4p(1 − p) toward 440 px at mid-flight on the trip's longest leg, and proportionally
  * less on shorter legs. Flights, stops, and holds all ease with smootherstep.
+ *
+ * Train, bus, car, and ferry legs are filmed differently, like a drone following the vehicle: they don't take
+ * off or land. The camera stays at the airports' zoom, rising only as far as it must to keep the ground from
+ * crossing the frame faster than SURFACE_SCREEN_SPEED, so only a long leg played fast rises at all. It glides
+ * over the route smoothed along its length (SmoothPath, with a window tied to the ground the frame spans), while
+ * the vehicle keeps to the road, railway, or ferry line and drifts a little within the frame. The vehicle gets
+ * up to speed and slows to a stop over the first and last SURFACE_RAMP of the leg, steady between.
  */
 const SHORT_SIDE_PX = 1080;
 const SHORT_SIDE_FOV = 70 * DEG;
@@ -145,6 +158,22 @@ const SHORT_SIDE_FOV = 70 * DEG;
 export const FOCAL_PX = SHORT_SIDE_PX / (2 * Math.tan(SHORT_SIDE_FOV / 2));
 const GROUND_RADIUS_PX = 1300;
 const SUMMIT_RADIUS_PX = 440;
+/** Fraction of a surface leg's screen time spent getting up to speed, and again slowing to a stop. */
+export const SURFACE_RAMP = 0.2;
+/** The ground crosses a surface leg's frame no faster than this, in pixels a second of a 1080-pixel short side. */
+export const SURFACE_SCREEN_SPEED = 0.1 * SHORT_SIDE_PX;
+/**
+ * The camera's smoothing window on each side of the vehicle, as a fraction of the ground that half the frame's
+ * short side spans straight below the camera. The camera then stays within a third of that window of the
+ * vehicle (SmoothPath), so the vehicle stays within GLIDE_WINDOW / 3 of half the short side from the centre.
+ */
+export const GLIDE_WINDOW = 0.5;
+/**
+ * The vehicle's safe area: it stays within this fraction of the short side from the frame's centre. The window
+ * keeps it within 1/12 (a 90-pixel radius on a 1080-pixel short side), and the labels keep the central 224 pixels
+ * clear for it.
+ */
+export const SURFACE_SAFE_RADIUS = 1 / 8;
 /** Illustrative cruise: 11 km at mid-flight following sin(πp), drawn 12× taller, as the offline renderer does. */
 export const CRUISE_DISPLAY = (11_000 * 12) / 6_371_000;
 /**
@@ -156,6 +185,33 @@ const HOLD_MS = HOLD_MINUTES * 60_000;
 
 /** Flight progress (fraction of the route covered) for a fraction u of a flight's screen time. */
 export const flightProgress = smootherstep;
+
+/**
+ * Route covered (0–1) for a fraction u of a surface leg's screen time. The speed rises along a smoothstep over the
+ * first SURFACE_RAMP of the time, holds steady, and falls the same way over the last, so the vehicle starts and
+ * stops with no speed or acceleration and the position is C2. Steady speed is 1 / (1 − SURFACE_RAMP) of the
+ * average: 1.25 times, where a flight's smootherstep peaks at 1.875.
+ */
+export function surfaceProgress(u: number): number {
+  const x = clamp(u, 0, 1);
+  const a = SURFACE_RAMP;
+  if (x < a) return rampProgress(x / a);
+  if (x > 1 - a) return 1 - rampProgress((1 - x) / a);
+  return (x - a / 2) / (1 - a);
+}
+
+/** Route covered y of the way through a ramp: the integral of smoothstep from 0 to y is y³ − y⁴ / 2. */
+function rampProgress(y: number): number {
+  return (SURFACE_RAMP / (1 - SURFACE_RAMP)) * y * y * y * (1 - y / 2);
+}
+
+/** The rate of surfaceProgress: route covered per unit of u. */
+export function surfaceSpeed(u: number): number {
+  const x = clamp(u, 0, 1);
+  const a = SURFACE_RAMP;
+  const y = x < a ? x / a : x > 1 - a ? (1 - x) / a : 1;
+  return (y * y * (3 - 2 * y)) / (1 - a);
+}
 
 /** Display altitude (Earth radii) along a leg: the trail and aircraft share it. */
 export function displayAltitude(cruise: number, p: number): number {
@@ -182,6 +238,35 @@ function apparentRadius(p: number, height: number): number {
   return GROUND_RADIUS_PX / (1 + (GROUND_RADIUS_PX / SUMMIT_RADIUS_PX - 1) * lift);
 }
 
+/** Camera distance from Earth's centre (Earth radii) at the airports, through holds and stops. */
+const GROUND_DISTANCE = cameraDistance(GROUND_RADIUS_PX);
+
+/**
+ * Height above the ground (Earth radii) of the camera over a surface leg's vehicle covering `rate` radians of
+ * route a second: the airports' height, or higher where the ground straight below would otherwise cross the
+ * frame faster than SURFACE_SCREEN_SPEED (FOCAL_PX × rate / height pixels a second). The two are joined by a
+ * smooth maximum (an eighth-power mean), so the height follows the speed smoothly, is exactly the airports' at a
+ * standstill, and rises less than 1 % until the speed nears the limit.
+ */
+export function droneHeight(rate: number): number {
+  const low = GROUND_DISTANCE - 1;
+  const needed = (FOCAL_PX * Math.max(rate, 0)) / SURFACE_SCREEN_SPEED;
+  const r2 = (needed / low) * (needed / low);
+  const r4 = r2 * r2;
+  // The eighth root as three square roots: much cheaper than Math.pow before the code is optimized.
+  return low * Math.sqrt(Math.sqrt(Math.sqrt(1 + r4 * r4)));
+}
+
+/**
+ * The camera's smoothing window (radians of arc on each side) at a height: GLIDE_WINDOW of the ground that half
+ * the short side spans straight below the camera, smoothly capped at the route's length, which SmoothPath needs.
+ */
+function glideWindow(height: number, routeLength: number): number {
+  const w = GLIDE_WINDOW * height * Math.tan(SHORT_SIDE_FOV / 2);
+  const r2 = (w / routeLength) * (w / routeLength);
+  return w / Math.sqrt(Math.sqrt(1 + r2 * r2));
+}
+
 export function buildTimeline(scene: NormalizedSceneV1): Timeline {
   const p = scene.presentation;
   const segments: Segment[] = [];
@@ -197,12 +282,14 @@ export function buildTimeline(scene: NormalizedSceneV1): Timeline {
     const b = scene.airports[leg.to]!;
     return GreatCircle.fromLatLon(a.lat, a.lon, b.lat, b.lon);
   });
+  // Surface legs count toward the longest: a flight's pull-back shows its length against the whole trip's.
   const longest = Math.max(...circles.map((c) => c.angle), 1e-9);
   scene.legs.forEach((leg, i) => {
     const circle = circles[i]!;
     const flightStart = t;
     const surface = leg.mode !== undefined;
     push(surface ? 'surface' : 'flight', leg.flightSeconds, i);
+    const route = surface && leg.path ? PathTrack.fromPolyline(leg.path) : null;
     legs.push({
       id: leg.id,
       from: leg.from,
@@ -210,7 +297,9 @@ export function buildTimeline(scene: NormalizedSceneV1): Timeline {
       craft: surface ? leg.mode! : leg.aircraft!,
       mode: leg.mode ?? null,
       circle,
-      track: (surface && leg.path && PathTrack.fromPolyline(leg.path)) || circle,
+      track: route ?? circle,
+      // A straight leg has no bends to smooth: the camera stays over the vehicle.
+      glide: route && new SmoothPath(route.points, route.distances),
       depMs: Date.parse(leg.departureUtc),
       arrMs: Date.parse(leg.arrivalUtc),
       cruise: surface ? 0 : CRUISE_DISPLAY,
@@ -269,8 +358,10 @@ interface Kinematics {
   ground: Vec3;
   altitude: number;
   heading: Vec3;
-  /** Apparent globe radius (pixels on a 1080-pixel short side) the camera frames. */
-  radiusPx: number;
+  /** The ground point straight below the camera: the aircraft's, or a surface leg's smoothed route. */
+  eye: Vec3;
+  /** The camera's distance from Earth's centre, in Earth radii. */
+  distance: number;
 }
 
 function kinematics(tl: Timeline, tIn: number): Kinematics {
@@ -290,20 +381,40 @@ function kinematics(tl: Timeline, tIn: number): Kinematics {
         ground: leg.track.a,
         altitude: 0,
         heading: leg.track.tangent(0),
-        radiusPx: GROUND_RADIUS_PX,
+        eye: leg.track.a,
+        distance: GROUND_DISTANCE,
       };
-    case 'flight':
-    case 'surface': {
+    case 'flight': {
       const p = flightProgress(u);
+      const ground = leg.track.at(p);
       return {
         seg,
         legIndex: seg.leg,
         legProgress: p,
         physicalUtcMs: leg.depMs + p * (leg.arrMs - leg.depMs),
-        ground: leg.track.at(p),
+        ground,
         altitude: displayAltitude(leg.cruise, p),
         heading: leg.track.tangent(p),
-        radiusPx: apparentRadius(p, leg.height),
+        eye: ground,
+        distance: cameraDistance(apparentRadius(p, leg.height)),
+      };
+    }
+    case 'surface': {
+      // A drone over the vehicle: its height from the vehicle's own speed, gliding over the smoothed route.
+      const p = surfaceProgress(u);
+      const ground = leg.track.at(p);
+      const height = droneHeight((leg.track.angle * surfaceSpeed(u)) / (seg.t1 - seg.t0));
+      const glide = leg.glide;
+      return {
+        seg,
+        legIndex: seg.leg,
+        legProgress: p,
+        physicalUtcMs: leg.depMs + p * (leg.arrMs - leg.depMs),
+        ground,
+        altitude: 0,
+        heading: leg.track.tangent(p),
+        eye: glide ? glide.at(p * glide.length, glideWindow(height, glide.length)) : ground,
+        distance: 1 + height,
       };
     }
     case 'stop': {
@@ -317,7 +428,8 @@ function kinematics(tl: Timeline, tIn: number): Kinematics {
         ground,
         altitude: 0,
         heading: turnHeading(leg.track.tangent(1), next.track.tangent(0), ground, eased),
-        radiusPx: GROUND_RADIUS_PX,
+        eye: ground,
+        distance: GROUND_DISTANCE,
       };
     }
     case 'end':
@@ -332,7 +444,8 @@ function kinematics(tl: Timeline, tIn: number): Kinematics {
         ground: leg.track.b,
         altitude: 0,
         heading: leg.track.tangent(1),
-        radiusPx: GROUND_RADIUS_PX,
+        eye: leg.track.b,
+        distance: GROUND_DISTANCE,
       };
     }
   }
@@ -349,15 +462,15 @@ function northUp(dir: Vec3, heading: Vec3): Vec3 {
 /** The camera's position at presentation time t (Earth frame, Earth radii), whatever the frame's shape. */
 export function cameraPositionAt(tl: Timeline, t: number): Vec3 {
   const k = kinematics(tl, t);
-  return scale(k.ground, cameraDistance(k.radiusPx));
+  return scale(k.eye, k.distance);
 }
 
-/** Straight down at the aircraft (or the airport it waits at), north up. */
+/** Straight down at the aircraft (or the airport it waits at, or a surface leg's smoothed route), north up. */
 function evaluateCamera(k: Kinematics, aspect: number): CameraState {
   return {
-    position: scale(k.ground, cameraDistance(k.radiusPx)),
+    position: scale(k.eye, k.distance),
     target: [0, 0, 0],
-    up: northUp(k.ground, k.heading),
+    up: northUp(k.eye, k.heading),
     fovDeg: verticalFovFor(aspect),
   };
 }
@@ -418,8 +531,8 @@ export function exposureAt(tl: Timeline, t: number): number {
     const tanHalf = Math.tan(SHORT_SIDE_FOV / 2);
     for (let i = 0; i < meters.length; i++) {
       const k = kinematics(tl, i / tl.fps);
-      const camera = scale(k.ground, cameraDistance(k.radiusPx));
-      meters[i] = meterGlobe(camera, scale(k.ground, -1), northUp(k.ground, k.heading), tanHalf, sunDirection(k.physicalUtcMs));
+      const camera = scale(k.eye, k.distance);
+      meters[i] = meterGlobe(camera, scale(k.eye, -1), northUp(k.eye, k.heading), tanHalf, sunDirection(k.physicalUtcMs));
     }
     profile = exposureProfile(meters, 1 / tl.fps);
     exposures.set(tl, profile);

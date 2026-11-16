@@ -5,7 +5,7 @@
 | Field | Meaning | Current |
 | --- | --- | --- |
 | `schemaVersion` | Authoring contract (`/schemas/scene-v1.json`) | 1 |
-| `compatibility.rendererVersion` | Semver of the timeline and scene code | 2.4.0 |
+| `compatibility.rendererVersion` | Semver of the timeline and scene code | 2.6.0 |
 | `compatibility.assetManifestVersion` | Directory under `/assets/` holding textures and font when the record was saved | 2026-11-12 |
 | `compatibility.airportDataVersion` | Airport table used to normalize the record | `2026-11-11.<hash>` |
 
@@ -31,6 +31,8 @@ Renderer 2.3 (November 13, 2026) draws a control tower at each airport and stops
 Renderer 2.4 (November 13, 2026) changes only the picture: airports go back to the ringed dot, the arrival ring is gone, the accent is an electric blue, and the aircraft's shadow softens with height ([decisions.md](decisions.md#no-towers-an-electric-blue-accent-and-shadows-that-soften-with-height)). The golden states and the storyboard fixture are unchanged. `evaluate` no longer returns arrival pulses or marks which labels are airports; neither was in the golden states.
 
 Renderer 2.5 (November 14, 2026) also changes only the picture: one linear composite tone mapped once, with the air's transmittance per colour ([decisions.md](decisions.md#one-linear-composite-tone-mapped-once)); sky light on clouds, cellular billows, and a high cloud layer from GFS ice ([decisions.md](decisions.md#sky-light-on-clouds)); and the aircraft and vehicles lit by the scene's own light, with self-shadows ([decisions.md](decisions.md#the-aircraft-in-the-scenes-own-light)). The golden states and the storyboard fixture are unchanged. Weather steps moved to `/api/v1/weather/gfs-layers/…`, because the old responses are cached as immutable.
+
+Renderer 2.6 (November 15, 2026) films train, bus, car, and ferry legs like a drone following the vehicle instead of a flight taking off and landing ([decisions.md](decisions.md#surface-legs-filmed-like-a-drone)). The camera stays at the airports' zoom unless the leg is fast, glides over the route smoothed along its length while the vehicle keeps to the route, and the vehicle eases in and out over a fifth of the leg instead of a flight's smootherstep. That changes the pacing and framing of every journey with a surface leg, which by the rule above calls for a major version. It stays minor for the same reason as 2.2: there are no users yet, and a major would make every saved journey unplayable. Journeys with only flights evaluate exactly as before, so the fixture's golden states and storyboard are unchanged; flights in mixed trips are unchanged too. Once there are users, a change like this one needs the major bump.
 
 Pixel-identical output across GPUs is not promised. The golden states pin what is drawn, not how a GPU rasterizes it.
 

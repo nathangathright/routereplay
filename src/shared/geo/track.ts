@@ -2,7 +2,7 @@
  * The line a leg follows: a great circle for flights, or a looked-up route (railway, road, ferry line) for
  * surface legs. Both are parametrized by the fraction f of the distance along them.
  */
-import { COINCIDENT_ANGLE, GreatCircle } from './greatCircle';
+import { ANTIPODAL_MARGIN, COINCIDENT_ANGLE, GreatCircle, centralAngle } from './greatCircle';
 import { type Vec3, add, clamp, latLonToVec, normalize } from './vec';
 import { decodePolyline } from './polyline';
 
@@ -26,6 +26,10 @@ export class PathTrack implements Track {
   readonly b: Vec3;
   readonly angle: number;
   readonly corners: readonly number[];
+  /** The route's vertices, as unit vectors. */
+  readonly points: readonly Vec3[];
+  /** Arc length at each vertex: 0 at the first, `angle` at the last. */
+  readonly distances: readonly number[];
   private readonly segments: GreatCircle[];
   /** Arc length at the start of each segment, and the total at the end. */
   private readonly cumulative: number[];
@@ -35,6 +39,8 @@ export class PathTrack implements Track {
     for (let i = 1; i < points.length; i++) segments.push(new GreatCircle(points[i - 1]!, points[i]!));
     const cumulative = [0];
     for (const s of segments) cumulative.push(cumulative[cumulative.length - 1]! + s.angle);
+    this.points = points;
+    this.distances = cumulative;
     this.segments = segments;
     this.cumulative = cumulative;
     this.angle = cumulative[cumulative.length - 1]!;
@@ -43,18 +49,19 @@ export class PathTrack implements Track {
     this.corners = cumulative.slice(1, -1).map((s) => s / this.angle);
   }
 
-  /** Points closer than a few metres are merged. Null when fewer than two distinct points remain. */
+  /**
+   * Points closer than a few metres are merged, and a point opposite the one before it (no single great circle
+   * joins them) is dropped. Null when fewer than two distinct points remain.
+   */
   static fromPoints(points: readonly Vec3[]): PathTrack | null {
     const distinct: Vec3[] = [];
     for (const p of points) {
       const last = distinct[distinct.length - 1];
-      if (!last) distinct.push(normalize(p));
+      const q = normalize(p);
+      if (!last) distinct.push(q);
       else {
-        try {
-          if (new GreatCircle(last, p).angle >= COINCIDENT_ANGLE) distinct.push(normalize(p));
-        } catch {
-          // Coincident with the previous point: skip it.
-        }
+        const angle = centralAngle(last, q);
+        if (angle >= COINCIDENT_ANGLE && Math.PI - angle >= ANTIPODAL_MARGIN) distinct.push(q);
       }
     }
     return distinct.length >= 2 ? new PathTrack(distinct) : null;

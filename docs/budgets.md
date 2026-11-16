@@ -253,4 +253,23 @@ Production figures after the change: not yet measured (needs a deploy).
 
 **Storyboards and seeks lay out airport labels** (renderer 2.2): one pass over every frame of the journey, about 1 ms for 18–30 s journeys and 3–4 ms for the 120 s maximum, warm, in Node. A storyboard, a seek, or an agent's read of a draft with an open preview pays it once per request. Not yet measured in workerd or production.
 
+**Storyboards with a drone camera over surface legs** (renderer 2.6; [decisions.md](decisions.md#surface-legs-filmed-like-a-drone)). Building the timeline now also builds each traced route's running integrals, and every camera evaluation on a surface leg costs three binary searches into them. `buildStoryboard` on stored records (8 keyframes, and the label layout over every frame), in Node on an M1 Max, before → after. Warm is the median of 60 runs after 20; a fresh process is the median of 15, each in a new process that has already loaded ICU, as a busy production machine has.
+
+| Record | Warm | Fresh process |
+| --- | --- | --- |
+| Zurich–Milan by train, 246 km traced, 24 s | 0.53 → 0.60 ms | 7.3 → 7.9 ms |
+| Paris CDG–Marseille by TGV, 770 km traced, 24 s | 0.64 → 0.66 ms | 7.4 → 8.5 ms |
+| The same leg on a winding 1,500-point route (the most the server stores) | 0.82 → 0.99 ms | 9.5 → 10.9 ms |
+| Twelve such legs in 120 s: the largest record possible | 6.2 → 6.5 ms | 27.0 → 34.6 ms |
+
+- **Building** the integrals for those twelve 1,500-point routes costs about 0.5 ms in a fresh process.
+- **Evaluating** is the rest. The label layout evaluates the camera once per frame, about 3,700 times on the largest record, and before the code is optimized each evaluation over a surface leg costs about 2 µs more.
+- **Brought down from a first version** that cost 8.2 ms warm on the largest record:
+  - the reflections at each end come from the route's own integrals in closed form, not from copies of the route;
+  - `PathTrack.fromPoints` no longer builds a throwaway great circle for every pair of points;
+  - the drone's height and window use square roots, not fractional powers.
+  - Checking the previous segment before each binary search saved nothing measurable, so it isn't there.
+- **In fresh isolates**, real records were already near the budget and stay there. The largest record was already more than twice over and is now three times over.
+- Not yet measured in workerd or production.
+
 **Still over budget:** a save that looks up a new train, bus, car or ferry route in a fresh isolate. The route's own work is now about 2.5 ms per 650 km warm, but the first lookup in an isolate also pays for the runtime's fetch and cache machinery and for running cold code. Lookups are infrequent: about once per route, per Cloudflare location, per 30 days (edge caches can evict sooner). See [decisions.md](decisions.md#worker-cpu-within-the-free-plan) for the options if production shows them recurring.

@@ -6,6 +6,7 @@ import { DEFAULTS } from '../src/shared/scene/constants';
 import { sceneSchemaV1 } from '../src/shared/scene/schema';
 import { validateScene } from '../src/shared/scene/validate';
 import { sceneWarnings } from '../src/shared/scene/warnings';
+import { length } from '../src/shared/geo/vec';
 import { buildTimeline, evaluate } from '../src/shared/timeline/evaluate';
 import { buildStoryboard, keyframeAt } from '../src/shared/timeline/storyboard';
 import { clone, issues, leg, normalize, opts, spec, surface } from './helpers';
@@ -177,10 +178,18 @@ describe('surface legs: timeline', () => {
     expect(mix(stopAfter('pcn-chc'), 0.5)).toEqual([{ type: 'bus', weight: 1 }]);
   });
 
-  it('keeps the camera close over short ground legs', () => {
-    const height = (id: string) => tl.legs[legIndex(id)]!.height;
-    expect(height('wlg-pcn')).toBeLessThan(0.01);
-    expect(height('mel-sfo')).toBe(1);
+  it('films ground legs low over the ground, not climbing like a flight', () => {
+    // The camera's height above the ground at mid-leg, in Earth radii.
+    const midHeight = (id: string) => length(at(motion(id), 0.5).camera.position) - 1;
+    const airports = length(evaluate(tl, 0).camera.position) - 1;
+    for (const id of SURFACE_IDS) {
+      expect(midHeight(id)).toBeGreaterThanOrEqual(airports - 1e-12);
+      expect(midHeight(id)).toBeLessThan(airports * 1.5);
+    }
+    expect(midHeight('wlg-pcn')).toBeCloseTo(airports, 5);
+    // The longest flight still climbs to the whole globe.
+    expect(tl.legs[legIndex('mel-sfo')]!.height).toBe(1);
+    expect(midHeight('mel-sfo')).toBeGreaterThan(5 * airports);
   });
 });
 

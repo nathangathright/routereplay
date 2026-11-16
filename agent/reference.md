@@ -61,7 +61,7 @@ Warnings never block saving. Each has `path` (where a fix would go in the spec),
 | `compressed_connection` | A stop runs faster than {{WARN_LAYOVER_RATE}} real hours per second on screen | Day and night flash past; lengthen the stop, or set it to 0 to cut |
 | `far_future_or_past` | The journey starts more than {{WARN_YEARS}} years from today | A typo in the year |
 | `route_not_found` | A train, bus, car, or ferry leg has no matching railway, road, or ferry line in OpenStreetMap between its airports, so it is drawn straight | A wrong mode or airport; or a line OpenStreetMap lacks, which needs no fix |
-| `route_unavailable` | The route lookup service didn't answer when the journey was saved; the leg is drawn straight for now | Nothing to fix; save again later to retry |
+| `route_unavailable` | The route lookup service didn't answer, or was too busy to finish, when the journey was saved; the leg is drawn straight for now | Nothing to fix; save again later to retry |
 | `no_cloud_data` | Clouds are on, but part of the journey is before 22 March 2021 or more than 16 days after the save (not raised with `far_future_or_past`) | Nothing to fix; that part is drawn without clouds |
 
 ### Errors

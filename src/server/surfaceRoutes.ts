@@ -62,10 +62,18 @@ async function get(url: string, deps: RoutingDeps): Promise<Response | { kind: '
   }
 }
 
+/**
+ * BRouter also answers 400 when it gives up on a search for time, which brouter.de does whenever it is busy
+ * ("operation killed by thread-priority-watchdog after 3 seconds"). That is the service failing, not a missing
+ * railway: it mustn't be cached as not found, or tell the agent the line doesn't exist.
+ */
+const GAVE_UP = /watchdog|timeout|timed out/i;
+
 /** Both services answer 400 when there is no route; anything else that isn't 200 is the service failing. */
 async function failure(res: Response): Promise<Raw> {
   const text = (await res.text()).slice(0, 200);
-  return res.status === 400 ? { kind: 'not_found', reason: text } : { kind: 'unavailable', reason: `HTTP ${res.status}` };
+  if (res.status === 400 && !GAVE_UP.test(text)) return { kind: 'not_found', reason: text };
+  return { kind: 'unavailable', reason: res.status === 400 ? text : `HTTP ${res.status}` };
 }
 
 /**
