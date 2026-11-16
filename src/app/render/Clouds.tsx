@@ -396,14 +396,18 @@ void main() {
 }
 `;
 
-const cloudFragment = /* glsl */ `
+/**
+ * The deck at a point on its shell, `deck(n)`: its light and its opacity, carved into lobes and gaps. The deck draws it
+ * at every point of its sphere; its veil draws it over a craft under it, at the point where each of the craft's pixels
+ * looks through the shell (veilMaterial). One source, so the veil is the same cloud in the same light, lobe for lobe.
+ */
+export const DECK_GLSL = /* glsl */ `
 precision highp sampler3D;
 ${CLOUD_BRIGHTNESS_GLSL}
 uniform sampler3D noise;
 uniform vec4 coverLevels[${COVER_LEVELS + 1}]; // cut-off with the finer octave, without it, and the mean of each
 uniform sampler2D nightMap;
 uniform vec4 detail; // x: phase of layer 1 (0–1), y: its cycle, z: cycle of layer 2 (half a period behind)
-varying vec3 vEarth;
 ${LIGHT_GLSL}
 ${AIR_GLSL}
 ${CITY_GLSL}
@@ -475,8 +479,9 @@ vec3 skyThinning(float tau) {
   return vec3(zenith, side, side);
 }
 
-void main() {
-  vec3 n = normalize(vEarth);
+// The deck at n (unit vector, Earth frame, on its shell): its light, and its opacity (at most 0.95) in alpha. It takes
+// screen-space derivatives, to antialias its lobes, so it must be called in uniform control flow.
+vec4 deck(vec3 n) {
   // The noise detail drifts with the wind too. Two copies, half a cycle apart, each restart from a fresh
   // seed when unseen, so the texture moves without ever smearing out.
   vec2 wind = mix(windAt(windA, gridUv(n)), windAt(windB, gridUv(n)), cloudBlend);
@@ -560,8 +565,57 @@ void main() {
   float penetration = 0.7 * exp(-tau) + 0.3 * exp(-0.4 * tau);
   float spread = cubicSample(nightMap, uv, vec2(textureSize(nightMap, 2)), 2.0).r;
   color += cityLights(n, spread) * 0.5 * penetration;
+  return vec4(color, alpha);
+}
+`;
 
-  gl_FragColor = vec4(color, alpha);
+const cloudFragment = /* glsl */ `
+varying vec3 vEarth;
+${DECK_GLSL}
+void main() {
+  gl_FragColor = deck(normalize(vEarth));
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}
+`;
+
+/**
+ * The deck again, over a craft's own pixels: where each pixel's view ray meets the deck's shell, the cloud the deck
+ * draws there, at its density × `veilStrength` (cloudCrossing.ts). The craft's geometry only says which pixels to cover;
+ * how far under the deck it is comes from its altitude. Pixels whose ray misses the shell (past the limb) stay clear.
+ * Hashed alpha discards the same pixels as the craft's paint while it dissolves into the next craft.
+ */
+const veilVertex = /* glsl */ `
+invariant gl_Position;
+uniform mat4 earthFromWorld;
+varying vec3 vEarthPoint;
+varying vec3 vPosition;
+void main() {
+  vPosition = position;
+  vec4 world = modelMatrix * vec4(position, 1.0);
+  vEarthPoint = (earthFromWorld * world).xyz;
+  // Exactly as the craft's paint places it (craftPaint.ts), so the veil's depth equals the paint's at every pixel.
+  gl_Position = projectionMatrix * viewMatrix * world;
+}
+`;
+
+const veilFragment = /* glsl */ `
+uniform vec3 veilEye; // the camera, Earth frame
+uniform float veilStrength;
+uniform float opacity;
+varying vec3 vEarthPoint;
+varying vec3 vPosition;
+${DECK_GLSL}
+#include <alphahash_pars_fragment>
+void main() {
+  vec3 ray = normalize(vEarthPoint - veilEye);
+  float b = dot(veilEye, ray);
+  float h = b * b - dot(veilEye, veilEye) + ${(CLOUD_RADIUS * CLOUD_RADIUS).toFixed(6)};
+  vec3 n = normalize(veilEye + ray * (-b - sqrt(max(h, 0.0))));
+  vec4 cloud = deck(n);
+  vec4 diffuseColor = vec4(1.0, 1.0, 1.0, opacity);
+  #include <alphahash_fragment>
+  gl_FragColor = vec4(cloud.rgb, h > 0.0 ? cloud.a / 0.95 * veilStrength : 0.0);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }
@@ -688,9 +742,104 @@ export interface CloudFrame {
   seconds: number;
 }
 
+/** How the deck looks this frame: everything its shader reads besides the point on its shell (DECK_GLSL). */
+export interface DeckLook {
+  frame: CloudFrame;
+  lights: SkyLights;
+  /** The global night map, for the city light the deck lets up through it. */
+  night: THREE.Texture;
+  /** The aircraft that shade its tops (planeShadow.ts); each is left off while it is under the deck. */
+  shadows: readonly ShadowCaster[];
+}
+
+/** Uniforms for DECK_GLSL; keep them current with setDeckUniforms. */
+function deckUniforms(night: THREE.Texture): Record<string, THREE.IUniform> {
+  return {
+    ...cloudUniforms(),
+    ...lightUniforms(),
+    ...planeShadowUniforms(),
+    noise: { value: cloudShapes().texture },
+    coverLevels: { value: cloudShapes().levels },
+    nightMap: { value: night },
+    skyTable: { value: skyTexture(SKY_LAYERS) },
+    detail: { value: new THREE.Vector4() },
+  };
+}
+
+/** The drifting detail's phase and cycles (the deck's and the high layer's `detail`). */
+function setDetailUniform(u: Record<string, THREE.IUniform>, frame: CloudFrame): void {
+  const cycles = frame.seconds / DETAIL_PERIOD_S;
+  (u.detail!.value as THREE.Vector4).set(cycles - Math.floor(cycles), Math.floor(cycles), Math.floor(cycles + 0.5), 0);
+}
+
+/** Keep a deck shader (the deck itself, or a veil over a craft) on this frame's look. */
+function setDeckUniforms(u: Record<string, THREE.IUniform>, look: DeckLook): void {
+  setCloudUniforms(u, look.frame);
+  setLightUniforms(u, look.lights);
+  setDetailUniform(u, look.frame);
+  setPlaneShadowUniforms(u, look.shadows, look.lights.sun, 'deck');
+  u.nightMap!.value = look.night;
+}
+
+/**
+ * The deck's veil over a craft (veilVertex, veilFragment): drawn with the same geometry and placement as the craft's
+ * paint, right after it, and only where that paint is the front-most surface (its depth, equal). Point it at the frame
+ * with setVeil, and call aimVeil as it draws.
+ *
+ * `graphics`: for a craft drawn with the graphics after the tone-map pass (the train, bus, car, and ferry; display.tsx),
+ * so its veil draws among them, tone mapped as it draws, as the deck would be on its own. Otherwise the veil is scene
+ * light, drawn into the linear target right after the aircraft, as the deck is before it.
+ */
+export function veilMaterial(linear: boolean, graphics: boolean): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    defines: sceneDefines(linear),
+    uniforms: {
+      ...deckUniforms(blankTexture(0)),
+      earthFromWorld: { value: new THREE.Matrix4() },
+      veilEye: { value: new THREE.Vector3() },
+      veilStrength: { value: 0 },
+      opacity: { value: 1 },
+    },
+    vertexShader: veilVertex,
+    fragmentShader: veilFragment,
+    alphaHash: true,
+    transparent: graphics,
+    // Cloud over the craft; the frame's alpha is left alone.
+    blending: THREE.CustomBlending,
+    blendSrc: THREE.SrcAlphaFactor,
+    blendDst: THREE.OneMinusSrcAlphaFactor,
+    blendSrcAlpha: THREE.ZeroFactor,
+    blendDstAlpha: THREE.OneFactor,
+    depthFunc: THREE.LessEqualDepth,
+    depthWrite: false,
+  });
+}
+
+/**
+ * This frame's veil: the deck's look, its strength (veilStrength in cloudCrossing.ts: 0 above the deck), and the
+ * craft's own opacity while it dissolves into the next craft (the paint's hashed alpha).
+ */
+export function setVeil(material: THREE.ShaderMaterial, look: DeckLook, strength: number, opacity: number): void {
+  const u = material.uniforms;
+  setDeckUniforms(u, look);
+  u.veilStrength!.value = strength;
+  u.opacity!.value = opacity;
+}
+
+/**
+ * As a veil draws: the Earth frame it looks through the deck in (`earth`, the object whose world matrix is the Earth
+ * frame's: the craft's parent) and the camera there. Call it from the veil mesh's onBeforeRender.
+ */
+export function aimVeil(material: THREE.ShaderMaterial, earth: THREE.Object3D, camera: THREE.Camera): void {
+  const u = material.uniforms;
+  const inverse = (u.earthFromWorld!.value as THREE.Matrix4).copy(earth.matrixWorld).invert();
+  (u.veilEye!.value as THREE.Vector3).setFromMatrixPosition(camera.matrixWorld).applyMatrix4(inverse);
+}
+
 /**
  * Real clouds from NOAA's GFS model on a shell just above the ground (Earth frame), carried by the model's
- * wind between time steps. Drawn after the ground and before planes, routes, and labels, which stay on top.
+ * wind between time steps. Drawn after the ground and before planes, routes, and labels. An aircraft or vehicle under
+ * the deck is drawn over it, then veiled by the deck again (veilMaterial).
  * `shadows`: the aircraft that shade the cloud tops (see planeShadow.ts).
  */
 export function Clouds({
@@ -711,19 +860,10 @@ export function Clouds({
     () =>
       new THREE.ShaderMaterial({
         defines: sceneDefines(linear),
-        uniforms: {
-          ...cloudUniforms(),
-          ...lightUniforms(),
-          ...planeShadowUniforms(),
-          noise: { value: cloudShapes().texture },
-          coverLevels: { value: cloudShapes().levels },
-          nightMap: { value: night },
-          skyTable: { value: skyTexture(SKY_LAYERS) },
-          detail: { value: new THREE.Vector4() },
-        },
+        uniforms: deckUniforms(night),
         vertexShader: cloudVertex,
         fragmentShader: cloudFragment,
-        // Blended but kept in the opaque pass, so planes (drawn after it) always stay visible above the clouds.
+        // Blended but kept in the opaque pass, before the aircraft. One under the deck is veiled by veilMaterial.
         blending: THREE.CustomBlending,
         blendSrc: THREE.SrcAlphaFactor,
         blendDst: THREE.OneMinusSrcAlphaFactor,
@@ -753,14 +893,10 @@ export function Clouds({
   );
   useEffect(() => () => material.dispose(), [material]);
   useEffect(() => () => high.dispose(), [high]);
-  const cycles = frame.seconds / DETAIL_PERIOD_S;
-  for (const m of [material, high]) {
-    const u = m.uniforms;
-    setCloudUniforms(u, frame);
-    setLightUniforms(u, lights);
-    (u.detail!.value as THREE.Vector4).set(cycles - Math.floor(cycles), Math.floor(cycles), Math.floor(cycles + 0.5), 0);
-  }
-  setPlaneShadowUniforms(material.uniforms, shadows, lights.sun);
+  setDeckUniforms(material.uniforms, { frame, lights, night, shadows });
+  setCloudUniforms(high.uniforms, frame);
+  setLightUniforms(high.uniforms, lights);
+  setDetailUniform(high.uniforms, frame);
   return (
     <>
       <mesh material={material} renderOrder={0.5}>

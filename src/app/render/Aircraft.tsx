@@ -4,8 +4,11 @@ import * as THREE from 'three';
 import { type Vec3, cross, normalize } from '../../shared/geo/vec';
 import type { AircraftType } from '../../shared/scene/aircraft';
 import { aircraftRadius, airframeModel } from './airframe';
+import { type DeckLook, aimVeil, setVeil, veilMaterial } from './Clouds';
+import { veilStrength } from './cloudCrossing';
 import type { CraftLight } from './craftLight';
 import { CraftLighting, enableCraftShadows } from './craftPaint';
+import { useLinearScene } from './display';
 
 const lampVertex = /* glsl */ `
 uniform float uPixelRatio;
@@ -48,6 +51,8 @@ interface Plane {
   lighting: CraftLighting;
   prop: THREE.MeshBasicMaterial;
   lamps: THREE.ShaderMaterial;
+  /** The cloud deck drawn again over the airframe while it is under the deck (Clouds.tsx veilMaterial). */
+  veil: THREE.Mesh;
   /** The airframe's bounding sphere, model units. */
   bounds: THREE.Sphere;
 }
@@ -73,8 +78,13 @@ function buildPlane(type: AircraftType): Plane {
   const body = new THREE.Mesh(model.geometry, [...materials, HIDDEN]);
   lighting.attach(body, true);
   const discs = new THREE.Mesh(model.geometry, [HIDDEN, HIDDEN, HIDDEN, prop]);
+  // The deck's veil: the airframe's own geometry and placement, drawn right after its paint (Aircraft gives it its
+  // material).
+  const veil = new THREE.Mesh(model.geometry, [HIDDEN, HIDDEN, HIDDEN, HIDDEN]);
+  veil.renderOrder = 1;
+  veil.visible = false;
   const group = new THREE.Group();
-  group.add(body, discs);
+  group.add(body, discs, veil);
   const lamps = new THREE.ShaderMaterial({
     uniforms: { uPixelRatio: { value: 1 }, uNight: { value: 0 }, uTime: { value: 0 } },
     vertexShader: lampVertex,
@@ -88,12 +98,13 @@ function buildPlane(type: AircraftType): Plane {
   points.renderOrder = 4;
   points.frustumCulled = false;
   group.add(points);
-  // Drawn after the cloud layer, so a plane always shows above the clouds.
+  // Drawn after the cloud layer and the air. Above the deck a plane shows over the clouds; under it, its veil draws the
+  // deck over it again.
   group.renderOrder = 1;
   const root = new THREE.Object3D();
   root.add(group, lighting.root);
   if (!model.geometry.boundingSphere) model.geometry.computeBoundingSphere();
-  return { root, group, lighting, prop, lamps, bounds: model.geometry.boundingSphere!.clone() };
+  return { root, group, lighting, prop, lamps, veil, bounds: model.geometry.boundingSphere!.clone() };
 }
 
 /**
@@ -101,6 +112,10 @@ function buildPlane(type: AircraftType): Plane {
  * through the air, the Moon and the night rig after dark, the sky above and what lies below, and its own shadow.
  * Its navigation lights show after dusk. `clock` (seconds) times the beacon: pass presentation time where frames
  * must be reproducible. `opacity` below 1 dissolves the plane, for changing aircraft at a connection.
+ *
+ * `deck`: the cloud deck drawn this frame, if any. Under it, by its altitude (cloudCrossing.ts), the plane is veiled by
+ * the deck's own cloud wherever the deck's lobes cover it, up to VEIL_MAX, so a plane at the gate under an overcast
+ * still reads as a faint shape. Its lamps and propeller discs, drawn as graphics over the veil, fade by its average.
  */
 export function Aircraft({
   type,
@@ -111,6 +126,7 @@ export function Aircraft({
   light,
   clock = 0,
   opacity = 1,
+  deck = null,
 }: {
   type: AircraftType;
   ground: Vec3;
@@ -120,8 +136,17 @@ export function Aircraft({
   light: CraftLight;
   clock?: number;
   opacity?: number;
+  deck?: DeckLook | null;
 }) {
   const plane = useMemo(() => buildPlane(type), [type]);
+  const linear = useLinearScene();
+  const veil = useMemo(() => {
+    const material = veilMaterial(linear, false);
+    plane.veil.material = [material, material, material, HIDDEN];
+    plane.veil.onBeforeRender = (_renderer, _scene, camera) => aimVeil(material, plane.root, camera);
+    return material;
+  }, [plane, linear]);
+  useEffect(() => () => veil.dispose(), [veil]);
   const { group: model, lighting, prop, lamps, bounds } = plane;
   const gl = useThree((state) => state.gl);
   const pixelRatio = gl.getPixelRatio();
@@ -135,9 +160,14 @@ export function Aircraft({
     },
     [plane],
   );
-  prop.opacity = PROP_OPACITY * opacity;
+  const strength = deck ? veilStrength(light.submersion) : 0;
+  plane.veil.visible = strength > 0;
+  if (deck && strength > 0) setVeil(veil, deck, strength, opacity);
+  // Graphics, drawn over the veil: they fade by its average over the plane.
+  const shown = 1 - (deck ? light.veil : 0);
+  prop.opacity = PROP_OPACITY * opacity * shown;
   const uniforms = lamps.uniforms;
-  uniforms.uNight!.value = light.lamps * opacity;
+  uniforms.uNight!.value = light.lamps * opacity * shown;
   uniforms.uTime!.value = clock;
   uniforms.uPixelRatio!.value = pixelRatio;
   const matrix = model.matrix;

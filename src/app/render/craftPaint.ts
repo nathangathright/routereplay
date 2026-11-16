@@ -26,6 +26,9 @@ const KEY_SHADOW_RADIUS = 4;
 const FAINTEST = 0.002;
 
 const paintVertex = /* glsl */ `
+// The cloud deck's veil over a craft under it (Clouds.tsx veilMaterial) is drawn where its depth equals this paint's,
+// from the same expression: invariant, so the two can't differ.
+invariant gl_Position;
 uniform mat4 uSunShadowMatrix;
 uniform mat4 uKeyShadowMatrix;
 uniform float uNormalBias;

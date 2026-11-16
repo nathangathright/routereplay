@@ -7,7 +7,7 @@ import { length } from '../../shared/geo/vec';
 import { AIRCRAFT_SHORT_SIDE_FRACTION, CRUISE_DISPLAY, type Timeline, evaluate, exposureAt, isSurfaceMode } from '../../shared/timeline/evaluate';
 import { Aircraft } from './Aircraft';
 import type { EarthTextures } from './assets';
-import { CIRRUS_RADIUS, CLOUD_RADIUS, type CloudSet, Clouds, cloudFrameAt } from './Clouds';
+import { CIRRUS_RADIUS, CLOUD_RADIUS, type CloudSet, Clouds, type DeckLook, cloudFrameAt } from './Clouds';
 import { craftLight } from './craftLight';
 import { dayAlbedo } from './dayAlbedo';
 import type { NightDetailTextures } from './nightDetail';
@@ -97,11 +97,15 @@ export function JourneyScene({
     albedo: dayAlbedo(gl, textures.day),
     clouds: cloudFrame && { frame: cloudFrame, top: CLOUD_RADIUS, cirrus: CIRRUS_RADIUS },
   });
+  // Under the deck a shadow stays off the cloud tops, and lands on them as the plane breaks out (planeShadow.ts).
+  const { submersion, overhead } = light;
   const shadows: ShadowCaster[] = state.aircraft.mix.flatMap((m) =>
     isSurfaceMode(m.type)
       ? []
-      : [{ type: m.type, ground, heading, altitude, size: aircraftSize, aloft: altitude / CRUISE_DISPLAY, weight: m.weight }],
+      : [{ type: m.type, ground, heading, altitude, size: aircraftSize, aloft: altitude / CRUISE_DISPLAY, weight: m.weight, submersion, overhead }],
   );
+  // The deck as drawn this frame, for its veil over a craft under it (Clouds.tsx veilMaterial).
+  const deck: DeckLook | null = cloudFrame && { frame: cloudFrame, lights, night: textures.night, shadows };
 
   return (
     <>
@@ -117,7 +121,7 @@ export function JourneyScene({
       <Routes timeline={timeline} trail={state.trail} />
       {state.aircraft.mix.map((m) =>
         isSurfaceMode(m.type) ? (
-          <Vehicle key={m.type} mode={m.type} timeline={timeline} state={state} shortSide={shortSide} light={light} opacity={m.weight} />
+          <Vehicle key={m.type} mode={m.type} timeline={timeline} state={state} shortSide={shortSide} light={light} opacity={m.weight} deck={deck} />
         ) : (
           <Aircraft
             key={m.type}
@@ -129,6 +133,7 @@ export function JourneyScene({
             size={aircraftSize}
             light={light}
             clock={t}
+            deck={deck}
           />
         ),
       )}

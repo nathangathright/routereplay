@@ -9,7 +9,7 @@ import { type Vec3, add, cross, dot, normalize, scale } from '../../shared/geo/v
 import { AIRCRAFT_DESIGNATORS, type AircraftType } from '../../shared/scene/aircraft';
 import { Aircraft } from './Aircraft';
 import { type EarthTextures, type Quality, currentSurfaceMonth, loadEarthTextures } from './assets';
-import { CIRRUS_RADIUS, CLOUD_RADIUS, type CloudSet, Clouds, type WeatherStep, cloudFrameAt, loadWeatherStep, releaseWeatherStep } from './Clouds';
+import { CIRRUS_RADIUS, CLOUD_RADIUS, type CloudSet, Clouds, type DeckLook, type WeatherStep, cloudFrameAt, loadWeatherStep, releaseWeatherStep } from './Clouds';
 import { craftLight } from './craftLight';
 import { dayAlbedo } from './dayAlbedo';
 import { LinearDisplay } from './display';
@@ -33,6 +33,10 @@ const FLIGHTS = 3;
 const CRUISE_KMH = 850;
 /** Great-circle arc a plane covers per real second, in radians. */
 const FLIGHT_RATE = (CRUISE_KMH / EARTH_RADIUS_KM / 3600) * TIME_SCALE;
+/**
+ * Display altitude of the planes here (Earth radii): always at cruise, above the cloud deck's top (0.004), so they
+ * are never veiled by it (cloudCrossing.ts) and always shade its tops. The same rule as journeys, applied below.
+ */
 const FLIGHT_ALTITUDE = 0.006;
 /** Each plane flies a great circle this far either side of a point in view (radians). */
 const FLIGHT_REACH = 0.9;
@@ -341,8 +345,23 @@ function LiveEarth({
   const cloudFrame = cloudFrameAt(cloudSet, utc);
   const clouds = cloudFrame && { ...cloudFrame, presence: cloudFrame.presence * cloudFade.current };
   const planeSize = 0.024 * reach;
+  // The camera in the Earth's frame: the planes' night light is set in the frame's terms (craftLight.ts).
+  const turned = globe.current?.quaternion.clone().invert() ?? new THREE.Quaternion();
+  const screenUp = new THREE.Vector3(0, 1, 0).applyQuaternion(turned);
+  const eye = globe.current ? globe.current.worldToLocal(camera.position.clone()) : camera.position.clone();
+  const planeLights = flights.current.map((fl) =>
+    craftLight({
+      ground: fl.circle.at(fl.f),
+      altitude: FLIGHT_ALTITUDE,
+      lights,
+      eye: [eye.x, eye.y, eye.z],
+      screenUp: [screenUp.x, screenUp.y, screenUp.z],
+      albedo: dayAlbedo(gl, textures.day),
+      clouds: clouds && { frame: clouds, top: CLOUD_RADIUS, cirrus: CIRRUS_RADIUS },
+    }),
+  );
   // The planes here are always at cruise, and cast their shadows so.
-  const shadows: ShadowCaster[] = flights.current.map((fl) => ({
+  const shadows: ShadowCaster[] = flights.current.map((fl, i) => ({
     type: fl.type,
     ground: fl.circle.at(fl.f),
     heading: fl.circle.tangent(fl.f),
@@ -350,11 +369,10 @@ function LiveEarth({
     size: planeSize,
     aloft: 1,
     weight: 1,
+    submersion: planeLights[i]!.submersion,
+    overhead: planeLights[i]!.overhead,
   }));
-  // The camera in the Earth's frame: the planes' night light is set in the frame's terms (craftLight.ts).
-  const turned = globe.current?.quaternion.clone().invert() ?? new THREE.Quaternion();
-  const screenUp = new THREE.Vector3(0, 1, 0).applyQuaternion(turned);
-  const eye = globe.current ? globe.current.worldToLocal(camera.position.clone()) : camera.position.clone();
+  const deck: DeckLook | null = clouds && { frame: clouds, lights, night: textures.night, shadows };
   // Everything lives in the Earth's frame, so the Sun, Moon, stars, sunlight, and planes stay true
   // to the clock while the globe is turned to put the camera's place in front.
   return (
@@ -368,7 +386,7 @@ function LiveEarth({
         <Earth textures={textures} lights={lights} segments={128} clouds={clouds} shadows={shadows} />
         {clouds && <Clouds frame={clouds} lights={lights} night={textures.night} segments={128} shadows={shadows} />}
         <Atmosphere sun={sun} segments={96} shadows={shadows} />
-        {flights.current.map((fl) => (
+        {flights.current.map((fl, i) => (
           <Aircraft
             key={fl.id}
             type={fl.type}
@@ -376,16 +394,9 @@ function LiveEarth({
             heading={fl.circle.tangent(fl.f)}
             altitude={FLIGHT_ALTITUDE}
             size={planeSize}
-            light={craftLight({
-              ground: fl.circle.at(fl.f),
-              altitude: FLIGHT_ALTITUDE,
-              lights,
-              eye: [eye.x, eye.y, eye.z],
-              screenUp: [screenUp.x, screenUp.y, screenUp.z],
-              albedo: dayAlbedo(gl, textures.day),
-              clouds: clouds && { frame: clouds, top: CLOUD_RADIUS, cirrus: CIRRUS_RADIUS },
-            })}
+            light={planeLights[i]!}
             clock={performance.now() / 1000}
+            deck={deck}
           />
         ))}
       </group>

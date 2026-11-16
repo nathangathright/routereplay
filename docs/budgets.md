@@ -118,6 +118,24 @@ The 95th percentiles went from 15–35 ms before to 22–32 ms with all three. S
 
 **The air and clouds in the ground's units** (November 14, 2026; [decisions.md](decisions.md#the-air-and-clouds-in-the-grounds-units)) add a few operations per pixel to the air's transmittance draw and one division per cloud pixel. Measured as above (7 seconds of playback from 2 s, everything a frame's `requestAnimationFrame` callbacks submit), the builds before and after alternated four times in one browser, with the machine's load average at 15–17. Medians stayed within run-to-run spread. At 1280×720, DPR 2: Singapore–Hong Kong 13.1–14.8 ms before and 13.7–14.8 ms after; London–Frankfurt at low Sun 13.8–14.8 and 13.9–14.8 ms. In phone emulation (390×844, DPR 3), Singapore–Hong Kong went from 1.91–1.96 to 1.92–1.99 ms. Export of the same 10.3 s journey at 720p took 6.1 s, as before.
 
+**Aircraft under the cloud deck** (November 15, 2026; [decisions.md](decisions.md#aircraft-under-the-cloud-deck)) runs the deck's shader once more over a plane's own pixels while it is under the deck: about 0.005 ms a frame at 2560×1440, under 0.02 ms allowing for overshading. That is too little to measure directly, so it was worked out from the deck's own cost per pixel. All figures are from the GPU's timer over everything a frame's `requestAnimationFrame` callbacks submit, in headless Chrome on the M1 Max, playing London's gate hold under an overcast. The variants were switched at runtime in one page and alternated play by play, six to eight times, so the load from other work (load average 8–13) fell on all of them alike.
+
+| | 1280×720 at DPR 2 (2560×1440) | Phone viewport, 390×844 at DPR 3 |
+| --- | --- | --- |
+| Pixels the veil changes at the gate (A350) | 8,400 (0.23 % of the frame) | about 6,600 screenshot pixels |
+| The deck's pass (hidden against shown) | 1.4–2.7 ms, 0.4–0.7 ns per pixel | 1.2–1.5 ms |
+| The veil (hidden against shown) | +0.16 ms median, within the ±0.5 ms noise | +0.005 ms |
+| The veil, from the deck's cost per pixel | about 0.005 ms; under 0.02 ms allowing for the airframe's small triangles | — |
+
+- **The phone viewport** is the player's own choice of quality at 390×844, DPR 3. Forced to low quality (DPR 1, a 390×808 canvas), a plane at the gate is about 700 pixels: a few microseconds.
+- **The fallback** without half floats (`?display-referred`) measured the same, within noise (−0.3 to +0.6 ms at 2560×1440).
+- **Methods that didn't work here.** A timer query around the veil's draw alone returned 9–30 ms: on Apple GPUs, ANGLE's Metal backend times command buffers, not draws. Two amplified tests also failed:
+  - Drawing the veil 101 times added 0.17–0.3 ms per copy, more at the phone's size than at 2560×1440. Per-draw overhead, not pixels, dominated.
+  - Running `deck()` 41 times per pixel would put the full-screen deck at about 45 ms a frame, more than the whole measured frame. The 255-step loop it needed bloats the shader.
+- **CPU:** under the deck, the plane's light takes 4.5 µs instead of 3.9 µs, and setting a veil's uniforms takes 0.4 µs a frame (Node, warm).
+- **Memory and downloads:** nothing added. The veil reads the deck's textures. It is one more shader program, or two with a surface leg, since a vehicle's veil is tone mapped as a graphic.
+- **Re-measure on the iPhone** before relying on these numbers.
+
 CPU throttling does not slow the GPU, so the emulated-phone frame times are optimistic. The player steps down from standard to low automatically if playback stays below 20 fps for 3 seconds. Timing is unaffected.
 
 ## GPU memory (estimated, not measured)

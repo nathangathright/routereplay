@@ -7,6 +7,9 @@
  *   units, and cut off by the planet with a finite solar disc. Golden near sunset, then gone.
  * - **Sky and ground fill:** clear skylight from above, at the Sun's elevation; from below, what the craft flies
  *   over: a lit cloud deck, dark sea, or the day map's ground, with the haze in between.
+ * - **Under the cloud deck** (cloudCrossing.ts), by the craft's altitude: direct light is dimmed as the ground's is under
+ *   the same cloud, the clear sky above gives way to the deck's grey base, and what lies below is the ground, not the
+ *   deck's top. The deck's veil over the craft is drawn by Clouds.tsx; `veil` here is its average, for the craft's lamps.
  * - **Moonlight** at its real phase and distance, 4000× real as on the globe.
  * - **A night rig** after the offline renderer's aircraft-only cinematic lights (routereplay aircraft_night.py):
  *   a cool key and a weaker fill that fade in from 2° to 12° after sunset, the key from the Moon when it is up and
@@ -19,6 +22,7 @@ import type * as THREE from 'three';
 import { type Vec3, cross, dot, normalize, smoothstep } from '../../shared/geo/vec';
 import { CLOUD_GRID } from '../../shared/weather/gfs';
 import { AIR_SPREAD, H_R, type RGB, SUN_ABOVE_AIR, airAboveAlbedo, clearSkyLight, columnToLight, extinction, lightThroughAir, verticalTransmittance } from './airLight';
+import { submersion, veilStrength } from './cloudCrossing';
 import type { SkyLights } from './lighting';
 
 const DEG = Math.PI / 180;
@@ -63,6 +67,15 @@ export interface CraftLight {
   ground: RGB;
   /** Navigation lights and lamps: 0 by day, 1 from 12° after sunset (they start at 2°). */
   lamps: number;
+  /** How far under the cloud deck's top the craft is, 0–1 (cloudCrossing.ts submersion); 0 without clouds. */
+  submersion: number;
+  /** How much deck lies over the craft: its submersion × the deck's mean opacity over it (0–0.95). */
+  overhead: number;
+  /**
+   * How much of the craft the deck's veil hides, on average over it (the veil itself follows the deck's lobes). For what
+   * draws as graphics over the veil and can't be veiled pixel by pixel: lamps, propeller discs, a vehicle's shadow.
+   */
+  veil: number;
 }
 
 /**
@@ -86,6 +99,8 @@ const SKY_GAIN = 2.7;
 const SKY_SATURATION = 0.3;
 /** Light a deck of thick cloud reflects, for the light it throws up at a plane (the drawn deck is brighter still). */
 const CLOUD_ALBEDO = 0.75;
+/** Share of direct light a deck of opacity 1 keeps off what lies under it: the ground's own rule (Earth.tsx cloudShadow). */
+const DECK_DIRECT_LOSS = 0.54;
 /** Ground where the day map can't be read (before it loads, or outside a browser): grey-green land. */
 const DEFAULT_ALBEDO: RGB = [0.08, 0.1, 0.07];
 
@@ -151,10 +166,10 @@ function drift(n: Vec3, east: number, north: number, seconds: number): Vec3 {
 }
 
 /**
- * The cloud layer's opacity over the unit vector n, as the cloud shader works it out (CLOUD_GLSL cloudOpacity, then
- * the deck's density with its billow noise at its mean): each model field carried along its own wind, blended.
+ * The model's cloud opacity over the unit vector n, as CLOUD_GLSL's cloudOpacity works it out: each model field
+ * carried along its own wind, blended. The ground's cloud shadows use this (Earth.tsx cloudShadow).
  */
-export function cloudCoverAt(frame: CloudsBelow['frame'], n: Vec3): number {
+export function cloudWaterAt(frame: CloudsBelow['frame'], n: Vec3): number {
   const field = (step: WeatherFields, seconds: number) => {
     const { lat, lon } = latLon(n);
     // The cloud field's first channel is the deck's opacity, and the wind's first two the 700 hPa wind.
@@ -163,8 +178,15 @@ export function cloudCoverAt(frame: CloudsBelow['frame'], n: Vec3): number {
     const at = latLon(drift(n, east, north, seconds));
     return gridSample(step.cloud, at.lon, at.lat, 0, 0) / 255;
   };
-  const water = (field(frame.a, -frame.ageA) * (1 - frame.blend) + field(frame.b, frame.ageB) * frame.blend) * frame.presence;
-  return smoothstep(0.04, 0.9, water) * 0.95;
+  return (field(frame.a, -frame.ageA) * (1 - frame.blend) + field(frame.b, frame.ageB) * frame.blend) * frame.presence;
+}
+
+/**
+ * The cloud layer's opacity over the unit vector n, as the cloud shader works it out (cloudWaterAt, then the deck's
+ * density with its billow noise at its mean).
+ */
+export function cloudCoverAt(frame: CloudsBelow['frame'], n: Vec3): number {
+  return smoothstep(0.04, 0.9, cloudWaterAt(frame, n)) * 0.95;
 }
 
 /** The 250 hPa wind as Clouds.tsx stores it: m/s per step of the wind texture's B and A channels. */
@@ -222,28 +244,52 @@ export function craftLight({ ground, altitude, lights, eye, screenUp, albedo = n
   const r = 1 + altitude * AIR_HEIGHT;
   const at: Vec3 = [up[0] * r, up[1] * r, up[2] * r];
 
+  // How far under the deck's top the craft is, by its altitude, not its icon's geometry (cloudCrossing.ts).
+  const under = clouds ? submersion(altitude, clouds.top - 1) : 0;
+  // Direct light under the deck keeps what the ground's keeps under the same cloud: at least 46 %, taken where the
+  // light crosses the deck's top on its way down to the craft.
+  const throughDeck = (s: Vec3) => {
+    if (!clouds || under <= 0) return 1;
+    const h = 1 + altitude;
+    const ps = h * dot(up, s);
+    const t = -ps + Math.sqrt(Math.max(0, ps * ps - h * h + clouds.top * clouds.top));
+    const crossing = normalize([up[0] * h + s[0] * t, up[1] * h + s[1] * t, up[2] * h + s[2] * t]);
+    return 1 - DECK_DIRECT_LOSS * under * cloudWaterAt(clouds.frame, crossing);
+  };
+  const sunKept = throughDeck(sunDir);
+  const moonKept = throughDeck(moonDir);
+
   // Direct light, reddened along its path to the craft and cut off by the planet.
-  const sun = lightThroughAir(at, sunDir);
-  const moon = scale3(lightThroughAir(at, moonDir), lights.moonlight);
+  const clearSun = lightThroughAir(at, sunDir);
+  const clearMoon = scale3(lightThroughAir(at, moonDir), lights.moonlight);
+  const sun = scale3(clearSun, sunKept);
+  const moon = scale3(clearMoon, moonKept);
 
   // Skylight at the Sun's elevation, on the ground below: a plane at cruise has little air above it, and in this
   // scene's stretched heights its shaded paint would go almost black.
   const sunHeight = dot(up, sunDir);
   const single = scale3(clearSkyLight(Math.asin(Math.max(-1, Math.min(1, sunHeight)))), SKY_GAIN);
-  const sky = mix3([luminance(single), luminance(single), luminance(single)], single, SKY_SATURATION);
+  const clearSky = mix3([luminance(single), luminance(single), luminance(single)], single, SKY_SATURATION);
 
-  // What lies below: the cloud deck over the ground, each lit by the Sun, Moon, and sky. Planes are drawn over the
-  // cloud layer, so they always see its top.
+  // What lies below: the cloud deck over the ground, each lit by the Sun, Moon, and sky. A craft above the deck sees
+  // its top; one under it sees the ground (below).
   // A craft above the high layer sees it too, over the deck; it reflects like the deck per unit of opacity.
   const overCirrus = clouds?.cirrus ? smoothstep(clouds.cirrus - 0.0004, clouds.cirrus + 0.0004, 1 + altitude) : 0;
   const deckCover = clouds ? cloudCoverAt(clouds.frame, up) : 0;
+  const overhead = under * deckCover;
+  // Under the deck its grey base takes the clear sky's place, at the sky's own luminance, and passes on diffusely the
+  // share of the direct light it took away that it doesn't reflect (1 − CLOUD_ALBEDO).
+  const level = (light: RGB, s: Vec3) => luminance(light) * Math.max(0, dot(up, s));
+  const passed = (level(clearSun, sunDir) * (1 - sunKept) + level(clearMoon, moonDir) * (1 - moonKept)) * (1 - CLOUD_ALBEDO);
+  const base = luminance(clearSky) * overhead + passed;
+  const sky = overhead > 0 || passed > 0 ? add3(scale3(clearSky, 1 - overhead), [base, base, base]) : clearSky;
   const highCover = clouds && overCirrus > 0 ? cirrusCoverAt(clouds.frame, up) * overCirrus : 0;
   const cover = 1 - (1 - deckCover) * (1 - highCover);
   const colour = albedo?.(up) ?? DEFAULT_ALBEDO;
   const direct = (s: Vec3, light: RGB) => scale3(light, Math.max(0, dot(up, s)));
   const onGround = add3(direct(sunDir, lightThroughAir(up, sunDir)), direct(moonDir, scale3(lightThroughAir(up, moonDir), lights.moonlight)));
   // Cloud keeps at least 46 % of the direct light off the ground below it, as the ground's own shading does.
-  const surface = mul3(colour, add3(scale3(onGround, 1 - 0.54 * cover), sky));
+  const surface = mul3(colour, add3(scale3(onGround, 1 - DECK_DIRECT_LOSS * cover), clearSky));
   let below = surface;
   if (clouds && cover > 0) {
     const radius = clouds.top;
@@ -258,14 +304,14 @@ export function craftLight({ ground, altitude, lights, eye, screenUp, albedo = n
     };
     // As in the cloud shader, the air above the deck sends part of its light back down onto it.
     const returned = deckReturn(radius);
-    const reflected = scale3(add3(add3(deckLight(sunDir), scale3(deckLight(moonDir), lights.moonlight)), sky), CLOUD_ALBEDO);
+    const reflected = scale3(add3(add3(deckLight(sunDir), scale3(deckLight(moonDir), lights.moonlight)), clearSky), CLOUD_ALBEDO);
     const deck: RGB = [0, 1, 2].map((i) => reflected[i]! / (1 - returned[i]! * CLOUD_ALBEDO)) as RGB;
-    below = mix3(surface, deck, cover);
+    below = mix3(surface, deck, cover * (1 - under));
   }
   // Seen from above, the haze between the craft and the ground dims what is below and adds its own glow.
   const between = verticalTransmittance(1, Math.max(1, r));
   const haze = 1 - Math.exp(-(r - 1) / H_R);
-  const groundFill = add3(mul3(below, between), scale3(sky, haze));
+  const groundFill = add3(mul3(below, between), scale3(clearSky, haze));
 
   // The night rig. Its directions are in the frame's terms: x right, y up the screen, z toward the camera, which
   // looks down on the craft. Seen from straight above, as journeys are, z is up; the homepage's planes are seen at an
@@ -306,6 +352,9 @@ export function craftLight({ ground, altitude, lights, eye, screenUp, albedo = n
     sky,
     ground: groundFill,
     lamps: night,
+    submersion: under,
+    overhead,
+    veil: (veilStrength(under) * deckCover) / 0.95,
   };
 }
 

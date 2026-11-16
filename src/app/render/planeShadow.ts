@@ -2,7 +2,8 @@
  * The aircraft's shadow on the clouds and the ground: a soft silhouette of the airframe seen from above, cast
  * along the Sun onto each surface by the ground and cloud shaders, where it takes away direct sunlight only. So
  * it fades with the direct light (low Sun, night, under cloud) and the cloud layer's opacity weighs the shadow on
- * the cloud tops against the one on the ground below.
+ * the cloud tops against the one on the ground below. While the aircraft is under the deck (cloudCrossing.ts), its
+ * shadow stays off the deck's tops and lands on them as it breaks out (ShadowSurface).
  *
  * The aircraft is an icon hundreds of kilometres long at an exaggerated height that is small beside its length
  * on long legs and large on short ones, so a physically placed shadow would hide under it or land far away.
@@ -56,6 +57,25 @@ export interface ShadowCaster {
   /** How high it flies, as a share of cruise height: 0 on the ground, 1 at cruise. */
   aloft: number;
   weight: number;
+  /** How far under the cloud deck's top it is, 0–1 (cloudCrossing.ts submersion); 0 when absent. */
+  submersion?: number;
+  /** How much deck lies over it: its submersion × the deck's opacity there (craftLight.ts `overhead`); 0 when absent. */
+  overhead?: number;
+}
+
+/**
+ * Which surface a shader shades. The ground takes the whole shadow. The deck's tops take none while the aircraft is
+ * under them, and the shadow lands on them as it breaks out above (1 − submersion). The air over the footprint is the
+ * shadow's stylized volume between the aircraft and what lies below it: under a deck that volume is hidden, so the air
+ * takes only what the deck over the aircraft lets show (1 − overhead).
+ */
+export type ShadowSurface = 'ground' | 'deck' | 'air';
+
+/** How much of an aircraft's shadow shows on a surface (see ShadowSurface). */
+export function shadowOn(surface: ShadowSurface, c: ShadowCaster): number {
+  if (surface === 'deck') return 1 - Math.min(1, Math.max(0, c.submersion ?? 0));
+  if (surface === 'air') return 1 - Math.min(1, Math.max(0, c.overhead ?? 0));
+  return 1;
 }
 
 /** Separable box blur of a square image, in place. */
@@ -193,8 +213,11 @@ export function planeShadowUniforms(): Record<string, THREE.IUniform> {
   };
 }
 
-/** Point the shadow uniforms at up to MAX_CASTERS aircraft, lit by the Sun in direction `sun` (Earth frame). */
-export function setPlaneShadowUniforms(u: Record<string, THREE.IUniform>, casters: readonly ShadowCaster[], sun: Vec3): void {
+/**
+ * Point the shadow uniforms at up to MAX_CASTERS aircraft, lit by the Sun in direction `sun` (Earth frame), for a shader
+ * that shades `surface`.
+ */
+export function setPlaneShadowUniforms(u: Record<string, THREE.IUniform>, casters: readonly ShadowCaster[], sun: Vec3, surface: ShadowSurface = 'ground'): void {
   const ups = u.casterUp!.value as THREE.Vector4[];
   const rights = u.casterRight!.value as THREE.Vector4[];
   const forwards = u.casterForward!.value as THREE.Vector4[];
@@ -204,7 +227,7 @@ export function setPlaneShadowUniforms(u: Record<string, THREE.IUniform>, caster
     const c = casters[i];
     const up = c ? normalize(c.ground) : sun;
     const sunHeight = dot(up, sun);
-    const strength = c ? SHADOW_DEPTH * c.weight * smoothstep(0, SHADOW_FULL_SUN, Math.asin(sunHeight)) : 0;
+    const strength = c ? SHADOW_DEPTH * c.weight * shadowOn(surface, c) * smoothstep(0, SHADOW_FULL_SUN, Math.asin(sunHeight)) : 0;
     lights[i]!.w = strength;
     u[`shadowMask${i}`]!.value = c && strength > 0 ? shadowMask(c.type) : blankMask();
     if (!c || strength <= 0) continue;

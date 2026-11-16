@@ -343,7 +343,7 @@ Limits:
 
 - **A stylized height.** The aircraft is an icon drawn hundreds of kilometres long, and its display height is small beside its length on long legs and large on short ones. A physically placed shadow would hide under the icon or land far from it. So the shadow is cast as if the plane flew `SHADOW_HEIGHT` = 0.3 of its own lengths above its parked height at cruise, in proportion to its share of cruise height while climbing and descending. It is cast along the Sun, raised to at least `SHADOW_LOWEST_SUN` = 27°. That puts it about 0.3 lengths off at 45° and never more than about 0.7 lengths away. On the ground it is cast from the parked height, so it touches the plane.
 - **A silhouette, not a shadow map.** Each type's plan view is rasterized once, in JavaScript: the airframe's triangles without the propeller discs, 4×4 samples per texel, on a 128² mask 1.4 lengths across, softened by a box blur of radius 2 applied twice (since renderer 2.4, three blurs on a 160² mask 2 lengths across, so the shadow softens with height; see [below](#no-towers-an-electric-blue-accent-and-shadows-that-soften-with-height)). It is the same on every device, so preview and export agree. A shadow map would need another render pass every frame. Projecting the airframe's mesh would need a stencil buffer to keep overlapping faces from darkening twice, and couldn't see the cloud layer's opacity.
-- **Drawn in the shaders that are already there.** The ground, cloud, and air shaders each find where the ray from their point toward the light crosses the silhouette, which lies level at the shadow height above the point below the plane. All three use that one footprint, so the shadow reads as one: on clear ground, on cloud tops, or both, weighed by the cloud's opacity. The plane is always drawn above the clouds, so it shades them even when parked under the deck.
+- **Drawn in the shaders that are already there.** The ground, cloud, and air shaders each find where the ray from their point toward the light crosses the silhouette, which lies level at the shadow height above the point below the plane. All three use that one footprint, so the shadow reads as one: on clear ground, on cloud tops, or both, weighed by the cloud's opacity. The plane is always drawn above the clouds, so it shades them even when parked under the deck. (Reversed on November 15, 2026: under the deck, the shadow stays off its tops; see [aircraft under the cloud deck](#aircraft-under-the-cloud-deck).)
 - **What it takes away:** `SHADOW_DEPTH` = 75 % of direct sunlight on the ground and cloud tops, and 75 % of the light the air scatters over the footprint. That last part is a stylized shadow volume. Without it, the haze laid over the ground left the shadow only 1–14 % darker than its surroundings in test frames, and it disappeared over the sea.
 - **When it shows.** It fades in as the Sun climbs from the horizon to 20° above the plane (`SHADOW_FULL_SUN`), so it is gone at night and never sits where a low Sun couldn't put it. While one type dissolves into the next at a stop, each type's silhouette is weighted like the airframe. Train, bus, car, and ferry vehicles cast their own shadows and none of this. The homepage's planes cast it too (up to `MAX_CASTERS` = 3 at once).
 - **Cost:** per ground, cloud, and air pixel, three uniform tests. Within a shadow's reach, about 30 arithmetic operations and one texture read per aircraft. The ground shader binds three more textures (13 of the 16 a phone guarantees). Masks are 16 KiB each (100 KiB since 2.4), kept for the page's life like the airframes. Frame times didn't measurably change ([budgets.md](budgets.md#frame-time)).
@@ -381,10 +381,54 @@ Cost:
 - **Memory:** 2 MiB per shadow map (depth, and the colour attachment three.js adds): 2–4 MiB per aircraft, up to 12 MiB with the homepage's three planes. Maps are freed with their plane.
 
 Limits:
-- No shadow from the fill or the Moon's own light, and cloud never shades the plane: it is drawn above the clouds.
+- No shadow from the fill or the Moon's own light, and cloud never shades the plane: it is drawn above the clouds. (Since November 15, 2026, a plane under the deck is veiled by it and its direct light dimmed; see [aircraft under the cloud deck](#aircraft-under-the-cloud-deck).)
 - The sky light has no direction across the sky, so the bright horizon toward a setting Sun warms the plane only through the Sun's own light.
 - From straight above at sunset the light grazes the wings and the top of the fuselage. The gold shows on the fuselage's sunward side and the nacelles, as in the offline renderer, more than on the wings.
 - `sunlight.ts` (the homepage button's light) keeps its own simpler model.
+
+## Aircraft under the cloud deck
+
+*Decided November 15, 2026.* An aircraft under the cloud deck is drawn under it. Until now a plane was always drawn over the cloud layer, by decision ([the aircraft's shadow](#the-aircrafts-shadow)), so a plane landing under an overcast looked as if it landed on the clouds, its shadow on their tops. Now it sinks into the deck on the descent and breaks out above it on the climb. The offline renderer does the same: it composites the cloud between the camera and the plane over the plane (`routereplay` `cloudvolume.py`'s foreground layer, `render.py`), and ties cloud crossings "to aircraft altitude rather than icon size" (`aircraft_blender.py`). Renderer 2.6.0.
+
+- **Submersion comes from altitude, not geometry** (`cloudCrossing.ts`). It is 0 at or above the deck's top (25.5 km as drawn, 2.1 km real), rises smoothly to 1 a kilometre of real cloud (12 km drawn) below it, and uses the plane's display altitude. The icon is drawn tens of kilometres tall at an airport, so a depth test against the shell would cut through its fuselage.
+- **The deck, drawn again over the plane.** A second mesh with the airframe's geometry and placement draws right after the paint, only where the paint is the front-most surface: the same depth, from the same vertex expression, `invariant` in both shaders. For each pixel it finds where the view ray meets the deck's shell and runs the deck's own shader there. That shader is now one function, `deck(n)` in `DECK_GLSL`, shared by the deck and its veil, with the same lobes and gaps, sunlight, sky light, Moon, and city glow. The veil is drawn over the plane at the cloud's density × `VEIL_MAX` × submersion. So broken cloud veils only where a lobe covers the plane, and a moonlit deck veils it in moonlight. While one type dissolves into the next at a stop, hashed alpha discards the same pixels as the paint.
+- **The plane under the deck is lit as the ground under it is** (`craftLight.ts`):
+  - Direct Sun and Moon keep what the ground keeps under the same cloud: 1 − 0.54 × the cloud water where the light crosses the deck's top, scaled by submersion.
+  - The clear sky above gives way to the deck's grey base, at the sky's luminance, plus the quarter of the lost direct light that the deck passes on diffusely (1 − its albedo of 0.75).
+  - From below it sees the ground, not the deck's bright top.
+  - Above the deck, and under clear sky, its light is exactly what it was (`tests/app/cloudCrossing.test.ts`).
+- **Lamps and propeller discs** are graphics drawn after the tone-map pass, so they would show over the veil. They fade by the veil's average over the plane, taken from the deck's mean opacity there on the CPU.
+
+The owner's decisions:
+
+1. **A plane under thick cloud shows faintly through it, never fully hidden.** `VEIL_MAX` = 0.65, chosen by looking at an A350 parked under London's overcast: at 0.65 it reads as a pale aircraft in the cloud. Thinner or broken cloud veils less, in proportion to its density.
+2. **The shadow stays off the cloud tops while the plane is under them.** The deck's shader weighs it by 1 − submersion, so it lands on the tops as the plane breaks out, sharp at first and softening as the plane climbs. The air over the footprint, the shadow's stylized volume, is weighed by 1 − the deck over the plane (submersion × its opacity there): under a deck that volume is hidden. The ground keeps its shadow, which its cloud shadow already dims (`planeShadow.ts` `ShadowSurface`).
+3. **Crossings keep the existing altitude profile.** `evaluate()` is unchanged, so the golden states and the storyboard fixture are too. On a default 6 s leg the climb crosses the deck between 0.16 and 0.20 of the leg's screen time, about 0.26 s or 8 frames at 30 fps, and the descent mirrors it.
+4. **No wake, canal, or hole punched in the deck behind the plane.**
+
+Where else it applies:
+
+- **Train, bus, car, and ferry legs** are always on the ground, so under the deck, and take the same rule and cap. Their veil draws as graphics between the body and its lamps, tone mapped as it draws, like the vehicle itself. Their drop shadow, wake, and lamps fade by the veil's average.
+- **The homepage's planes** fly at 0.006 Earth radii, above the deck's top (0.004). They carry the same veil, which never shows, and still shade the deck's tops.
+- **The high layer veils nothing.** A plane is under it (10.5 km, 126 km as drawn) until it is 40 % of the way to cruise, almost half of every leg (u ≈ 0.45), so a veil would hide planes under anvils for half the flight. Over the tropics a plane at the gate therefore still sits on the anvils. At Singapore on 12 November the deck's opacity at the airport was 0–0.09 and the high layer's 0.48–0.99, and the before and after frames look the same.
+
+Checked in Chrome at 1280×720, on journeys from real GFS steps, frame by frame through each crossing:
+
+- **London under an overcast** (London–New York, 6 November): parked, the A350 is a pale shape in the cloud, with no shadow on the tops. Climbing out, it brightens over about 8 frames while its shadow appears beside it, and is clear of the deck by 2.82 s.
+- **Broken cumulus** (Hong Kong–Bangkok, 12 November): only the parts of the plane over a lobe are veiled. At Hong Kong's gate that is the right wing alone.
+- **A moonlit deck at dawn** (New York–London, 25–26 October): the plane takes on the deck's grey-gold as it sinks into it.
+- **Phones** (390×844, low quality, DPR 1): the same, at about 700 veiled pixels.
+
+Cost: per veiled pixel, the deck's shader once more and a ray–sphere intersection: about 8,400 pixels at 2560×1440 at the gate (0.23 % of the frame), none above the deck. Directly measured, it is within the run-to-run noise of whole-frame GPU timing; scaled from the deck's own cost per pixel, about 0.005 ms ([budgets.md](budgets.md#frame-time)). On the CPU, the plane's light takes 0.6 µs more under the deck, and setting a veil's uniforms 0.4 µs a frame. No textures or downloads are added.
+
+Limits:
+
+- **The veil has no air in front of it.** The plane is drawn after the air, so its veil is the deck as it leaves the cloud, not as seen through the air. Composited in linear light the difference is small: the veil's cloud comes out at (221, 221, 220) beside the deck's (213, 213, 213) at London's gate. In the fallback without half floats (`?display-referred`) the air is one premultiplied draw in display values that tints the deck to (210, 228, 247), while the veil stays (198, 197, 191). There a veiled plane reads as a grey shape rather than as cloud, and looks less sunk. Sharing the atmosphere's march as a function and adding its light over the veil would fix it.
+- **A vehicle under an overcast stays veiled for the whole leg,** while its route line, markers, and labels stay crisp above the cloud. On a New York–Philadelphia train under a full deck, the train is a faint shape the whole way.
+- **The crossing is brief:** about 0.26 s on a default leg.
+- **The deck's top is the drawn shell,** at 2.1 km real, not the real cloud top. GFS's cloud ceiling and liquid-water profile could place real tops for the steps near airports, about 0.5–1 MB more for a one-leg trip.
+- **Lamps fade by the average veil over the plane,** not lamp by lamp, so a lamp over a gap in broken cloud fades too.
+- **The vehicles' veil compiles when the first surface leg starts,** as their paint does. The aircraft's compiles with the first frame drawn with clouds, since every flight starts at a gate under the deck's top.
 
 ## Sharp city lights near airports
 

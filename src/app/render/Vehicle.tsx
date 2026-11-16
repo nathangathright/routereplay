@@ -5,15 +5,21 @@ import { cross, normalize, smoothstep, sub } from '../../shared/geo/vec';
 import type { SurfaceMode } from '../../shared/scene/constants';
 import type { SceneState, Timeline } from '../../shared/timeline/evaluate';
 import { bodyOnPath, vehiclePlace } from '../../shared/timeline/journeyPath';
+import { type DeckLook, aimVeil, setVeil, veilMaterial } from './Clouds';
+import { veilStrength } from './cloudCrossing';
 import { type CraftLight, levelLight } from './craftLight';
 import { CraftLighting } from './craftPaint';
+import { useLinearScene } from './display';
 import { vehicleModel } from './vehicles';
 
 const FOAM = new THREE.Color(0.9, 0.94, 1);
 /** Radius the vehicles stand at: on the route ribbon (1.0015). */
 const GROUND = 1.0016;
-/** Where they draw: over the airport dots (10), as the marker they replace did, and under the label panels (11). */
-const ORDER = { shadow: 10.35, wake: 10.4, body: 10.5, lamps: 10.6 };
+/**
+ * Where they draw: over the airport dots (10), as the marker they replace did, and under the label panels (11). The
+ * cloud deck's veil (Clouds.tsx veilMaterial) draws over the bodies, and the lamps over it.
+ */
+const ORDER = { shadow: 10.35, wake: 10.4, body: 10.5, veil: 10.55, lamps: 10.6 };
 
 const lampVertex = /* glsl */ `
 uniform float uNight;
@@ -58,6 +64,8 @@ const WAKE_PROFILE: [number, number][] = [
 interface Kit {
   root: THREE.Object3D;
   bodies: THREE.Object3D[];
+  /** The cloud deck drawn again over each body while the vehicle is under it (Vehicle gives them their material). */
+  veils: THREE.Mesh[];
   lampPoints: THREE.Points[];
   lighting: CraftLighting;
   lamps: THREE.ShaderMaterial;
@@ -97,6 +105,7 @@ function buildKit(mode: SurfaceMode): Kit {
   const root = new THREE.Object3D();
   root.add(lighting.root);
   const lampPoints: THREE.Points[] = [];
+  const veils: THREE.Mesh[] = [];
   const bodies = model.bodies.map((b) => {
     const o = new THREE.Object3D();
     o.matrixAutoUpdate = false;
@@ -111,7 +120,12 @@ function buildKit(mode: SurfaceMode): Kit {
     const under = new THREE.Mesh(b.shadow, shadow);
     under.renderOrder = ORDER.shadow;
     under.frustumCulled = false;
-    o.add(under, mesh, points);
+    const veil = new THREE.Mesh(b.geometry);
+    veil.renderOrder = ORDER.veil;
+    veil.frustumCulled = false;
+    veil.visible = false;
+    veils.push(veil);
+    o.add(under, mesh, veil, points);
     root.add(o);
     return o;
   });
@@ -135,7 +149,7 @@ function buildKit(mode: SurfaceMode): Kit {
     wake.frustumCulled = false;
     root.add(wake);
   }
-  return { root, bodies, lampPoints, lighting, lamps, shadow, wake };
+  return { root, bodies, veils, lampPoints, lighting, lamps, shadow, wake };
 }
 
 /**
@@ -145,6 +159,10 @@ function buildKit(mode: SurfaceMode): Kit {
  * train's cars follow its locomotive; at a connection it carries straight on past the station rather than onto
  * the next leg's line. Lit by `light` like the aircraft (craftLight.ts), with lamps after dusk.
  * `opacity` below 1 dissolves it into or out of the next craft at a connection.
+ *
+ * `deck`: the cloud deck drawn this frame, if any. A vehicle is always on the ground, under the deck, so wherever the
+ * deck's lobes cover it, the deck is drawn over it again, up to VEIL_MAX, as for an aircraft at the gate
+ * (cloudCrossing.ts). Its lamps, shadow, and wake fade by the veil's average.
  */
 export function Vehicle({
   mode,
@@ -153,6 +171,7 @@ export function Vehicle({
   shortSide,
   light,
   opacity = 1,
+  deck = null,
 }: {
   mode: SurfaceMode;
   timeline: Timeline;
@@ -160,8 +179,21 @@ export function Vehicle({
   shortSide: number;
   light: CraftLight;
   opacity?: number;
+  deck?: DeckLook | null;
 }) {
   const kit = useMemo(() => buildKit(mode), [mode]);
+  const linear = useLinearScene();
+  const veil = useMemo(() => {
+    // Graphics, like the vehicle: drawn after the tone-map pass, tone mapped as it draws (display.tsx).
+    const material = veilMaterial(linear, true);
+    for (const mesh of kit.veils) {
+      (mesh.material as THREE.Material).dispose();
+      mesh.material = material;
+      mesh.onBeforeRender = (_renderer, _scene, camera) => aimVeil(material, kit.root, camera);
+    }
+    return material;
+  }, [kit, linear]);
+  useEffect(() => () => veil.dispose(), [veil]);
   const shortSidePx = useThree((s) => Math.min(s.size.width, s.size.height) * s.gl.getPixelRatio());
   // A vehicle that leaves frees what it owns; the shared model geometry stays for the next one.
   useEffect(
@@ -177,9 +209,14 @@ export function Vehicle({
 
   const model = vehicleModel(mode);
   kit.lighting.update(light, opacity);
-  kit.shadow.opacity = opacity;
+  const veiling = deck ? veilStrength(light.submersion) : 0;
+  for (const mesh of kit.veils) mesh.visible = veiling > 0;
+  if (deck && veiling > 0) setVeil(veil, deck, veiling, opacity);
+  // Graphics the veil can't cover pixel by pixel fade by its average.
+  const shown = 1 - (deck ? light.veil : 0);
+  kit.shadow.opacity = opacity * shown;
   // Lamps show from civil dusk (Sun 2° below the horizon) and are full by 12° below, as the aircraft's.
-  const night = light.lamps * opacity;
+  const night = light.lamps * opacity * shown;
   kit.lamps.uniforms.uNight!.value = night;
   kit.lamps.uniforms.uShortSide!.value = shortSidePx;
   for (const p of kit.lampPoints) p.visible = night > 0.002;
@@ -212,7 +249,7 @@ export function Vehicle({
     const hull = model.bodies[0]!.length * shortSide;
     const stern = at - 0.42 * hull;
     const reach = Math.min(WAKE_LENGTH * hull, stern);
-    kit.wake.visible = strength * opacity > 0.002 && reach > 0;
+    kit.wake.visible = strength * opacity * shown > 0.002 && reach > 0;
     if (kit.wake.visible) {
       const beam = model.width * shortSide;
       const pos = kit.wake.geometry.getAttribute('position') as THREE.BufferAttribute;
@@ -228,7 +265,7 @@ export function Vehicle({
         // Measured from the stern in hull lengths: it spreads, and fades with distance.
         const f = (j / WAKE_ROWS) * (reach / (WAKE_LENGTH * hull));
         const w = beam * (0.45 + 1.05 * f);
-        const fade = 0.85 * strength * opacity * (1 - f) ** 1.2;
+        const fade = 0.85 * strength * opacity * shown * (1 - f) ** 1.2;
         WAKE_PROFILE.forEach(([x, a], i) => {
           pos.setXYZ(
             j * k + i,

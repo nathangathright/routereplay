@@ -372,7 +372,8 @@ export function Atmosphere({ sun, segments, shadows = [] }: { sun: Vec3; segment
   useEffect(() => () => geometry.dispose(), [geometry]);
   const light = draws[draws.length - 1]!.material;
   (light.uniforms.sunDir!.value as THREE.Vector3).set(sun[0], sun[1], sun[2]);
-  setPlaneShadowUniforms(light.uniforms, shadows, sun);
+  // Under a deck, the shadow's volume of air is hidden by the cloud over the aircraft (planeShadow.ts ShadowSurface).
+  setPlaneShadowUniforms(light.uniforms, shadows, sun, 'air');
   return (
     <>
       {draws.map((d) => (
