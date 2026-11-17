@@ -20,6 +20,17 @@ const OFFLINE_REPORT = [
   { code: 'SFO', slot: [220, 610], first: 3.566667, retired: 10.933333 },
   { code: 'AKL', slot: [170, 950], first: 10.8, retired: null },
 ];
+/**
+ * What this renderer reports. The offline renderer pulls a flight back by its share of the trip's longest leg; here
+ * a flight pulls back by its own length (flightLift), so Chicago–San Francisco climbs a little higher (0.35 of the
+ * way to the whole globe, not 0.28). ORD then stays in view 0.2 s longer and SFO comes into view 0.13 s sooner.
+ * Slots, and everything about the long-haul leg, match the offline renderer.
+ */
+const REPORT = [
+  { ...OFFLINE_REPORT[0]!, retired: 4.1 },
+  { ...OFFLINE_REPORT[1]!, first: 3.433333 },
+  OFFLINE_REPORT[2]!,
+];
 
 /** The same report, read off evaluate() frame by frame, with slots in the offline renderer's 1080×1920 frame. */
 function report(tl: Timeline, aspect: number) {
@@ -40,12 +51,12 @@ function report(tl: Timeline, aspect: number) {
 }
 
 describe('airport labels', () => {
-  it("match the offline renderer's slots, appearances, and retirements for its README demo", () => {
+  it("match the offline renderer's slots, appearances, and retirements for its README demo, but for the camera", () => {
     const tl = buildTimeline(normalize(README));
     const got = report(tl, ASPECT_VALUE['9:16']);
-    expect(got.map((r) => r.code)).toEqual(OFFLINE_REPORT.map((r) => r.code));
+    expect(got.map((r) => r.code)).toEqual(REPORT.map((r) => r.code));
     got.forEach((r, i) => {
-      const want = OFFLINE_REPORT[i]!;
+      const want = REPORT[i]!;
       expect(r.slot).toEqual(want.slot);
       expect(r.first).toBeCloseTo(want.first, 5);
       if (want.retired === null) expect(r.retired).toBeNull();
@@ -58,7 +69,7 @@ describe('airport labels', () => {
     const aspect = ASPECT_VALUE['9:16'];
     const at = (t: number) => evaluate(tl, t, aspect).labels.find((l) => l.code === 'SFO')!;
     const first = at(3.6);
-    expect(first.age).toBeCloseTo(3.6 - 3.566667, 5);
+    expect(first.age).toBeCloseTo(3.6 - REPORT[1]!.first, 5);
     expect(first.panel).toEqual({ x: 220 - 540, y: 610 - 960, w: PANEL_W, h: PANEL_H });
     expect(at(5.5).panel).toEqual(first.panel);
     // At arrival the anchor locks under the slot; during the stop the camera is still, so nothing moves.

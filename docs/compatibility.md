@@ -5,7 +5,7 @@
 | Field | Meaning | Current |
 | --- | --- | --- |
 | `schemaVersion` | Authoring contract (`/schemas/scene-v1.json`) | 1 |
-| `compatibility.rendererVersion` | Semver of the timeline and scene code | 2.6.0 |
+| `compatibility.rendererVersion` | Semver of the timeline and scene code | 2.7.0 |
 | `compatibility.assetManifestVersion` | Directory under `/assets/` holding textures and font when the record was saved | 2026-11-12 |
 | `compatibility.airportDataVersion` | Airport table used to normalize the record | `2026-11-11.<hash>` |
 
@@ -37,6 +37,8 @@ Renderer 2.6 (November 15, 2026) makes three changes. It films train, bus, car, 
 It also veils an aircraft or vehicle under the cloud deck and lights it like the ground beneath it, and an aircraft's shadow stays off the deck's tops until it breaks out above them ([decisions.md](decisions.md#aircraft-under-the-cloud-deck)). This reverses the earlier rule that planes are always drawn above the clouds. Crossings come from the existing altitude profile, so `evaluate` is unchanged, and the golden states and the storyboard fixture are unchanged.
 
 And it adds hardware tiers and draws exports with several jittered samples per frame where the device has time for them ([decisions.md](decisions.md#hardware-tiers-and-cleaner-exports)). Playback draws exactly as before on phones and laptops, and a phone's export too; an export from a laptop or desktop is antialiased. No tier reaches the timeline: the golden states and the storyboard fixture are unchanged.
+
+Renderer 2.7 (November 17, 2026) pulls each flight back by its own length instead of its share of the trip's longest leg ([decisions.md](decisions.md#flights-pull-back-by-their-own-length)). That changes the camera on every flight that isn't long-haul. In the fixture, Chicago–San Francisco climbs a little higher (its storyboard view radius went from 1,710 to 2,000 km at one keyframe and from 920 to 960 km at another, and one golden camera position moved), so the golden states and the storyboard were regenerated; San Francisco–Auckland, timing, aircraft, Sun, trail, and labels are unchanged, and the fixture record itself was not rewritten. By the rule above this calls for a major version. It stays minor for the same reason as 2.2: there are no users yet, and a major would make every saved journey unplayable.
 
 Pixel-identical output across GPUs is not promised, and since 2.6 neither is it across machines' exports, which may draw different numbers of samples. The golden states pin what is drawn, not how a GPU rasterizes it.
 

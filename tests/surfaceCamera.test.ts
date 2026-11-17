@@ -199,17 +199,17 @@ describe('surface legs: the drone camera zooms by the leg alone', () => {
     expect(droneHeight(1e-9)).toBeCloseTo(HOLD - 1, 15);
   });
 
-  it("still counts surface legs in the scale a flight's pull-back is measured against", () => {
-    // A short hop after a long bus ride pulls back less than the same hop on its own.
+  it("doesn't let a surface leg change how far a flight pulls back", () => {
+    // A short hop pulls back by its own length, after a long bus ride or on its own.
     const hop = leg('rix-vno', 'RIX', 'VNO', '2026-11-07T10:00:00+02:00', '2026-11-07T11:00:00+02:00', 'A320');
     const mixed = buildTimeline(
       normalize(spec([surface('tll-rix', 'TLL', 'RIX', '2026-11-06T16:30:00+02:00', '2026-11-06T21:00:00+02:00', 'bus'), hop])),
     );
     const alone = buildTimeline(normalize(spec([hop])));
-    expect(mixed.legs[1]!.height).toBeLessThan(1);
-    expect(alone.legs[0]!.height).toBe(1);
+    expect(mixed.legs[0]!.lift).toBe(0);
+    expect(mixed.legs[1]!.lift).toBe(alone.legs[0]!.lift);
     const peak = (tl: Timeline, i: number) => length(evaluate(tl, (tl.legs[i]!.flightStart + tl.legs[i]!.flightEnd) / 2).camera.position);
-    expect(peak(mixed, 1)).toBeLessThan(peak(alone, 0));
+    expect(peak(mixed, 1)).toBeCloseTo(peak(alone, 0), 12);
   });
 });
 

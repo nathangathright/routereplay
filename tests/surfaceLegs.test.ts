@@ -187,8 +187,8 @@ describe('surface legs: timeline', () => {
       expect(midHeight(id)).toBeLessThan(airports * 1.5);
     }
     expect(midHeight('wlg-pcn')).toBeCloseTo(airports, 5);
-    // The longest flight still climbs to the whole globe.
-    expect(tl.legs[legIndex('mel-sfo')]!.height).toBe(1);
+    // A long-haul flight still climbs to the whole globe.
+    expect(tl.legs[legIndex('mel-sfo')]!.lift).toBe(1);
     expect(midHeight('mel-sfo')).toBeGreaterThan(5 * airports);
   });
 });

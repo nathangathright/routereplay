@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { GreatCircle } from '../src/shared/geo/greatCircle';
 import { moonPosition, subsolarPoint, sunDirection } from '../src/shared/geo/solar';
-import { dot, length, normalize as unit, vecToLatLon } from '../src/shared/geo/vec';
+import { dot, latLonToVec, length, sub, normalize as unit, vecToLatLon } from '../src/shared/geo/vec';
 import { EXAMPLE_SCENE } from '../src/shared/scene/examples';
 import { validateScene } from '../src/shared/scene/validate';
-import { ASPECT_VALUE, buildTimeline, evaluate, flightProgress, verticalFovFor } from '../src/shared/timeline/evaluate';
+import { ASPECT_VALUE, FLIGHT_FRAME, FOCAL_PX, buildTimeline, evaluate, flightLift, flightProgress, verticalFovFor } from '../src/shared/timeline/evaluate';
 import { clone, issues, leg, normalize, spec, synthetic, syntheticLookup } from './helpers';
 
 const example = () => buildTimeline(normalize(EXAMPLE_SCENE));
@@ -245,18 +245,46 @@ describe('camera', () => {
     }
   });
 
-  it('is close at the airports and pulls back mid-flight, furthest on the longest leg', () => {
+  it("is close at the airports and pulls back mid-flight by the flight's own length", () => {
     const tl = example();
     const distanceAt = (t: number) => length(evaluate(tl, t).camera.position);
     const atGate = distanceAt(0);
     // 1300 px apparent radius on a 1080 px short side through 70°: about 1,040 km up.
     expect(atGate).toBeCloseTo(Math.sqrt(1 + (540 / Math.tan((35 * Math.PI) / 180) / 1300) ** 2), 9);
-    const middle = (i: number) => distanceAt((tl.legs[i]!.flightStart + tl.legs[i]!.flightEnd) / 2);
-    const longest = tl.legs[0]!.circle.angle > tl.legs[1]!.circle.angle ? 0 : 1;
-    expect(middle(longest)).toBeCloseTo(Math.sqrt(1 + (540 / Math.tan((35 * Math.PI) / 180) / 440) ** 2), 9);
-    expect(middle(1 - longest)).toBeGreaterThan(atGate);
-    expect(middle(1 - longest)).toBeLessThan(middle(longest));
+    const middle = (i: number) => (tl.legs[i]!.flightStart + tl.legs[i]!.flightEnd) / 2;
+    // San Francisco to Auckland, 10,500 km, climbs to the whole globe: 440 px.
+    expect(distanceAt(middle(1))).toBeCloseTo(Math.sqrt(1 + (540 / Math.tan((35 * Math.PI) / 180) / 440) ** 2), 9);
+    // Chicago to San Francisco, 3,000 km, climbs just far enough to frame both airports at FLIGHT_FRAME.
+    const s = evaluate(tl, middle(0));
+    const offsetPx = (code: string) => {
+      const a = tl.scene.airports[code]!;
+      const ray = sub(latLonToVec(a.lat, a.lon), s.camera.position);
+      const cos = -dot(unit(ray), unit(s.camera.position));
+      return FOCAL_PX * Math.tan(Math.acos(cos));
+    };
+    expect(offsetPx('ORD')).toBeCloseTo(FLIGHT_FRAME * 540, 6);
+    expect(offsetPx('SFO')).toBeCloseTo(FLIGHT_FRAME * 540, 6);
+    expect(distanceAt(middle(0))).toBeGreaterThan(atGate);
+    expect(distanceAt(middle(0))).toBeLessThan(distanceAt(middle(1)));
     expect(distanceAt(tl.duration)).toBeCloseTo(atGate, 9);
+  });
+
+  it("doesn't pull back on a flight that already fits at the airports' zoom, whatever the rest of the trip", () => {
+    // London to Paris, 344 km: the frame spans about 1,500 km at the airports.
+    const hop = leg('lhr-cdg', 'LHR', 'CDG', '2031-01-05T09:00:00+00:00', '2031-01-05T11:15:00+01:00');
+    const alone = buildTimeline(normalize(spec([hop])));
+    const after = buildTimeline(
+      normalize(spec([leg('sfo-lhr', 'SFO', 'LHR', '2031-01-04T16:00:00-08:00', '2031-01-05T10:20:00+00:00', 'B77W'), { ...hop, departure: '2031-01-05T13:00:00+00:00', arrival: '2031-01-05T15:15:00+01:00' }])),
+    );
+    for (const [tl, i] of [[alone, 0], [after, 1]] as const) {
+      expect(tl.legs[i]!.lift).toBe(0);
+      const mid = (tl.legs[i]!.flightStart + tl.legs[i]!.flightEnd) / 2;
+      expect(length(evaluate(tl, mid).camera.position)).toBeCloseTo(length(evaluate(tl, 0).camera.position), 12);
+    }
+    // Longer flights never pull back less, up to the whole globe.
+    const lifts = [0, 1000, 2000, 4000, 8000, 12000, 16000, 20000].map((km) => flightLift(km / 6371.0088));
+    for (let i = 1; i < lifts.length; i++) expect(lifts[i]!).toBeGreaterThanOrEqual(lifts[i - 1]!);
+    expect(lifts.at(-1)).toBe(1);
   });
 
   it('frames the same moment for whichever shape it is shown at', () => {

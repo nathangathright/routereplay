@@ -66,10 +66,10 @@ interface TimelineLeg {
   /** Display altitude at mid-flight in Earth radii (artistic, not physical); 0 on surface legs. */
   cruise: number;
   /**
-   * This leg's length as a fraction of the trip's longest, surface legs included: how far the camera pulls back
-   * on a flight. Surface legs don't pull back by it.
+   * How far a flight pulls back at mid-flight, from 0 (the airports' zoom) to 1 (the whole globe), from its own
+   * length alone (flightLift); 0 on surface legs, which are filmed by their speed instead.
    */
-  height: number;
+  lift: number;
   flightStart: number;
   flightEnd: number;
 }
@@ -142,8 +142,11 @@ export const DEFAULT_ASPECT = ASPECT_VALUE['16:9'];
  * The offline renderer's cinematography (routereplay motion.py, camera_geometry.py, trip.py): one continuous
  * shot looking straight down at the aircraft, north up, that stays over the airport through holds and stops.
  * Zoom is the globe's apparent radius on a 1080-pixel short side seen through a 70° field: 1300 px at the
- * airports, easing out by 4p(1 − p) toward 440 px at mid-flight on the trip's longest leg, and proportionally
- * less on shorter legs. Flights, stops, and holds all ease with smootherstep.
+ * airports, where the frame spans about 1,500 km, easing out by 4p(1 − p) to mid-flight. How far out depends on
+ * the flight's own length, not the rest of the trip: just far enough that both airports sit within FLIGHT_FRAME
+ * of the frame's centre, and no further than 440 px, the whole globe (flightLift). A flight that already fits at
+ * the airports' zoom, under about 1,100 km, doesn't pull back. Flights, stops, and holds all ease with
+ * smootherstep.
  *
  * Train, bus, car, and ferry legs are filmed differently, like a drone following the vehicle: they don't take
  * off or land. The camera stays at the airports' zoom, rising only as far as it must to keep the ground from
@@ -158,6 +161,8 @@ const SHORT_SIDE_FOV = 70 * DEG;
 export const FOCAL_PX = SHORT_SIDE_PX / (2 * Math.tan(SHORT_SIDE_FOV / 2));
 const GROUND_RADIUS_PX = 1300;
 const SUMMIT_RADIUS_PX = 440;
+/** At mid-flight both airports sit within this fraction of half the short side from the frame's centre. */
+export const FLIGHT_FRAME = 0.75;
 /** Fraction of a surface leg's screen time spent getting up to speed, and again slowing to a stop. */
 export const SURFACE_RAMP = 0.2;
 /** The ground crosses a surface leg's frame no faster than this, in pixels a second of a 1080-pixel short side. */
@@ -232,14 +237,30 @@ function cameraDistance(radiusPx: number): number {
   return Math.sqrt(1 + (FOCAL_PX / radiusPx) ** 2);
 }
 
-/** Apparent globe radius at progress p along a leg whose length is `height` of the trip's longest. */
-function apparentRadius(p: number, height: number): number {
-  const lift = 4 * p * (1 - p) * height;
-  return GROUND_RADIUS_PX / (1 + (GROUND_RADIUS_PX / SUMMIT_RADIUS_PX - 1) * lift);
+/** Apparent globe radius at progress p along a flight that pulls back by `lift` at mid-flight. */
+function apparentRadius(p: number, lift: number): number {
+  return GROUND_RADIUS_PX / (1 + (GROUND_RADIUS_PX / SUMMIT_RADIUS_PX - 1) * 4 * p * (1 - p) * lift);
 }
 
 /** Camera distance from Earth's centre (Earth radii) at the airports, through holds and stops. */
 const GROUND_DISTANCE = cameraDistance(GROUND_RADIUS_PX);
+
+/**
+ * How far a flight between airports `angle` radians apart pulls back at mid-flight, from 0 (the airports' zoom) to
+ * 1 (the whole globe): just far enough that both airports sit within FLIGHT_FRAME of half the short side from the
+ * frame's centre. Looking straight down over the midpoint from distance d, an airport φ = angle / 2 away appears
+ * at tan β = sin φ / (d − cos φ) off the axis, so the airports reach the frame's edge at
+ * d = cos φ + sin φ / (FLIGHT_FRAME · tan 35°). That distance peaks at tan φ = 1 / (FLIGHT_FRAME · tan 35°), well
+ * past the whole globe; φ is held there so that longer flights never pull back less.
+ */
+export function flightLift(angle: number): number {
+  const k = FLIGHT_FRAME * Math.tan(SHORT_SIDE_FOV / 2);
+  const phi = Math.min(angle / 2, Math.atan(1 / k));
+  const d = Math.cos(phi) + Math.sin(phi) / k;
+  if (d <= GROUND_DISTANCE) return 0;
+  const radius = FOCAL_PX / Math.sqrt(d * d - 1);
+  return clamp((GROUND_RADIUS_PX / radius - 1) / (GROUND_RADIUS_PX / SUMMIT_RADIUS_PX - 1), 0, 1);
+}
 
 /**
  * Height above the ground (Earth radii) of the camera over a surface leg's vehicle covering `rate` radians of
@@ -282,8 +303,6 @@ export function buildTimeline(scene: NormalizedSceneV1): Timeline {
     const b = scene.airports[leg.to]!;
     return GreatCircle.fromLatLon(a.lat, a.lon, b.lat, b.lon);
   });
-  // Surface legs count toward the longest: a flight's pull-back shows its length against the whole trip's.
-  const longest = Math.max(...circles.map((c) => c.angle), 1e-9);
   scene.legs.forEach((leg, i) => {
     const circle = circles[i]!;
     const flightStart = t;
@@ -303,7 +322,7 @@ export function buildTimeline(scene: NormalizedSceneV1): Timeline {
       depMs: Date.parse(leg.departureUtc),
       arrMs: Date.parse(leg.arrivalUtc),
       cruise: surface ? 0 : CRUISE_DISPLAY,
-      height: circle.angle / longest,
+      lift: surface ? 0 : flightLift(circle.angle),
       flightStart,
       flightEnd: t,
     });
@@ -396,7 +415,7 @@ function kinematics(tl: Timeline, tIn: number): Kinematics {
         altitude: displayAltitude(leg.cruise, p),
         heading: leg.track.tangent(p),
         eye: ground,
-        distance: cameraDistance(apparentRadius(p, leg.height)),
+        distance: cameraDistance(apparentRadius(p, leg.lift)),
       };
     }
     case 'surface': {

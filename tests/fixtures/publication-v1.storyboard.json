@@ -106,7 +106,7 @@
       "camera": {
         "centerLat": 41.6,
         "centerLon": -101.06,
-        "viewRadiusKm": 1710
+        "viewRadiusKm": 2000
       }
     },
     {
@@ -132,7 +132,7 @@
       "camera": {
         "centerLat": 38.07,
         "centerLon": -120.8,
-        "viewRadiusKm": 920
+        "viewRadiusKm": 960
       }
     },
     {
