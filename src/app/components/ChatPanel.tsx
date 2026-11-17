@@ -43,7 +43,7 @@ import {
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -85,6 +85,7 @@ import {
   getComposeLimits,
   putScene,
 } from '../api';
+import { appleTouchDevice } from '../device';
 import type { ChatBridge, ChatState, Draft } from '../draft';
 import { type ExportChoice, type ExportPhase, describeExport, exportRunning, runExport } from '../exportOptions';
 import { ExportProgress, ExportQuestionnaire, ExportResult, PublishReply, type PublishState } from './ChatActions';
@@ -518,6 +519,8 @@ function QuestionsForm({ questions, disabled, onSend }: { questions: ComposeQues
 
 export interface ChatPanelProps {
   draft: Draft;
+  /** What the message box starts with: a trip handed over in the address (`/#trip=`), for the person to send. */
+  initialText?: string | null;
   /** On the homepage until the chat makes a draft; then on the draft's page, editing it. */
   open: boolean;
   layout: 'rail' | 'drawer';
@@ -563,11 +566,13 @@ export function ShowChatButton({ onClick }: { onClick: () => void }) {
  * POST /api/v1/compose with the conversation so far. When the journey is complete, the chat saves it: the first
  * time as a new draft that this page becomes, then as new revisions of it.
  */
-export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, faqLayer, onHide, onReveal, onDraftCreated, onNewTrip, onDeleted }: ChatPanelProps) {
+export function ChatPanel({ draft, initialText, open, layout, expanded, onExpandedChange, faqLayer, onHide, onReveal, onDraftCreated, onNewTrip, onDeleted }: ChatPanelProps) {
   const heading = useRef<HTMLHeadingElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const [entries, setEntries] = useState<Entry[]>(() => (draft.sceneId ? loadEntries(draft.sceneId) : []));
-  const [text, setText] = useState('');
+  const [text, setText] = useState(initialText ?? '');
+  // iPhone and iPad visitors are offered the shortcut, unless it's what opened the page.
+  const [offerShortcut] = useState(() => !initialText && appleTouchDevice());
   const [pending, setPending] = useState(false);
   const [limits, setLimits] = useState<ComposeLimits | null>(null);
   const inDraft = draft.sceneId !== null;
@@ -1128,6 +1133,16 @@ export function ChatPanel({ draft, open, layout, expanded, onExpandedChange, faq
                         >
                           Copy prompt for your agent
                         </CopyButton>
+                        {offerShortcut && (
+                          <>
+                            <p>On iPhone or iPad? Add the Route Replay shortcut, then share a booking confirmation to it, or say “Route Replay” to Siri with one on screen.</p>
+                            {/* /shortcut redirects to the current iCloud link (public/_redirects). */}
+                            <a className={buttonVariants({ variant: 'outline', className: 'self-start' })} href="/shortcut" target="_blank" rel="noreferrer">
+                              <PlusIcon aria-hidden="true" />
+                              Get the shortcut
+                            </a>
+                          </>
+                        )}
                       </>
                     )}
                   </>

@@ -19,6 +19,7 @@
     "assets:airports": "node scripts/build-airports.mjs",
     "assets:textures": "python3 -I scripts/build-textures.py",
     "usage": "node scripts/usage-report.mjs",
+    "shortcut": "node scripts/shortcut.mjs",
     "dev:worker": "npm run build && npm run db:migrate:local && portless run --name routereplay sh -c 'exec wrangler dev --port \"$PORT\" --ip \"$HOST\" --var \"PUBLIC_ORIGIN:$PORTLESS_URL\"'",
     "deploy": "npm run build && npm test && wrangler deploy"
   },

@@ -40,6 +40,20 @@ Local servers run through [portless](https://github.com/vercel-labs/portless), w
 
 Asset rebuilds, which download sources into `.cache/`, are `npm run assets:airports` and `npm run assets:textures` (needs Pillow).
 
+## Siri shortcut
+
+The Route Replay shortcut hands a trip to the homepage chat. The page opens with the trip in the message box, you press Enter, and the chat asks what's missing and makes the draft. iPhone and iPad visitors get it from the chat's first message, through `/shortcut`, which redirects to its iCloud link (`public/_redirects`). On a Mac, `npm run shortcut` builds it, signs it with your Apple Account, and opens it in Shortcuts to add. To give it a trip:
+
+- **Siri:** say "Route Replay" with a booking confirmation on screen. The shortcut takes what's on screen.
+- **Share Sheet, or Services on selected text:** from Mail, Notes, Messages, Preview, or a PDF in Finder.
+- **Run it** with nothing to share, from Shortcuts or Spotlight, and it just opens Route Replay, where the chat asks for the trip.
+
+Screenshots are read on the device. To fit the chat's 4,000 characters, the shortcut tidies runs of spaces and blank lines, and cuts text still over 3,000 characters, such as a long confirmation email, at a line break.
+
+`npm run shortcut -- --local` builds "Route Replay Local" for `npm run dev:worker`, and `--origin <url>` builds one for another deployment. Rebuild rather than editing the shortcut in Shortcuts. The signed file stays in `.cache/shortcut/` and isn't committed: it's a binary, and each server needs its own build.
+
+**To publish a new version:** run `npm run shortcut` and choose Replace. Then, in Shortcuts, use Share → Copy iCloud Link, put the link in `public/_redirects`, and deploy. Copies people have already added don't change. See [decisions](docs/decisions.md#a-siri-shortcut-that-hands-the-trip-to-the-chat).
+
 ## Layout
 
 | Path | Contents |

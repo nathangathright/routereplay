@@ -2,6 +2,7 @@ import { Suspense, lazy, useCallback, useEffect, useRef, useState, useSyncExtern
 import { useDraft } from './draft';
 import { usePip } from './pip';
 import { LandingStage } from './pages/Landing';
+import { takeTripFromLink } from './tripLink';
 import { offerTools } from './webmcp/core';
 
 // The chat and the UI kit it's built from load when someone reaches for Get started, not with the homepage.
@@ -39,7 +40,9 @@ const sceneIdOf = (path: string) => /^\/s\/([a-z0-9]{16})\/?$/.exec(path)?.[1] ?
 export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
   const desktop = useMedia(DESKTOP);
   const [sceneId, setSceneId] = useState(initialSceneId);
-  const [chatOpen, setChatOpen] = useState(initialSceneId !== null);
+  // A trip handed over in the address (`/#trip=`, from the Route Replay shortcut) opens the chat with it.
+  const [linkedTrip] = useState(() => (initialSceneId === null ? takeTripFromLink() : null));
+  const [chatOpen, setChatOpen] = useState(initialSceneId !== null || linkedTrip !== null);
   // The chat mounts the first time it opens, then stays, so hiding it keeps the conversation.
   const [chatMounted, setChatMounted] = useState(chatOpen);
   if (chatOpen && !chatMounted) setChatMounted(true);
@@ -195,6 +198,7 @@ export function Studio({ initialSceneId }: { initialSceneId: string | null }) {
             <ChatPanel
               key={chatKey}
               draft={draft}
+              initialText={chatKey === 0 ? linkedTrip : null}
               open={chatOpen}
               layout={layout}
               expanded={desktop || expanded}
